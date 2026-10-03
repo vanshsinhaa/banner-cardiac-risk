@@ -1,0 +1,306 @@
+{
+  "source": "https://zenodo.org/records/13617673",
+  "seed": 42,
+  "images": [
+    {
+      "file": "photos_iphone__img_80_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_80_page_0.jpeg",
+      "bytes": 4226926,
+      "crc32": "6be73223"
+    },
+    {
+      "file": "photos_samsung__img_33_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_33_page_0.jpeg",
+      "bytes": 4590362,
+      "crc32": "4a73452b"
+    },
+    {
+      "file": "photos_doogee__img_22_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_22_page_0.jpeg",
+      "bytes": 4572806,
+      "crc32": "296c704e"
+    },
+    {
+      "file": "photos_bents__img_99_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_99_page_0.jpeg",
+      "bytes": 3779887,
+      "crc32": "168717bd"
+    },
+    {
+      "file": "photos_crumbles__img_44_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_44_page_0.jpeg",
+      "bytes": 3648148,
+      "crc32": "5bb2ffd6"
+    },
+    {
+      "file": "photos_iphone__img_21_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_21_page_0.jpeg",
+      "bytes": 4192972,
+      "crc32": "22af1acc"
+    },
+    {
+      "file": "photos_samsung__img_73_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_73_page_0.jpeg",
+      "bytes": 3959946,
+      "crc32": "12e86b8f"
+    },
+    {
+      "file": "photos_doogee__img_37_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_37_page_0.jpeg",
+      "bytes": 5134515,
+      "crc32": "b64440e6"
+    },
+    {
+      "file": "photos_bents__img_2_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_2_page_0.jpeg",
+      "bytes": 5367657,
+      "crc32": "1d1af14c"
+    },
+    {
+      "file": "photos_crumbles__img_50_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_50_page_0.jpeg",
+      "bytes": 4048236,
+      "crc32": "e517c38e"
+    },
+    {
+      "file": "photos_iphone__img_12_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_12_page_0.jpeg",
+      "bytes": 3069003,
+      "crc32": "1ead1bf3"
+    },
+    {
+      "file": "photos_samsung__img_88_page_2.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_88_page_2.jpeg",
+      "bytes": 3779974,
+      "crc32": "7a30f31c"
+    },
+    {
+      "file": "photos_doogee__img_34_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_34_page_0.jpeg",
+      "bytes": 5303037,
+      "crc32": "e4597a10"
+    },
+    {
+      "file": "photos_bents__img_17_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_17_page_0.jpeg",
+      "bytes": 4433991,
+      "crc32": "a2aa5544"
+    },
+    {
+      "file": "photos_crumbles__img_95_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_95_page_0.jpeg",
+      "bytes": 6126341,
+      "crc32": "d6c6afcc"
+    },
+    {
+      "file": "photos_iphone__img_89_page_1.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_89_page_1.jpeg",
+      "bytes": 3746645,
+      "crc32": "bfaca872"
+    },
+    {
+      "file": "photos_samsung__img_45_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_45_page_0.jpeg",
+      "bytes": 3737564,
+      "crc32": "adb39f82"
+    },
+    {
+      "file": "photos_doogee__img_17_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_17_page_0.jpeg",
+      "bytes": 4958876,
+      "crc32": "4a50968b"
+    },
+    {
+      "file": "photos_bents__img_76_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_76_page_0.jpeg",
+      "bytes": 5501754,
+      "crc32": "854de053"
+    },
+    {
+      "file": "photos_crumbles__img_14_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_14_page_0.jpeg",
+      "bytes": 3564035,
+      "crc32": "4fade1d9"
+    },
+    {
+      "file": "photos_iphone__img_40_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_40_page_0.jpeg",
+      "bytes": 3435399,
+      "crc32": "7f7eecc3"
+    },
+    {
+      "file": "photos_samsung__img_9_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_9_page_0.jpeg",
+      "bytes": 5136827,
+      "crc32": "c45a4905"
+    },
+    {
+      "file": "photos_doogee__img_48_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_48_page_0.jpeg",
+      "bytes": 4937550,
+      "crc32": "362bb02a"
+    },
+    {
+      "file": "photos_bents__img_98_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_98_page_0.jpeg",
+      "bytes": 3508141,
+      "crc32": "a34616ce"
+    },
+    {
+      "file": "photos_crumbles__img_4_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_4_page_0.jpeg",
+      "bytes": 3793325,
+      "crc32": "3a5e0aea"
+    },
+    {
+      "file": "photos_iphone__img_37_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_37_page_0.jpeg",
+      "bytes": 2708722,
+      "crc32": "f8439c2c"
+    },
+    {
+      "file": "photos_samsung__img_82_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_82_page_0.jpeg",
+      "bytes": 3519664,
+      "crc32": "b6ac15ce"
+    },
+    {
+      "file": "photos_doogee__img_11_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_11_page_0.jpeg",
+      "bytes": 6323970,
+      "crc32": "d2822d17"
+    },
+    {
+      "file": "photos_bents__img_85_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_85_page_0.jpeg",
+      "bytes": 4060739,
+      "crc32": "3734a839"
+    },
+    {
+      "file": "photos_crumbles__img_32_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_32_page_0.jpeg",
+      "bytes": 3493613,
+      "crc32": "b79dfb02"
+    },
+    {
+      "file": "photos_iphone__img_34_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_34_page_0.jpeg",
+      "bytes": 4876738,
+      "crc32": "821c6825"
+    },
+    {
+      "file": "photos_samsung__img_65_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_65_page_0.jpeg",
+      "bytes": 4456143,
+      "crc32": "8e010c82"
+    },
+    {
+      "file": "photos_doogee__img_75_page_1.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_75_page_1.jpeg",
+      "bytes": 5332575,
+      "crc32": "8ca8f84b"
+    },
+    {
+      "file": "photos_bents__img_36_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_36_page_0.jpeg",
+      "bytes": 3305308,
+      "crc32": "c2ea7b77"
+    },
+    {
+      "file": "photos_crumbles__img_86_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_86_page_0.jpeg",
+      "bytes": 5217464,
+      "crc32": "6285ed37"
+    },
+    {
+      "file": "photos_iphone__img_24_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_24_page_0.jpeg",
+      "bytes": 4370106,
+      "crc32": "29f79d35"
+    },
+    {
+      "file": "photos_samsung__img_54_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_54_page_0.jpeg",
+      "bytes": 4485287,
+      "crc32": "9b1dc408"
+    },
+    {
+      "file": "photos_doogee__img_71_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_71_page_0.jpeg",
+      "bytes": 4614952,
+      "crc32": "1a64844f"
+    },
+    {
+      "file": "photos_bents__img_54_page_1.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_54_page_1.jpeg",
+      "bytes": 5018580,
+      "crc32": "7748b4fc"
+    },
+    {
+      "file": "photos_crumbles__img_37_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_37_page_0.jpeg",
+      "bytes": 3799177,
+      "crc32": "5a2f464c"
+    },
+    {
+      "file": "photos_iphone__img_97_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_97_page_0.jpeg",
+      "bytes": 4353216,
+      "crc32": "c1e664de"
+    },
+    {
+      "file": "photos_samsung__img_81_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_81_page_0.jpeg",
+      "bytes": 5122617,
+      "crc32": "b768d0ea"
+    },
+    {
+      "file": "photos_doogee__img_35_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_35_page_0.jpeg",
+      "bytes": 4591147,
+      "crc32": "635a97a5"
+    },
+    {
+      "file": "photos_bents__img_22_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_22_page_0.jpeg",
+      "bytes": 5897460,
+      "crc32": "a3d4bd87"
+    },
+    {
+      "file": "photos_crumbles__img_84_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_84_page_0.jpeg",
+      "bytes": 3982136,
+      "crc32": "6c2f43e1"
+    },
+    {
+      "file": "photos_iphone__img_20_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_iphone/img_20_page_0.jpeg",
+      "bytes": 3887736,
+      "crc32": "22d6d515"
+    },
+    {
+      "file": "photos_samsung__img_60_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_samsung/img_60_page_0.jpeg",
+      "bytes": 5035242,
+      "crc32": "d2f89af0"
+    },
+    {
+      "file": "photos_doogee__img_96_page_1.jpeg",
+      "archive_path": "final_data/visual_data/photos_doogee/img_96_page_1.jpeg",
+      "bytes": 3864697,
+      "crc32": "e5e20721"
+    },
+    {
+      "file": "photos_bents__img_73_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_bents/img_73_page_0.jpeg",
+      "bytes": 4679264,
+      "crc32": "3cb975ce"
+    },
+    {
+      "file": "photos_crumbles__img_20_page_0.jpeg",
+      "archive_path": "final_data/visual_data/photos_crumbles/img_20_page_0.jpeg",
+      "bytes": 3883852,
+      "crc32": "c3caa1e2"
+    }
+  ]
+}
