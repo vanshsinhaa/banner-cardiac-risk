@@ -3,6 +3,10 @@
 import { useCallback, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
+import { MOVE_CLOSER } from "@/constants/captureMessages";
+import { checkResolution } from "@/lib/checkResolution";
+import type { ResolutionResult } from "@/lib/checkResolution";
+
 // Fallback capture screen for user story #2 (task #34).
 // Minimal camera input + basic crop. Wire onCapture to your upload/
 // de-identification pipeline once this is integrated.
@@ -32,6 +36,8 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const [resultSrc, setResultSrc] = useState<string | null>(null);
   const [rect, setRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
   const [count, setCount] = useState(0);
+  // Set when the last crop failed the resolution check (task #44).
+  const [resolutionFailure, setResolutionFailure] = useState<ResolutionResult | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -51,6 +57,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     setImageSrc(URL.createObjectURL(file));
+    setResolutionFailure(null);
     setStage("crop");
   };
 
@@ -128,6 +135,15 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     if (!ctx) return;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
+    // Resolution check (task #44). If the crop has too few pixels, stop
+    // here: no result, no save. The user sees "Move closer" and can retake.
+    const resolution = checkResolution({ width: canvas.width, height: canvas.height });
+    if (!resolution.pass) {
+      setResolutionFailure(resolution);
+      return;
+    }
+    setResolutionFailure(null);
+
     const dataUrl = canvas.toDataURL("image/png");
     setResultSrc(dataUrl);
     setCount((c) => c + 1);
@@ -147,6 +163,10 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
             <button style={styles.btnPrimary} onClick={handleOpenPicker}>
               Take / choose photo
             </button>
+            {/* Camera resolution (task #44): this input opens the phone's own
+                camera app, which takes the photo at the highest resolution
+                the device allows. There is no setting to ask for more.
+                A live getUserMedia preview would give smaller video frames. */}
             <input
               ref={fileInputRef}
               type="file"
@@ -179,6 +199,12 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
                 <div style={{ ...styles.handle, bottom: -9, right: -9, cursor: "nwse-resize" }} onPointerDown={startDrag("se")} />
               </div>
             </div>
+            {resolutionFailure && (
+              <div role="alert" style={styles.warning}>
+                <strong>{MOVE_CLOSER}</strong>
+                <div style={styles.warningDetail}>{resolutionFailure.reason}</div>
+              </div>
+            )}
             <div style={styles.row}>
               <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
                 Retake
@@ -288,5 +314,15 @@ const styles: Record<string, CSSProperties> = {
     border: "2px solid #fff",
     borderRadius: "50%",
   },
+  warning: {
+    marginTop: 16,
+    padding: "10px 12px",
+    borderRadius: 8,
+    background: "#fdecea",
+    border: "1px solid #f1b0a8",
+    color: "#8a1c12",
+    fontSize: 15,
+  },
+  warningDetail: { fontSize: 13, marginTop: 2 },
   count: { fontSize: 13, color: "#5b6672", marginTop: 18, textAlign: "center" },
 };
