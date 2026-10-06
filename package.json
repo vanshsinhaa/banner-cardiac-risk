@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
-    "experiment": "node --experimental-strip-types scripts/resolutionExperiment.ts"
+    "experiment": "node --experimental-strip-types scripts/resolutionExperiment.ts",
+    "validate:ekg": "node --experimental-strip-types scripts/validateEkg.ts"
   },
   "dependencies": {
     "next": "16.3.6",
@@ -19,6 +20,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "ajv": "^8.20.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "sharp": "^0.35.5",
