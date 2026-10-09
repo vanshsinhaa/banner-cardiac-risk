@@ -20,6 +20,20 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## ECG digitizer backend skeleton
+
+The capture screen submits the cropped image as multipart form data to
+`POST /api/ecg/digitize`, using the `image` field. The endpoint accepts JPEG,
+PNG, or WebP images up to 10 MB. Its response contract is defined by
+`src/lib/ecg-digitizer/types.ts`: per-lead waveform samples, sampling rate in
+Hz, and sample units in mV.
+
+The integration adapter in `src/lib/ecg-digitizer/digitize.ts` is intentionally
+unimplemented. It returns an explicit HTTP 501 until the team's digitizer is
+connected; it does not invent ECG measurements. Replace that adapter with the
+team's actual processing call. Uploaded images are not persisted by this
+skeleton.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
