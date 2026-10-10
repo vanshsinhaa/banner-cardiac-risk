@@ -2,30 +2,42 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { FALLBACK_MIN_CROP_WIDTH_PX, MIN_PIXELS_PER_MM } from "../config/resolution.ts";
+import { FALLBACK_MIN_PHOTO_LONG_SIDE_PX, MIN_PIXELS_PER_MM } from "../config/resolution.ts";
 import { checkResolution } from "./checkResolution.ts";
 
-describe("checkResolution, crop width fallback", () => {
-  it("passes an image above the limit", () => {
-    const result = checkResolution({ width: FALLBACK_MIN_CROP_WIDTH_PX + 500, height: 800 });
+describe("checkResolution, photo size fallback", () => {
+  it("passes a photo above the limit", () => {
+    const result = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX + 500, height: 800 });
     assert.equal(result.pass, true);
-    assert.equal(result.measure, "cropWidthPx");
-    assert.equal(result.measured, FALLBACK_MIN_CROP_WIDTH_PX + 500);
-    assert.equal(result.required, FALLBACK_MIN_CROP_WIDTH_PX);
+    assert.equal(result.measure, "photoLongSidePx");
+    assert.equal(result.measured, FALLBACK_MIN_PHOTO_LONG_SIDE_PX + 500);
+    assert.equal(result.required, FALLBACK_MIN_PHOTO_LONG_SIDE_PX);
   });
 
-  it("passes an image exactly at the limit", () => {
-    const result = checkResolution({ width: FALLBACK_MIN_CROP_WIDTH_PX, height: 800 });
+  it("passes a photo exactly at the limit", () => {
+    const result = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX, height: 800 });
     assert.equal(result.pass, true);
   });
 
-  it("fails an image below the limit and gives a reason", () => {
-    const result = checkResolution({ width: FALLBACK_MIN_CROP_WIDTH_PX - 1, height: 800 });
+  it("fails a photo below the limit and gives a reason", () => {
+    const result = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX - 1, height: 800 });
     assert.equal(result.pass, false);
-    assert.equal(result.measured, FALLBACK_MIN_CROP_WIDTH_PX - 1);
-    assert.equal(result.required, FALLBACK_MIN_CROP_WIDTH_PX);
-    assert.match(result.reason, /Image too small/);
-    assert.match(result.reason, new RegExp(String(FALLBACK_MIN_CROP_WIDTH_PX)));
+    assert.equal(result.measured, FALLBACK_MIN_PHOTO_LONG_SIDE_PX - 1);
+    assert.equal(result.required, FALLBACK_MIN_PHOTO_LONG_SIDE_PX);
+    assert.match(result.reason, /Photo too small/);
+    assert.match(result.reason, new RegExp(String(FALLBACK_MIN_PHOTO_LONG_SIDE_PX)));
+  });
+
+  it("uses the long side, so a portrait photo passes like a landscape one", () => {
+    const landscape = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX, height: 800 });
+    const portrait = checkResolution({ width: 800, height: FALLBACK_MIN_PHOTO_LONG_SIDE_PX });
+    assert.equal(portrait.pass, true);
+    assert.equal(portrait.measured, landscape.measured);
+  });
+
+  it("fails when both sides are below the limit", () => {
+    const side = FALLBACK_MIN_PHOTO_LONG_SIDE_PX - 1;
+    assert.equal(checkResolution({ width: side, height: side }).pass, false);
   });
 });
 

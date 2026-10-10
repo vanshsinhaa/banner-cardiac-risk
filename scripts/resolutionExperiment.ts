@@ -3,11 +3,17 @@
 // Question: if a photo is below the minimum resolution, does upscaling help?
 //
 // Run with:  npm run experiment -- path/to/ekg-photo.jpg
+//       or:  npm run experiment -- path/to/folder-of-photos
 // With no path, the script draws a fake grid image so it still runs.
 // Use a real EKG photo for results that mean anything.
+// With a folder, it runs the check on every photo and prints one table.
+
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 import sharp from "sharp";
 
+import { ASSUMED_PAGE_LONG_SIDE_MM } from "../src/config/resolution.ts";
 import { checkResolution } from "../src/lib/checkResolution.ts";
 
 const SCALES = [100, 75, 50, 25];
@@ -54,8 +60,62 @@ async function makeSyntheticImage(): Promise<Buffer> {
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
+// Folder mode: run the check on every photo in a folder, at each scale.
+// Only the image sizes are needed, so nothing is resized here.
+async function runFolder(folderPath: string) {
+  const files = readdirSync(folderPath)
+    .filter((name) => /\.(jpe?g|png)$/i.test(name))
+    .sort();
+
+  const rows = [];
+  const skipped: string[] = [];
+  for (const file of files) {
+    let width: number;
+    let height: number;
+    try {
+      // autoOrient gives the size after the phone's orientation tag is applied.
+      const meta = await sharp(join(folderPath, file)).metadata();
+      width = meta.autoOrient.width;
+      height = meta.autoOrient.height;
+    } catch {
+      skipped.push(file);
+      continue;
+    }
+
+    const longSide = Math.max(width, height);
+    const row: Record<string, string | number> = {
+      file,
+      width,
+      height,
+      // Same estimate the fallback check uses: the photo shows one full page.
+      "est. px/mm": Number((longSide / ASSUMED_PAGE_LONG_SIDE_MM).toFixed(1)),
+    };
+    for (const scale of SCALES) {
+      const result = checkResolution({
+        width: Math.round((width * scale) / 100),
+        height: Math.round((height * scale) / 100),
+      });
+      row[`${scale}%`] = result.pass ? "PASS" : "FAIL";
+    }
+    rows.push(row);
+  }
+
+  console.log(`Folder: ${folderPath}`);
+  console.log(`${rows.length} photos checked, ${skipped.length} skipped (not readable as images)\n`);
+  console.table(rows);
+  if (skipped.length > 0) {
+    console.log("\nSkipped files:");
+    for (const file of skipped) console.log(`  - ${file}`);
+  }
+}
+
 async function main() {
   const imagePath = process.argv[2];
+  if (imagePath && statSync(imagePath).isDirectory()) {
+    await runFolder(imagePath);
+    return;
+  }
+
   let original: Buffer;
   if (imagePath) {
     // rotate() with no angle applies the phone's orientation tag.

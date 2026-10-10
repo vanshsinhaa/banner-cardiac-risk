@@ -6,9 +6,15 @@
 // tell us how low we can go before the waveform is lost.
 export const MIN_PIXELS_PER_MM = 8;
 
-// Stand-in limit used until grid calibration exists.
-// We cannot measure pixels per millimeter yet, so we check the width of
-// the cropped image instead.
-// 2000 = 250 mm (a 10 second strip at 25 mm/s) x 8 pixels per mm.
-// This is also a guess. It assumes the crop covers a full-width strip.
-export const FALLBACK_MIN_CROP_WIDTH_PX = 2000;
+// Stand-in used until grid calibration exists.
+// We cannot measure pixels per millimeter yet, so we estimate it from
+// the size of the whole photo (not the crop). Cropping does not change
+// how many pixels cover one millimeter, so the crop size tells us nothing.
+// We assume the photo shows at most one full page, with a long side of
+// 297 mm (A4; US letter is 279 mm, so this is the stricter choice).
+// If the photo shows less than a full page, the real resolution is
+// higher than our estimate, which is the safe direction.
+export const ASSUMED_PAGE_LONG_SIDE_MM = 297;
+
+// 2376 = 297 mm x 8 pixels per mm.
+export const FALLBACK_MIN_PHOTO_LONG_SIDE_PX = ASSUMED_PAGE_LONG_SIDE_MM * MIN_PIXELS_PER_MM;

@@ -36,7 +36,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const [resultSrc, setResultSrc] = useState<string | null>(null);
   const [rect, setRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
   const [count, setCount] = useState(0);
-  // Set when the last crop failed the resolution check (task #44).
+  // Set when the current photo failed the resolution check (task #44).
   const [resolutionFailure, setResolutionFailure] = useState<ResolutionResult | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +63,16 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
 
   const handleImageLoad = () => {
     const wrap = wrapRef.current;
-    if (!wrap) return;
+    const img = imgRef.current;
+    if (!wrap || !img) return;
+
+    // Resolution check (task #44). It looks at the whole photo, not the
+    // crop, because cropping does not change the resolution. So we run it
+    // once, as soon as the photo loads. A failed photo cannot be fixed by
+    // moving the crop box; the user has to retake it.
+    const resolution = checkResolution({ width: img.naturalWidth, height: img.naturalHeight });
+    setResolutionFailure(resolution.pass ? null : resolution);
+
     const w = wrap.clientWidth;
     const h = wrap.clientHeight;
     const bw = w * 0.7;
@@ -120,6 +129,8 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const handleConfirmCrop = () => {
     const img = imgRef.current;
     if (!img) return;
+    // Photo failed the resolution check (task #44): no result, no save.
+    if (resolutionFailure) return;
 
     const scaleX = img.naturalWidth / img.clientWidth;
     const scaleY = img.naturalHeight / img.clientHeight;
@@ -134,15 +145,6 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-
-    // Resolution check (task #44). If the crop has too few pixels, stop
-    // here: no result, no save. The user sees "Move closer" and can retake.
-    const resolution = checkResolution({ width: canvas.width, height: canvas.height });
-    if (!resolution.pass) {
-      setResolutionFailure(resolution);
-      return;
-    }
-    setResolutionFailure(null);
 
     const dataUrl = canvas.toDataURL("image/png");
     setResultSrc(dataUrl);
@@ -209,7 +211,11 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
               <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
                 Retake
               </button>
-              <button style={styles.btnPrimaryFlex} onClick={handleConfirmCrop}>
+              <button
+                style={resolutionFailure ? styles.btnPrimaryFlexDisabled : styles.btnPrimaryFlex}
+                onClick={handleConfirmCrop}
+                disabled={resolutionFailure !== null}
+              >
                 Confirm crop
               </button>
             </div>
@@ -276,6 +282,17 @@ const styles: Record<string, CSSProperties> = {
     flex: 1,
     cursor: "pointer",
     font: "inherit",
+  },
+  btnPrimaryFlexDisabled: {
+    background: "#2f6f5e",
+    color: "#fff",
+    border: "none",
+    borderRadius: 8,
+    padding: "12px 18px",
+    flex: 1,
+    cursor: "not-allowed",
+    font: "inherit",
+    opacity: 0.5,
   },
   btnPrimaryLink: {
     background: "#2f6f5e",

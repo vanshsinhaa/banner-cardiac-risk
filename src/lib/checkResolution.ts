@@ -1,12 +1,13 @@
-// Resolution check for a cropped EKG image (Taiga #44).
+// Resolution check for an EKG photo (Taiga #44).
 // Plain function with no browser code, so tests and scripts can use it.
 
 // The ".ts" ending is needed so Node can run this file directly
 // (npm test, npm run experiment).
-import { FALLBACK_MIN_CROP_WIDTH_PX, MIN_PIXELS_PER_MM } from "../config/resolution.ts";
+import { FALLBACK_MIN_PHOTO_LONG_SIDE_PX, MIN_PIXELS_PER_MM } from "../config/resolution.ts";
 
 export interface ResolutionInput {
-  // Size of the cropped image in pixels.
+  // Size of the whole photo in pixels, before cropping. Cropping does
+  // not change the resolution, so do not pass the crop size here.
   width: number;
   height: number;
   // Pixels per millimeter of grid. Grid calibration will fill this in
@@ -17,7 +18,7 @@ export interface ResolutionInput {
 export interface ResolutionResult {
   pass: boolean;
   // Which measure was used for this check.
-  measure: "pixelsPerMm" | "cropWidthPx";
+  measure: "pixelsPerMm" | "photoLongSidePx";
   measured: number;
   required: number;
   // Short explanation, for logs and for the screen.
@@ -41,17 +42,18 @@ export function checkResolution(image: ResolutionInput): ResolutionResult {
     };
   }
 
-  // Stand-in measure: width of the cropped image in pixels.
-  const measured = image.width;
-  const required = FALLBACK_MIN_CROP_WIDTH_PX;
+  // Stand-in measure: long side of the whole photo in pixels. Using the
+  // long side means portrait and landscape photos are treated the same.
+  const measured = Math.max(image.width, image.height);
+  const required = FALLBACK_MIN_PHOTO_LONG_SIDE_PX;
   const pass = measured >= required;
   return {
     pass,
-    measure: "cropWidthPx",
+    measure: "photoLongSidePx",
     measured,
     required,
     reason: pass
       ? "Resolution OK."
-      : `Image too small: ${measured} pixels wide, need at least ${required}.`,
+      : `Photo too small: ${measured} pixels on its long side, need at least ${required}.`,
   };
 }
