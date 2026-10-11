@@ -34,6 +34,71 @@ connected; it does not invent ECG measurements. Replace that adapter with the
 team's actual processing call. Uploaded images are not persisted by this
 skeleton.
 
+## ECG digitizer service setup
+
+The digitizing itself is done by the open source
+[Open-ECG-Digitizer](https://github.com/Ahus-AIM/Open-ECG-Digitizer), a Python
+tool. `digitizer-service/server.py` wraps it in a small local API with one
+endpoint, `POST /digitize`, meant to be called by the Next.js backend. The tool
+is not included in this repo, so each developer clones it once.
+
+Requirements: Python 3.12, git, and [Git LFS](https://git-lfs.com) (for the
+model weights).
+
+1. From the root of this repo, clone the tool at the version the service was
+   tested with. The folder must be named `Open-ECG-Digitizer` and sit next to
+   `digitizer-service/`:
+
+   ```bash
+   git clone https://github.com/Ahus-AIM/Open-ECG-Digitizer.git
+   cd Open-ECG-Digitizer
+   git checkout 97a1508
+   ```
+
+2. Download the model weights (about 110 MB):
+
+   ```bash
+   git lfs pull
+   ```
+
+3. Create the Python environment and install the packages:
+
+   ```bash
+   python3.12 -m venv .venv
+   .venv/bin/pip install -r requirements.txt
+   .venv/bin/pip install fastapi uvicorn python-multipart
+   ```
+
+4. Start the service. Run this from inside `Open-ECG-Digitizer/`:
+
+   ```bash
+   PYTORCH_ENABLE_MPS_FALLBACK=1 .venv/bin/python -m uvicorn server:app \
+       --app-dir ../digitizer-service --host 127.0.0.1 --port 8000
+   ```
+
+   It is ready when it prints `Digitizer loaded on ...`.
+
+5. Test it from the root of this repo:
+
+   ```bash
+   curl -F image=@public/camera-ecgs/photos_bents__img_17_page_0.jpeg \
+       http://127.0.0.1:8000/digitize | head -c 300
+   ```
+
+   After about 10 seconds it should print JSON starting with `{"leads":{"I":[`.
+
+Notes:
+
+- The service picks an NVIDIA GPU if there is one, then an Apple Silicon GPU,
+  then the CPU.
+- `RESAMPLE_SIZE` in `server.py` caps the image's longest side at 2000 px. The
+  tool's default of 3000 ran out of memory on an 18 GB laptop; raise it only on
+  a machine with a dedicated GPU.
+- The Next.js adapter in `src/lib/ecg-digitizer/digitize.ts` does not call this
+  service yet.
+- Open-ECG-Digitizer is licensed under CC BY-SA 4.0 and asks that its paper be
+  cited; see its README.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
