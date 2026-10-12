@@ -32,6 +32,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const [resultSrc, setResultSrc] = useState<string | null>(null);
   const [rect, setRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
   const [count, setCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -49,7 +50,18 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    //if user cancelled the picker, no file and nothing to do 
     if (!file) return;
+    
+    //reject anything that isn't image 
+    if (!file.type.startsWith("image/")) {
+      setError("That file isn't an image. Please choose a photo.");
+      return;
+    }
+
+    setError(null); //clear old error
+    //free memory used by previous photo before loading a new one 
+    if (imageSrc) URL.revokeObjectURL(imageSrc);
     setImageSrc(URL.createObjectURL(file));
     setStage("crop");
   };
@@ -128,7 +140,8 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     if (!ctx) return;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
-    const dataUrl = canvas.toDataURL("image/png");
+    //JPEG at 92% quality is smaller than PNG and still sharp 
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     setResultSrc(dataUrl);
     setCount((c) => c + 1);
     setStage("result");
@@ -147,6 +160,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
             <button style={styles.btnPrimary} onClick={handleOpenPicker}>
               Take / choose photo
             </button>
+            {error && <p style={styles.error}>{error}</p>}
             <input
               ref={fileInputRef}
               type="file"
@@ -166,6 +180,11 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
                 ref={imgRef}
                 src={imageSrc}
                 onLoad={handleImageLoad}
+                onError={() => {
+                  //browser can't decode file, go back to start screen w/ message instead of blank crop box
+                  setError("This photo couldn't be displayed. Try a JPEG or PNG.");
+                  setStage("idle");
+                }}
                 alt="Captured EKG"
                 style={styles.img}
               />
@@ -198,7 +217,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
               <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
                 Capture another
               </button>
-              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-capture-${Date.now()}.png`}>
+              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-capture-${Date.now()}.jpg`}>
                 Save image
               </a>
             </div>
@@ -289,4 +308,5 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "50%",
   },
   count: { fontSize: 13, color: "#5b6672", marginTop: 18, textAlign: "center" },
+  error: { color: "#b3261e", fontSize: 14, marginTop: 12 },
 };
