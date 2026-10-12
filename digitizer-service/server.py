@@ -64,15 +64,17 @@ def decode_upload(data: bytes) -> torch.Tensor:
 def to_result(canonical: torch.Tensor) -> dict[str, Any]:
     """Converts the digitizer's 12x5000 microvolt tensor into the app's EcgDigitizationResult shape."""
     lines = canonical.squeeze().cpu().numpy()  # (12, 5000), NaN where there is no signal
-    leads: dict[str, list[float]] = {}
+    leads: dict[str, list[float | None]] = {}
 
     for name, samples in zip(LEAD_NAMES, lines):
-        if np.isnan(samples).all(): # lead is not on the page
+        if np.isnan(samples).all():  # lead is not on the page
             continue
-        valid_indices = np.where(~np.isnan(samples))[0]
-        samples = np.interp(np.arange(len(samples)), valid_indices, samples[valid_indices])
-        samples /= 1000  # convert microvolts to millivolts
-        leads[name] = samples.tolist()
+
+        # Same layout as the digitizer's own output: every lead stays on the shared
+        # 5000-sample time axis, and samples with no signal are left empty rather than
+        # filled in. JSON cannot represent NaN, so those samples are sent as null.
+        millivolts = samples / 1000  # convert microvolts to millivolts
+        leads[name] = [None if np.isnan(value) else float(value) for value in millivolts]
 
     return {"leads": leads, "samplingRateHz": SAMPLING_RATE_HZ, "units": "mV"}
 

@@ -16,7 +16,9 @@ export const ECG_LEADS = [
 export type EcgLead = (typeof ECG_LEADS)[number];
 
 export interface EcgDigitizationResult {
-  leads: Partial<Record<EcgLead, number[]>>;
+  // Every lead shares one time axis. A sample is null where the lead has no signal,
+  // e.g. outside the part of the strip where that lead is printed.
+  leads: Partial<Record<EcgLead, (number | null)[]>>;
   samplingRateHz: number;
   units: "mV";
 }
@@ -44,7 +46,9 @@ export function isEcgDigitizationResult(value: unknown): value is EcgDigitizatio
       ([lead, samples]) =>
         ECG_LEADS.some((knownLead) => knownLead === lead) &&
         Array.isArray(samples) &&
-        samples.every((sample) => typeof sample === "number" && Number.isFinite(sample)),
+        samples.every(
+          (sample) => sample === null || (typeof sample === "number" && Number.isFinite(sample)),
+        ),
     )
   );
 }
