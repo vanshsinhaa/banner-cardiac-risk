@@ -94,8 +94,12 @@ Notes:
 - `RESAMPLE_SIZE` in `server.py` caps the image's longest side at 2000 px. The
   tool's default of 3000 ran out of memory on an 18 GB laptop; raise it only on
   a machine with a dedicated GPU.
-- The Next.js adapter in `src/lib/ecg-digitizer/digitize.ts` does not call this
-  service yet.
+- For every digitized image the service saves a comparison plot to
+  `digitizer-service/trace-plots/` (ignored by git): the original image, the
+  straightened image, the detected trace pixels, and the digitized traces. Set
+  `SAVE_TRACE_PLOTS = False` in `server.py` to turn this off.
+- The Next.js adapter in `src/lib/ecg-digitizer/digitize.ts` calls this service
+  when `ECG_DIGITIZER_URL=http://127.0.0.1:8000` is set in `.env.local`.
 - Open-ECG-Digitizer is licensed under CC BY-SA 4.0 and asks that its paper be
   cited; see its README.
 

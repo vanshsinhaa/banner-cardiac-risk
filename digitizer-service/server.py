@@ -6,8 +6,15 @@ Run from inside Open-ECG-Digitizer/ (the config's weight paths are relative to i
         --app-dir ../digitizer-service --host 127.0.0.1 --port 8000
 """
 
+import re
 import threading
+from datetime import datetime
+from pathlib import Path
 from typing import Any
+
+import matplotlib
+
+matplotlib.use("Agg")  # draw plots to files only; must be set before pyplot is imported
 
 import numpy as np
 import torch
@@ -15,6 +22,7 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from torchvision.io import decode_image
 
 from src.config.default import get_cfg
+from src.digitize import save_png_plot
 from src.utils import import_class_from_path
 
 CONFIG_PATH = "src/config/inference_wrapper.yml"
@@ -24,6 +32,10 @@ LEAD_NAMES = ["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5
 #NOTE: If testing with a NVIDIA GPU, change resampling to 3000
 RESAMPLE_SIZE = 2000  # override the default resample size for the digitizer, default is 3000
 SAMPLING_RATE_HZ = 500  # placeholder: the digitizer always returns 5000 samples per lead
+
+# Trace plots: one PNG per digitized image, to compare the digitized traces with the original.
+SAVE_TRACE_PLOTS = True  # set to False to skip drawing (saves a few seconds per request)
+TRACE_PLOTS_DIR = Path(__file__).resolve().parent / "trace-plots"
 
 
 # --- Startup: load the model once -------------------------------------------
@@ -49,6 +61,8 @@ wrapper = import_class_from_path(cfg.MODEL.class_path)(**cfg.MODEL.KWARGS)
 
 # mutual exclusion for the model wrapper
 model_lock = threading.Lock()
+# matplotlib's pyplot is not safe to use from several threads at once
+plot_lock = threading.Lock()
 app = FastAPI()
 print(f"Digitizer loaded on {device}")
 
@@ -79,6 +93,25 @@ def to_result(canonical: torch.Tensor) -> dict[str, Any]:
     return {"leads": leads, "samplingRateHz": SAMPLING_RATE_HZ, "units": "mV"}
 
 
+def save_trace_plot(got: dict[str, Any], upload_name: str | None) -> Path:
+    """Saves the digitizer's four-panel comparison plot for one image and returns its path."""
+    TRACE_PLOTS_DIR.mkdir(exist_ok=True)
+
+    # File name: time of the request plus the upload's name, limited to safe characters.
+    stem = re.sub(r"[^A-Za-z0-9_-]", "_", Path(upload_name or "ecg").stem)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    basepath = TRACE_PLOTS_DIR / f"{timestamp}_{stem}"
+
+    # save_png_plot shifts the lines it is given so the leads do not overlap in the
+    # picture. Hand it a copy so the real signal values are left untouched.
+    canonical = got["signal"]["canonical_lines"]
+    canonical_copy = canonical.clone() if canonical is not None else None
+
+    with plot_lock:
+        save_png_plot(got, canonical_copy, str(basepath))  # writes <basepath>.png
+    return basepath.with_suffix(".png")
+
+
 # --- Endpoint ---------------------------------------------------------------
 @app.post("/digitize")
 def digitize(image: UploadFile) -> dict[str, Any]:
@@ -95,4 +128,13 @@ def digitize(image: UploadFile) -> dict[str, Any]:
 
     if not result["leads"]:
         raise HTTPException(status_code=422, detail="No leads were found.")
+
+    # The plot is only a visual check, so a failure to draw it must not fail the request.
+    if SAVE_TRACE_PLOTS:
+        try:
+            plot_path = save_trace_plot(got, image.filename)
+            print(f"Saved trace plot: {plot_path}")
+        except Exception as e:
+            print(f"Could not save trace plot: {e}")
+
     return result
