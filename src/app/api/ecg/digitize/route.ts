@@ -35,7 +35,12 @@ export async function POST(request: Request) {
 
   try {
     const result = await digitizeEcgImage(image);
-    return Response.json(result);
+
+    // TODO: pass `result` (the digitized leads) to the further analysis steps here.
+    // The leads are not sent back to the client yet; for now the response only
+    // confirms that the digitizer finished.
+    void result;
+    return Response.json({ message: "The ECG digitizer has finished processing the image." });
   } catch (error) {
     if (error instanceof DigitizerNotConfiguredError) {
       return Response.json({ error: error.message }, { status: 501 });
