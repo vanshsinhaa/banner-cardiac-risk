@@ -4,10 +4,31 @@ import { useCallback, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 // Fallback capture screen for user story #2 (task #34).
-// Minimal camera input + basic crop. Wire onCapture to your upload/
-// de-identification pipeline once this is integrated.
+// Crop, preprocess, and assess lead-label readability through the local API.
 
-type Stage = "idle" | "crop" | "result";
+type Stage = "idle" | "crop" | "processing" | "result";
+
+interface Assessment {
+  accepted: boolean;
+  status: "passed" | "failed" | "needs_review";
+  uncertain_leads: string[];
+  rotation_degrees: number;
+  ocr_timed_out: boolean;
+  reasons: string[];
+  detected_leads: string[];
+  missing_leads: string[];
+  boundary_found: boolean;
+  width: number;
+  height: number;
+  processed_image: string;
+}
+
+const reasonLabels: Record<string, string> = {
+  invalid_image: "The image could not be assessed.",
+  resolution_too_low: "The crop is too small. Keep at least 600 pixels on each side.",
+  insufficient_contrast: "The image has too little contrast. Retake it with clearer lighting.",
+  lead_labels_unreadable_or_missing: "OCR could not confirm all 12 labels. This can happen on a readable scan. Check the unconfirmed labels below; a partial ECG page cannot pass the full 12-lead check.",
+};
 
 interface Rect {
   x: number;
@@ -32,6 +53,8 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const [resultSrc, setResultSrc] = useState<string | null>(null);
   const [rect, setRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
   const [count, setCount] = useState(0);
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -50,7 +73,11 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (imageSrc) URL.revokeObjectURL(imageSrc);
     setImageSrc(URL.createObjectURL(file));
+    setAssessment(null);
+    setError(null);
+    setResultSrc(null);
     setStage("crop");
   };
 
@@ -59,8 +86,8 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     if (!wrap) return;
     const w = wrap.clientWidth;
     const h = wrap.clientHeight;
-    const bw = w * 0.7;
-    const bh = h * 0.5;
+    const bw = w;
+    const bh = h;
     setRect({ x: (w - bw) / 2, y: (h - bh) / 2, w: bw, h: bh });
   };
 
@@ -110,9 +137,9 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     window.addEventListener("pointerup", onDragEnd);
   };
 
-  const handleConfirmCrop = () => {
+  const handleConfirmCrop = async () => {
     const img = imgRef.current;
-    if (!img) return;
+    if (!img || stage !== "crop") return;
 
     const scaleX = img.naturalWidth / img.clientWidth;
     const scaleY = img.naturalHeight / img.clientHeight;
@@ -122,28 +149,48 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     const sh = rect.h * scaleY;
 
     const canvas = document.createElement("canvas");
-    canvas.width = sw;
-    canvas.height = sh;
+    canvas.width = Math.max(1, Math.round(sw));
+    canvas.height = Math.max(1, Math.round(sh));
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
-    const dataUrl = canvas.toDataURL("image/png");
-    setResultSrc(dataUrl);
-    setCount((c) => c + 1);
-    setStage("result");
-    onCapture?.(dataUrl);
+    setAssessment(null);
+    setError(null);
+    setResultSrc(canvas.toDataURL("image/png"));
+    setStage("processing");
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not create the crop.")), "image/png");
+      });
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "image/png" },
+        body: blob,
+        signal: AbortSignal.timeout(60_000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "The image check could not complete.");
+      setAssessment(result as Assessment);
+      setResultSrc(result.processed_image);
+      setCount((c) => c + 1);
+      if (result.accepted) onCapture?.(result.processed_image);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The image check could not complete. Try again.");
+    } finally {
+      setStage("result");
+    }
   };
 
   return (
     <div style={styles.wrap}>
       <h1 style={styles.h1}>EKG capture, fallback prototype</h1>
-      <p style={styles.sub}>Photo capture plus a basic crop, no lab lighting needed.</p>
+      <p style={styles.sub}>Crop the full 12-lead ECG to automatically check label readability.</p>
 
       <div style={styles.card}>
         {stage === "idle" && (
           <>
-            <div style={styles.placeholder}>Take a photo of the EKG strip or on-screen waveform.</div>
+            <div style={styles.placeholder}>Choose a photo showing all 12 ECG lead labels.</div>
             <button style={styles.btnPrimary} onClick={handleOpenPicker}>
               Take / choose photo
             </button>
@@ -184,22 +231,55 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
                 Retake
               </button>
               <button style={styles.btnPrimaryFlex} onClick={handleConfirmCrop}>
-                Confirm crop
+                Confirm crop & check
               </button>
             </div>
           </>
         )}
 
+        {stage === "processing" && (
+          <div role="status" aria-live="polite" style={{ padding: 24 }}>
+            Processing image and checking lead labels… This may take up to 45 seconds.
+          </div>
+        )}
+
         {stage === "result" && resultSrc && (
           <>
+            <div role="status" aria-live="polite" style={{
+              padding: 16, marginBottom: 16, borderRadius: 8,
+              background: error || assessment?.status === "needs_review" ? "#fff4dc" : assessment?.accepted ? "#e7f5ec" : "#fff0ef",
+              color: "#16202a", display: "grid", gap: 10,
+            }}>
+              <strong>{error ? "Check unavailable" : assessment?.accepted ? "Passed — lead labels readable" : assessment?.status === "needs_review" ? "Needs review — OCR incomplete" : "Failed — image quality check"}</strong>
+              {error && <p>{error}</p>}
+              {assessment && (
+                <>
+                  {assessment.reasons.map((reason) => <p key={reason}>{reasonLabels[reason] || reason}</p>)}
+                  <p>Confirmed labels ({assessment.detected_leads.length}/12): {assessment.detected_leads.join(", ") || "None"}</p>
+                  {assessment.uncertain_leads?.length > 0 && <p>Seen with low confidence: {assessment.uncertain_leads.join(", ")}</p>}
+                  {assessment.ocr_timed_out && <p>Some OCR attempts timed out. The label list may be incomplete; try a tighter crop around the full ECG.</p>}
+                  {assessment.missing_leads.length > 0 && <p>Not confirmed: {assessment.missing_leads.join(", ")}</p>}
+                  <p style={{ fontSize: 13 }}>
+                    {assessment.boundary_found ? "Perspective corrected." : "No page boundary found; used your crop."}
+                    {" "}{assessment.rotation_degrees > 0 && `Rotated ${assessment.rotation_degrees}° clockwise for reading. `}Lighting adjusted. Output: {assessment.width} × {assessment.height} pixels.
+                  </p>
+                  <p style={{ fontSize: 13 }}>This checks lead-label readability, not waveform accuracy or heart health.</p>
+                </>
+              )}
+            </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={resultSrc} alt="Cropped result" style={{ width: "100%", borderRadius: 8, display: "block" }} />
+            <img src={resultSrc} alt={assessment ? "Processed ECG" : "Original crop; check unavailable"} style={{ width: "100%", borderRadius: 8, display: "block" }} />
             <div style={styles.row}>
+              <button style={styles.btnSecondary} onClick={() => setStage("crop")}>
+                {error ? "Retry / adjust crop" : "Adjust crop"}
+              </button>
               <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
                 Capture another
               </button>
-              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-capture-${Date.now()}.png`}>
-                Save image
+            </div>
+            <div style={styles.row}>
+              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-${assessment ? "processed" : "crop"}-${Date.now()}.png`}>
+                {assessment ? "Save processed image" : "Save original crop"}
               </a>
             </div>
           </>
@@ -207,7 +287,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
       </div>
 
       <div style={styles.count}>
-        {count} {count === 1 ? "image" : "images"} captured this session
+        {count} {count === 1 ? "check" : "checks"} completed this session
       </div>
     </div>
   );
