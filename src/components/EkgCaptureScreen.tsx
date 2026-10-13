@@ -2,12 +2,13 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import CameraGuide from "./CameraGuide";
 
 // Fallback capture screen for user story #2 (task #34).
 // Minimal camera input + basic crop. Wire onCapture to your upload/
 // de-identification pipeline once this is integrated.
 
-type Stage = "idle" | "crop" | "result";
+type Stage = "idle" | "camera" | "crop" | "result";
 
 interface Rect {
   x: number;
@@ -65,6 +66,14 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     setImageSrc(URL.createObjectURL(file));
     setStage("crop");
   };
+
+    //receives frame captured by live cameraand sends it into same crop step file picker uses 
+    const handleCameraPhoto = (dataUrl: string) => {
+      setError(null);
+      setImageSrc(dataUrl);
+      setStage("crop");
+    };
+
 
   const handleImageLoad = () => {
     const wrap = wrapRef.current;
@@ -160,6 +169,14 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
             <button style={styles.btnPrimary} onClick={handleOpenPicker}>
               Take / choose photo
             </button>
+
+            <button
+              style={{ ...styles.btnSecondary, width: "100%", marginTop: 10 }}
+              onClick={() => setStage("camera")}
+            >
+              Use camera guide 
+            </button>
+
             {error && <p style={styles.error}>{error}</p>}
             <input
               ref={fileInputRef}
@@ -170,6 +187,13 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
               onChange={handleFileChange}
             />
           </>
+        )}
+
+        {stage === "camera" && (
+          <CameraGuide 
+            onPhoto={handleCameraPhoto}
+            onCancel={() => setStage("idle")}
+          />
         )}
 
         {stage === "crop" && imageSrc && (
