@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1.0",
+  "image_id": "example-invalid-confidence",
+  "calibration": { "mm_per_s": 25, "mm_per_mv": 10, "px_per_mm": 8, "source": "default" },
+  "sample_rate_hz": 100,
+  "leads": [
+    { "name": "II", "start_ms": 0, "amplitude_mv": [0.0, 0.05, 0.1, 0.05, 0.0], "confidence": 1.2, "beats": [] }
+  ],
+  "quality": { "overall_confidence": 0.9, "flags": [] }
+}
