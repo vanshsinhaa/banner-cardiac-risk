@@ -1,0 +1,1698 @@
+{
+  "summary": {
+    "images": 50,
+    "images_with_confirmed_labels": 39,
+    "passes": 0,
+    "errors": 0,
+    "note": "Detection counts are not recognition accuracy. No ground-truth labels were supplied."
+  },
+  "images": [
+    {
+      "file": "photos_bents__img_17_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 180,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1950,
+        4183
+      ],
+      "seconds": 7.68
+    },
+    {
+      "file": "photos_bents__img_22_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "V4"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "V2",
+        "V5"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1823,
+        3365
+      ],
+      "seconds": 4.01
+    },
+    {
+      "file": "photos_bents__img_2_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVL",
+        "aVF",
+        "V1"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "aVR",
+        "V2"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        3192,
+        4536
+      ],
+      "seconds": 7.55
+    },
+    {
+      "file": "photos_bents__img_36_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "V4"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1735,
+        3237
+      ],
+      "seconds": 2.01
+    },
+    {
+      "file": "photos_bents__img_54_page_1.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "V2"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "II"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        3153,
+        4376
+      ],
+      "seconds": 4.58
+    },
+    {
+      "file": "photos_bents__img_73_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V4",
+        "V5"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "V1",
+        "V2",
+        "V3",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "II",
+        "V2"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2493,
+        4162
+      ],
+      "seconds": 3.4
+    },
+    {
+      "file": "photos_bents__img_76_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1536,
+        4191
+      ],
+      "seconds": 4.02
+    },
+    {
+      "file": "photos_bents__img_85_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVL",
+        "aVF"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1901,
+        4006
+      ],
+      "seconds": 4.05
+    },
+    {
+      "file": "photos_bents__img_98_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVR",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V5"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVL",
+        "V4",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2326,
+        3743
+      ],
+      "seconds": 4.05
+    },
+    {
+      "file": "photos_bents__img_99_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVF",
+        "V2",
+        "V3",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "V1",
+        "V4",
+        "V5"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2221,
+        4198
+      ],
+      "seconds": 6.33
+    },
+    {
+      "file": "photos_crumbles__img_14_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "aVF"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": false,
+      "shape": [
+        3468,
+        4624
+      ],
+      "seconds": 7.51
+    },
+    {
+      "file": "photos_crumbles__img_20_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVR",
+        "V2",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVL",
+        "aVF",
+        "V1",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1470,
+        3946
+      ],
+      "seconds": 6.61
+    },
+    {
+      "file": "photos_crumbles__img_32_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "V4",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V5"
+      ],
+      "uncertain_leads": [
+        "I",
+        "aVR"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": false,
+      "shape": [
+        3468,
+        4624
+      ],
+      "seconds": 4.23
+    },
+    {
+      "file": "photos_crumbles__img_37_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVL",
+        "aVF",
+        "V2",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "V1",
+        "V3"
+      ],
+      "uncertain_leads": [
+        "I",
+        "aVR"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2139,
+        4016
+      ],
+      "seconds": 4.6
+    },
+    {
+      "file": "photos_crumbles__img_44_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVR",
+        "V2",
+        "V5"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVL",
+        "aVF",
+        "V1",
+        "V3",
+        "V4",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "aVF"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": false,
+      "shape": [
+        3468,
+        4624
+      ],
+      "seconds": 4.06
+    },
+    {
+      "file": "photos_crumbles__img_4_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 270,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2396,
+        4064
+      ],
+      "seconds": 6.27
+    },
+    {
+      "file": "photos_crumbles__img_50_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "V5"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1529,
+        4076
+      ],
+      "seconds": 3.86
+    },
+    {
+      "file": "photos_crumbles__img_84_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVR",
+        "aVF",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVL",
+        "V1"
+      ],
+      "uncertain_leads": [
+        "V1"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": false,
+      "shape": [
+        3468,
+        4624
+      ],
+      "seconds": 4.54
+    },
+    {
+      "file": "photos_crumbles__img_86_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V1",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V2",
+        "V3"
+      ],
+      "uncertain_leads": [
+        "II",
+        "V3"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2825,
+        4369
+      ],
+      "seconds": 5.85
+    },
+    {
+      "file": "photos_crumbles__img_95_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V2",
+        "V3"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "V1"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2169,
+        4168
+      ],
+      "seconds": 5.34
+    },
+    {
+      "file": "photos_doogee__img_11_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V2",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V3"
+      ],
+      "uncertain_leads": [
+        "V3"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": true,
+      "boundary_found": true,
+      "shape": [
+        2844,
+        4027
+      ],
+      "seconds": 9.57
+    },
+    {
+      "file": "photos_doogee__img_17_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2842,
+        3998
+      ],
+      "seconds": 6.18
+    },
+    {
+      "file": "photos_doogee__img_22_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVF",
+        "V2",
+        "V3",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "V1",
+        "V4",
+        "V5"
+      ],
+      "uncertain_leads": [
+        "I",
+        "V4"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2878,
+        4059
+      ],
+      "seconds": 4.4
+    },
+    {
+      "file": "photos_doogee__img_34_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2791,
+        3951
+      ],
+      "seconds": 5.12
+    },
+    {
+      "file": "photos_doogee__img_35_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2802,
+        3947
+      ],
+      "seconds": 5.36
+    },
+    {
+      "file": "photos_doogee__img_37_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V2",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "V1",
+        "V3",
+        "V4"
+      ],
+      "uncertain_leads": [
+        "V1"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2836,
+        3972
+      ],
+      "seconds": 3.5
+    },
+    {
+      "file": "photos_doogee__img_48_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V2",
+        "V3",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V4",
+        "V5"
+      ],
+      "uncertain_leads": [
+        "V1"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2776,
+        3875
+      ],
+      "seconds": 3.46
+    },
+    {
+      "file": "photos_doogee__img_71_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1249,
+        3559
+      ],
+      "seconds": 3.4
+    },
+    {
+      "file": "photos_doogee__img_75_page_1.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "V6"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2809,
+        3954
+      ],
+      "seconds": 3.05
+    },
+    {
+      "file": "photos_doogee__img_96_page_1.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 180,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2804,
+        3959
+      ],
+      "seconds": 4.19
+    },
+    {
+      "file": "photos_iphone__img_12_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVR",
+        "aVL",
+        "aVF",
+        "V2",
+        "V3",
+        "V4",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "V1",
+        "V5"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": true,
+      "boundary_found": true,
+      "shape": [
+        2018,
+        3673
+      ],
+      "seconds": 10.85
+    },
+    {
+      "file": "photos_iphone__img_20_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVR",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "uncertain_leads": [
+        "I",
+        "aVL",
+        "V3"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2819,
+        3858
+      ],
+      "seconds": 5.01
+    },
+    {
+      "file": "photos_iphone__img_21_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "V6"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2726,
+        3813
+      ],
+      "seconds": 4.42
+    },
+    {
+      "file": "photos_iphone__img_24_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "II"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2795,
+        3907
+      ],
+      "seconds": 4.93
+    },
+    {
+      "file": "photos_iphone__img_34_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVL",
+        "V5"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": true,
+      "boundary_found": true,
+      "shape": [
+        2734,
+        3915
+      ],
+      "seconds": 9.36
+    },
+    {
+      "file": "photos_iphone__img_37_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "V3",
+        "V4"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": true,
+      "boundary_found": true,
+      "shape": [
+        1957,
+        3793
+      ],
+      "seconds": 9.2
+    },
+    {
+      "file": "photos_iphone__img_40_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVR",
+        "aVL",
+        "aVF",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "V1",
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "uncertain_leads": [
+        "I",
+        "V1",
+        "V2"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2741,
+        3888
+      ],
+      "seconds": 2.9
+    },
+    {
+      "file": "photos_iphone__img_80_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "V4"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1452,
+        3473
+      ],
+      "seconds": 5.16
+    },
+    {
+      "file": "photos_iphone__img_89_page_1.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2759,
+        3901
+      ],
+      "seconds": 6.15
+    },
+    {
+      "file": "photos_iphone__img_97_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVF",
+        "V2"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "V1",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "aVR",
+        "V6"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2663,
+        3796
+      ],
+      "seconds": 4.99
+    },
+    {
+      "file": "photos_samsung__img_33_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V2",
+        "V6"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "uncertain_leads": [
+        "V5"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2304,
+        4177
+      ],
+      "seconds": 7.5
+    },
+    {
+      "file": "photos_samsung__img_45_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2072,
+        4016
+      ],
+      "seconds": 3.58
+    },
+    {
+      "file": "photos_samsung__img_54_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVR",
+        "aVL",
+        "aVF"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "III"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1385,
+        4178
+      ],
+      "seconds": 4.98
+    },
+    {
+      "file": "photos_samsung__img_60_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "I",
+        "aVF"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2189,
+        4216
+      ],
+      "seconds": 5.35
+    },
+    {
+      "file": "photos_samsung__img_65_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V5"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "V3"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        3221,
+        4576
+      ],
+      "seconds": 4.33
+    },
+    {
+      "file": "photos_samsung__img_73_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V2",
+        "V3"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "aVR",
+        "V6"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2054,
+        3946
+      ],
+      "seconds": 3.88
+    },
+    {
+      "file": "photos_samsung__img_81_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V5"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V6"
+      ],
+      "uncertain_leads": [
+        "V1",
+        "V2",
+        "V4"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1668,
+        3992
+      ],
+      "seconds": 5.94
+    },
+    {
+      "file": "photos_samsung__img_82_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        4262,
+        3871
+      ],
+      "seconds": 4.6
+    },
+    {
+      "file": "photos_samsung__img_88_page_2.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "I",
+        "V2",
+        "V3"
+      ],
+      "missing_leads": [
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "uncertain_leads": [],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        1326,
+        4229
+      ],
+      "seconds": 2.31
+    },
+    {
+      "file": "photos_samsung__img_9_page_0.jpeg",
+      "accepted": false,
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ],
+      "detected_leads": [
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6"
+      ],
+      "missing_leads": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL"
+      ],
+      "uncertain_leads": [
+        "I"
+      ],
+      "rotation_degrees": 0,
+      "ocr_timed_out": false,
+      "boundary_found": true,
+      "shape": [
+        2290,
+        3925
+      ],
+      "seconds": 6.29
+    }
+  ]
+}
