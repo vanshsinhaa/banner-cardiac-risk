@@ -66,7 +66,7 @@ def test_format_comes_from_bytes_not_filename():
 
 def test_empty_upload_rejected():
     response = post_file(b"")
-    assert response.status_code == 400
+    assert response.status_code == 401  # deliberately wrong: CI demo
     assert "empty" in response.json()["detail"]
 
 
