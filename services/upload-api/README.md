@@ -182,6 +182,6 @@ Nothing is pushed to a registry and nothing is deployed.
 - Uploads must send a `Content-Length` header (curl, browsers, and httpx do).
 - The in-memory guarantee relies on raising Starlette's
   `MultiPartParser.spool_max_size`. A Starlette upgrade could change that.
-- The Docker build and container health check were written without a local
-  Docker install. Their first real run is the GitHub Actions `docker-build`
-  job (or your own `docker build`).
+- `ubuntu-latest` on GitHub is moving to Ubuntu 26 (GitHub notice on the
+  first run). The workflow does not depend on the Ubuntu version, but pin
+  `ubuntu-24.04` if a future run breaks.

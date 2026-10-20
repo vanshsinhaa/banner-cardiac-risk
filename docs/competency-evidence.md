@@ -1,42 +1,54 @@
 # Competency evidence: CI/CD pipeline with GitHub Actions and Docker
 
-Status key: **Verified** = run and observed on 2026-10-20. **Pending** = not
-run yet; you must run it and capture it yourself.
+Everything below was run and captured on 2026-10-20. Screenshots are in
+`docs/evidence/`. Each one shows real command output or a real GitHub page.
 
-## Screenshot checklist
+## Screenshots
 
-| # | Capture | Status | Suggested caption |
-| --- | --- | --- | --- |
-| 1 | PowerShell window showing `pytest -v` with `14 passed` | Verified locally; screenshot pending | "All 14 automated tests pass locally. They cover the health check, PNG and JPEG uploads, empty files, fake and damaged images, unsupported formats, and the 10 MB size limit. Every test image is drawn in code." |
-| 2 | PowerShell window showing `curl.exe` upload returning `201` with `upload_id`, `detected_format`, `width`, `height`, `ekg_verified: false` | Verified locally; screenshot pending | "The running API accepts a synthetic EKG-style PNG and reports its real format and size. It states that it did not check for an EKG." |
-| 3 | Same window showing a rejected upload (`415` for a text file named `.png`) | Verified locally; screenshot pending | "The API reads the file's bytes, not its name. A text file renamed to .png is rejected with 415." |
-| 4 | `docker build` finishing, then `docker ps` showing the container `(healthy)`, or the CI `docker-build` job log | **Pending**: Docker is not installed on the dev machine | "The service builds into a Docker image and runs as a non-root user. The container passes its own health check." |
-| 5 | GitHub Actions run page: both jobs green, `docker-build` after `test` | **Pending**: no push yet | "On push, GitHub Actions runs the tests first. The Docker build runs only after the tests pass." |
-| 6 (optional, strong) | A run where a test was broken on purpose: `test` red, `docker-build` grey "skipped" | **Pending** | "A failing test blocks the Docker build. The pipeline stops bad code before it is packaged." |
-| 7 (optional) | `/docs` page in the browser | Pending | "FastAPI generates interactive API docs from the code." |
-
-Tips: use a large terminal font, crop to the relevant part, and keep the
-command and its result in the same shot. Do not include tokens, emails, or
-anything from real patient images.
-
-## Results verified so far (2026-10-20, Windows 11, Python 3.12.1)
-
-| Check | Command | Result |
+| # | File | Suggested caption |
 | --- | --- | --- |
-| Tests (dev venv) | `pytest -v` in `services/upload-api` | 14 passed, 0 warnings |
-| Tests (fresh venv from pinned files only, like CI) | `pip install -r requirements-dev.txt`, then `pytest` | 14 passed |
-| Live health | `curl.exe http://127.0.0.1:8765/health` | `200 {"status":"ok"}` |
-| Live valid upload (1200x600 synthetic PNG) | `curl.exe -F "file=@synthetic_ekg.png;type=image/png" .../uploads` | `201`, `detected_format: PNG`, `width: 1200`, `height: 600`, `meets_minimum: false` |
-| Live text file named `.png` | same, `fake.png` | `415 File is not a recognized image.` |
-| Live empty file | same, `empty.png` | `400 The uploaded file is empty.` |
-| Live 11 MB file | same, `big.png` | `413 File is larger than the 10 MB limit.` |
-| Server log content | uvicorn output | Only method, path, status. No file names or image data. |
-| In-memory handling | 9 MB upload with a spy on the upload's temp file | `_rolled = False` (never written to disk) |
-| Runtime deps only (what the image installs) | fresh venv with `requirements.txt`, run uvicorn, run the Dockerfile's HEALTHCHECK command | `/health` returned 200 |
-| Workflow file parses | load YAML with PyYAML | triggers `push`, `pull_request`, `workflow_dispatch`; jobs `test`, `docker-build`; `needs: test` |
+| 1 | `evidence/01-pytest-passing.png` | "All 14 automated tests pass locally. They cover the health check, PNG and JPEG uploads, empty files, fake and damaged images, unsupported formats, and the 10 MB size limit. Every test image is drawn in code." |
+| 2 | `evidence/02-docker-build.png` | "A clean Docker build (`--no-cache`) of the service. The image installs only the pinned runtime dependencies and creates a non-root user." |
+| 3 | `evidence/03-container-running-healthy.png` | "The container is running and Docker reports it as healthy. `whoami` shows it runs as `appuser`, not root, and `/health` answers." |
+| 4 | `evidence/04-api-responses.png` | "The containerized API accepts a synthetic EKG-style PNG (201) and reports its real format and size. It rejects a text file renamed to .png (415), an empty file (400), and an 11 MB file (413)." |
+| 5 | `evidence/05-actions-run-success.jpg` | "On push, GitHub Actions runs the tests and then builds the Docker image. Both jobs passed in 49 seconds." |
+| 6 | `evidence/06-actions-pytest-log.jpg` | "Inside GitHub Actions, the same 14 tests run on a fresh Ubuntu machine with Python 3.12 and pass." |
+| 7 | `evidence/07-actions-docker-health.jpg` | "The CI Docker job starts the built container and confirms `/health` returns ok before marking the build green." |
+| 8 | `evidence/08-actions-failing-test-skips-build.jpg` | "A test was broken on purpose. The test job failed, and GitHub skipped the Docker build. Bad code never gets packaged." |
+| 9 | `evidence/09-actions-failing-test-log.jpg` | "The failure log shows exactly which test failed and why (`assert 400 == 401`), and the step exits with code 1." |
+| 10 | `evidence/10-api-docs-page.jpg` | "FastAPI generates interactive API docs from the code. The description states the prototype's limits." |
 
-**Not verified:** `docker build`, `docker run`, and any GitHub Actions run.
-The workflow existing in the repo does not prove it passes on GitHub.
+Recommended for the report (space is limited): 5 and 8 side by side
+(pipeline passing vs. blocked), plus 4 (the application working). Use 1–3 if
+there is room.
+
+## GitHub Actions runs
+
+| Run | Trigger | Result | Link |
+| --- | --- | --- | --- |
+| #1 | push to `vansh-bannerwork` (commit `6f64f05`) | Success: tests 14 passed, Docker build + health check passed | https://github.com/vanshsinhaa/banner-cardiac-risk/actions/runs/39507363998 |
+| #2 | pull_request (PR #1, same commit) | Success, same jobs | https://github.com/vanshsinhaa/banner-cardiac-risk/actions/runs/39507365795 |
+| #3 | push to `ci-demo-failing-test` (commit `653c09a`, one test broken on purpose) | Failure: 1 failed, 13 passed; Docker build **skipped** | https://github.com/vanshsinhaa/banner-cardiac-risk/actions/runs/39507689009 |
+
+## All verified results
+
+| Check | Where | Result |
+| --- | --- | --- |
+| Tests | local venv, Windows 11, Python 3.12.1 | 14 passed |
+| Tests from pinned files only | fresh local venv | 14 passed |
+| Tests | GitHub Actions, Ubuntu, Python 3.12.15 | 14 passed in 0.51 s |
+| Docker build | local, Docker 29.9.1, `--no-cache` | Success, image 232 MB |
+| Docker build | GitHub Actions | Success |
+| Container health | local | `Up 40 seconds (healthy)`, `/health` → `{"status":"ok"}` |
+| Container health | GitHub Actions | `Health check passed on attempt 2` |
+| Container user | local, `docker exec upload-api whoami` | `appuser` |
+| Upload synthetic 1200x600 PNG | container | 201, `detected_format: PNG`, `meets_minimum: false` |
+| Text file named `.png` | container | 415 |
+| Empty file | container | 400 |
+| 11 MB file | container | 413 |
+| Logs | container `docker logs` | Only method, path, status. No file names or image data. |
+| In-memory handling | local, 9 MB upload | Not written to disk (`_rolled = False`) |
+| Failing test blocks build | GitHub Actions run #3 | Test job failed, Docker job skipped |
 
 ## Relevant files
 

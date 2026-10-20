@@ -64,8 +64,11 @@ Facts:
   `test` then job `docker-build` (`needs: test`), which builds the image,
   starts it, and checks `/health`. Read-only permissions, no secrets, no
   deployment.
-- Verified locally: tests pass (14/14), live API responses (201/400/413/415).
-  Not yet verified: Docker build and the GitHub Actions run.
+- Verified: tests pass locally and in GitHub Actions (14/14); local Docker
+  build and healthy container running as `appuser`; container API responses
+  201/400/413/415; Actions run #1 green; run #3 with a deliberately broken
+  test shows the Docker job skipped. Links and screenshots in
+  `docs/competency-evidence.md`.
 
 Suggested figures (they do not count toward the 2 pages): see the screenshot
 checklist in `docs/competency-evidence.md`. The strongest pair is the green
@@ -87,7 +90,9 @@ Technical challenges observed during implementation (details in
 - Test-client deprecation (`httpx` to `httpx2`).
 - Windows quirks: `curl` is a PowerShell alias; Git Bash paths broke
   `curl.exe` uploads.
-- No local Docker, so container verification was moved into CI.
+- Docker Desktop was not installed at first; after installing, the old
+  terminal still could not find `docker` (stale PATH).
+- One push produced two CI runs because the branch has an open PR.
 
 **[YOU]**
 - Which of these you understood, reproduced, or found hardest yourself.
@@ -114,6 +119,6 @@ Concrete next steps where this skill applies in the capstone:
 ## Unmet or unsupported requirements (as of 2026-10-20)
 
 - 5 to 10 hours of personal learning: not recorded yet.
-- GitHub Actions run: not run yet (needs a push).
-- Docker build/run screenshot: not captured; Docker not installed locally.
-- Personal reflection for all five categories: must be written by you.
+- Personal reflection details: marked [YOU] in `docs/report-draft.md`.
+- Done: GitHub Actions runs (pass and deliberate fail), Docker build/run,
+  all screenshots.

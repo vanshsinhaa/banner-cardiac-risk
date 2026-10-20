@@ -55,7 +55,10 @@ This file has two parts on purpose:
 | Pytest warning: "Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead." | Newer Starlette moved its test client to `httpx2`. | Replaced `httpx` with `httpx2==2.15.1`. Warning gone; 14 passed. |
 | A truncated JPEG passed Pillow's `verify()`. | `verify()` checks structure, not the full compressed data. Tested: truncated PNG raised `OSError` in `verify()`, truncated JPEG did not, and `load()` raised "image file is truncated" for both. | The API runs `verify()` and then a full `load()`. Test `test_truncated_jpeg_rejected` covers it. |
 | `curl.exe` from Git Bash failed with exit code 26 ("read error") on file uploads. | Windows `curl.exe` could not open the MSYS-style `/c/...` path. | Ran the commands from PowerShell with Windows paths. The README uses PowerShell for that reason. |
-| `docker: command not found`. | Docker Desktop is not installed on this machine, and WSL has no distro. | Added a container start + `/health` check to the CI job, so GitHub's runner verifies the image. Locally, simulated the image's contents with a runtime-only venv. |
+| `docker: command not found`, at first. | Docker Desktop was not installed yet. | Added a container start + `/health` check to the CI job so GitHub's runner verifies the image too. Docker Desktop was then installed. |
+| `docker: command not found` again, right after installing Docker Desktop. | Docker Desktop installs per-user (`%LOCALAPPDATA%\Programs\DockerDesktop\resources\bin`) and adds that to PATH, but terminals opened before the install keep the old PATH. | Opened a new terminal (or prepended that folder to `$env:Path`). `docker version` then showed client and server 29.9.1. |
+| Two CI runs appeared for one push. | The branch already had an open pull request (PR #1), so the push fired both the `push` and `pull_request` triggers. | Expected behavior, not a bug. Both passed. A `branches:` filter on `push` would remove the duplicate if wanted. |
+| Notice on the first run: "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026." | GitHub is moving the `ubuntu-latest` label to a newer OS. | No change needed now. Noted in the README limitations. |
 
 ## Part B: for you to do and record
 
@@ -63,11 +66,10 @@ This file has two parts on purpose:
 
 Do these yourself. Write down what happened in the log below.
 
-1. **Break a test on purpose.** In `tests/test_api.py`, change
-   `assert response.status_code == 400` in `test_empty_upload_rejected` to
-   `401`. Push to a throwaway branch. Predict first: which job turns red, and
-   what happens to `docker-build`? Then check the Actions tab, screenshot it,
-   and revert.
+1. **Break a test on purpose.** This was done once already on branch
+   `ci-demo-failing-test` (run #3, screenshots 08 and 09). Do it yourself
+   with a different test: predict which job turns red and what happens to
+   `docker-build`, push to a new throwaway branch, check the Actions tab.
 2. **Explain the build context.** What would happen to the Docker build if
    `app/` were listed in `.dockerignore`? Try it locally (or reason it out)
    and write the error you expect.
