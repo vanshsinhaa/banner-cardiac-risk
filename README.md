@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## EKG upload API prototype and CI
+
+`services/upload-api/` holds a small Python (FastAPI) service that checks an
+uploaded EKG photo is a real PNG or JPEG. It is separate from the Next.js app.
+GitHub Actions (`.github/workflows/upload-api-ci.yml`) runs its tests on every
+push and pull request, then builds its Docker image only if the tests pass.
+It does not check that an image is an EKG, remove identifying information, or
+score risk. Setup, commands, and limits: [services/upload-api/README.md](services/upload-api/README.md).
+
 ## Getting Started
 
 First, run the development server:
