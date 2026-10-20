@@ -1,8 +1,9 @@
 # Report checklist: CI/CD pipeline with GitHub Actions and Docker
 
-Final report text: `docs/report.md` (about 1,100 words; fits two pages at
-12 pt single-spaced, excluding figures). Paste it into the assignment
-template and export to PDF.
+Final submission: `docs/Growing-a-Competency-CICD.pdf` (Word source:
+`docs/Growing-a-Competency-CICD.docx`), built from the course template.
+3 pages including 3 figures; about 2 pages of text at 12 pt single-spaced.
+`docs/report.md` is a longer version of the same content.
 
 | Rubric category (20 pts each) | Report section | Supporting evidence |
 | --- | --- | --- |
@@ -25,4 +26,4 @@ Requirements check:
 - [x] Original application tied to the capstone
 - [x] Readable, captioned evidence
 - [x] All five rubric categories covered
-- [ ] Pasted into the template and exported to PDF
+- [x] Filled into the course template and exported to PDF
