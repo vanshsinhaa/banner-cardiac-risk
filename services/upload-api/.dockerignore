@@ -1,0 +1,14 @@
+# Keep the build context small. Only requirements.txt and app/ are needed.
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+scripts/
+*.png
+*.jpg
+*.jpeg
+.env*
+Dockerfile
+.dockerignore
+README.md

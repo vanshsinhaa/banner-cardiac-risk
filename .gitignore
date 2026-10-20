@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python (services/upload-api)
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
