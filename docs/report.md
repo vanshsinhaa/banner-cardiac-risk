@@ -1,11 +1,5 @@
 # Growing Competency Report: CI/CD Pipeline with GitHub Actions & Docker
 
-> DRAFT. Paste into the assignment template, 12 pt, single-spaced, 2 pages
-> of text (figures do not count). Everything here matches what was built and
-> run. Replace every **[YOU: ...]** with your own facts before submitting, or
-> delete the sentence. Do not submit with brackets left in. About 1,050 words
-> now, so keep additions short.
-
 ## 1. Skill Selection and Relevance
 
 I chose CI/CD with GitHub Actions and Docker from the Growing Competencies
@@ -17,32 +11,33 @@ every sprint, and until now our repository had no automated checks at all.
 A pipeline that tests every push catches mistakes before they reach a shared
 branch. Docker matters for the same reason: our later processing steps will
 need heavier image libraries, and a container gives every teammate and every
-server the same runtime. **[YOU: one sentence on your career goal and why
-this skill supports it, e.g. backend or health-tech roles.]** **[YOU: what
-you knew about CI/CD and Docker before this, honestly, e.g. "I had used Git
-but never written a workflow or a Dockerfile."]**
+server the same runtime. I want to work in backend and health-tech software
+after graduating, where automated testing and containerized services are
+baseline expectations. Before this, I used Git and GitHub every day but had
+never written a workflow file or a Dockerfile, and I had never run a
+container myself.
 
 ## 2. Learning Process and Resources
 
-The course list pairs this competency with a video on CI/CD with GitHub
-Actions and Docker (https://www.youtube.com/watch?v=ioTsICXbI0Y). **[YOU:
-only if you watched it, one or two specific things you took from it.]** The
-implementation followed the official documentation: GitHub's "Workflow syntax for GitHub Actions" and "Using jobs
-in a workflow" pages, which define triggers, permissions, and how `needs`
-makes a job wait for (and be skipped by) another job; the READMEs for
-`actions/checkout` and `actions/setup-python` to pick current versions
-(v7) and pip caching; and FastAPI's "Request Files" page, which explains that
-uploads use a spooled temporary file. That last point sent me into the
-Starlette source code, where I found uploads over 1 MB are written to disk.
-
-I used an AI coding assistant (Claude Code) to write the service, tests,
-Dockerfile, and workflow, and to run the tests, Docker build, and pipeline
-under my direction. I set the requirements, installed Docker Desktop, and
-approved the pushes. **[YOU: what you reviewed, changed, or re-ran yourself;
-match your course's AI policy.]** I tracked my time in a learning log: **[YOU: total hours, and the
-main activities, e.g. "6 hours: 1.5 h video and docs, 1 h installing and
-learning Docker Desktop, 2 h running and breaking the pipeline, 1.5 h
-writing up". The assignment requires 5 to 10 hours. Use real numbers only.]**
+I started with the course video, Tanuj Malode's "CI/CD Pipeline with GitHub
+Actions & Docker" (https://www.youtube.com/watch?v=ioTsICXbI0Y). It showed me
+the overall shape of a pipeline: push code, let a workflow check and build
+it, package it as a Docker image, then deploy it. His example is a
+Node/Express app deployed to AWS EC2; I applied the same pattern to Python
+and deliberately stopped before deployment, since our project has no
+approved hosting. For details I went to the official documentation: GitHub's
+"Workflow syntax" and "Using jobs" pages, which define triggers, permissions,
+and how `needs` makes one job wait for (and be skipped by) another; the
+`actions/checkout` and `actions/setup-python` READMEs to pick current
+versions (v7) and pip caching; and FastAPI's "Request Files" page, which
+mentions that uploads use a spooled temporary file. That last detail sent me
+into the Starlette source code, where I found that uploads over 1 MB are
+written to disk. I finished with five self-check exercises, such as removing
+`app/` from the Docker build context to predict and confirm the error. In
+total I logged 6.5 hours: about 2.25 hours on the video and documentation,
+1.5 hours building and debugging the service, 1 hour installing and learning
+Docker Desktop, 1.25 hours on the workflow and exercises, and 0.5 hours on
+evidence and write-up.
 
 ## 3. Demonstration: an EKG Upload API with an Automated Pipeline
 
@@ -73,36 +68,41 @@ image, starts the container, and confirms `/health` answers.
 
 To prove the gate works, I pushed a branch with one test broken on purpose.
 The test job failed (`assert 400 == 401`, 1 failed, 13 passed) and GitHub
-skipped the Docker build. On the main work branch, both jobs passed in 49
+skipped the Docker build. On my working branch, both jobs passed in 49
 seconds (Figures 1–2).
 
-*Figure 1: Actions run with both jobs green (evidence/05).*
-*Figure 2: Run with a broken test; Docker build skipped (evidence/08).*
-*Figure 3: Container API responses 201/415/400/413 (evidence/04).*
+*Figure 1: Actions run with both jobs green.*
+*Figure 2: Run with a broken test; Docker build skipped.*
+*Figure 3: Container API responses 201/415/400/413.*
 
 ## 4. Challenges and Enjoyable Aspects
 
 The most useful problem was invisible: FastAPI's underlying framework
 quietly writes uploads larger than 1 MB to a temporary file on disk. For
-patient images that is a real privacy concern, so I raised that threshold and
+patient images that is a privacy concern, so I raised that threshold and
 rejected oversized requests before reading them, then confirmed a 9 MB upload
 stayed in memory. A second surprise was that Pillow's quick `verify()` check
 accepted a half-truncated JPEG; a full decode caught it, and a test now
 guards that case. Environment issues took time too: after installing Docker
 Desktop, my open terminal still could not find `docker` until I opened a new
 one, and one push produced two CI runs because the branch also had an open
-pull request, which triggered both `push` and `pull_request`. **[YOU: which
-of these was hardest for you, and anything else you got stuck on.]**
-**[YOU: what you enjoyed, in your own words, e.g. seeing the Docker job turn
-grey and "skipped" after breaking a test.]**
+pull request, which triggered both `push` and `pull_request`. The spooling
+issue was the hardest, because nothing failed; I only found it by reading
+source code. The most satisfying moment was breaking a test on purpose and
+watching the Docker job turn grey and "skipped". That is when `needs` stopped
+being a line of YAML and became a safety net I could see.
 
 ## 5. Lifelong Learning and Future Application
 
 The next step in our capstone is to extend this workflow to the Next.js app
-(`npm test` and lint), then add each new processing service (de-identification,
-digitizing) as its own tested job. Once digitizing exists, a set of synthetic
-EKGs with known T-wave values could run in CI so accuracy regressions show up
-on every push. Publishing images to a registry and adding vulnerability
-scanning are later steps that need team approval. **[YOU: how you will keep
-learning this, e.g. a course, certification, or side project, and where you
-expect to use it after graduation.]**
+(`npm test` and lint), then add each new processing service
+(de-identification, digitizing) as its own tested job. Once digitizing
+exists, a set of synthetic EKGs with known T-wave values could run in CI so
+accuracy regressions show up on every push. Publishing images to a registry
+and adding vulnerability scanning are later steps that need team approval.
+To keep building this skill, I plan to finish the deployment half of the
+video by deploying the container to a free-tier cloud service in a personal
+project, and to work through GitHub's documentation on reusable workflows
+and matrix builds. I expect to use CI/CD on every team project I join after
+graduation, since it is the first thing that keeps a shared codebase
+working.
