@@ -1,13 +1,23 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Project progress and Sprint 3
+
+The [project tracker](project%20docs/TRACKER.md) records Vansh's work newest first,
+with dated decisions, verification, and remaining team handoffs. Sprint 3 details:
+[image metadata removal (#48)](project%20docs/task-48-metadata.md),
+[key management (#52)](project%20docs/task-52-key-management.md), and
+[reproducible instructor demo](project%20docs/verification-2026-10-26.md).
+
 ## EKG upload API prototype and CI
 
 `services/upload-api/` holds a small Python (FastAPI) service that checks an
 uploaded EKG photo is a real PNG or JPEG. It is separate from the Next.js app.
 GitHub Actions (`.github/workflows/upload-api-ci.yml`) runs its tests on every
 push and pull request, then builds its Docker image only if the tests pass.
-It does not check that an image is an EKG, remove identifying information, or
-score risk. Setup, commands, and limits: [services/upload-api/README.md](services/upload-api/README.md).
+It removes embedded metadata from accepted PNG/JPEG uploads before further
+processing and can return the sanitized PNG. It does not remove printed patient
+text, verify EKG content, or score risk. Setup, commands, and limits:
+[services/upload-api/README.md](services/upload-api/README.md).
 
 ## Getting Started
 

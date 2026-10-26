@@ -1,15 +1,25 @@
 # EKG Upload API (prototype)
 
-A small FastAPI service that accepts one EKG photo upload and checks that it is
-a real PNG or JPEG. It exists to demonstrate a CI/CD pipeline (GitHub Actions +
-Docker) around a piece of our capstone's image-capture flow.
+A small FastAPI service that accepts one static PNG/JPEG and strips embedded
+metadata before further image processing (Taiga #48). It began as a CI/CD demo
+and now provides a reusable input boundary. Key-provider code for #52 lives here
+as a reference for #50; existing upload routes do not encrypt or store data.
+
+Detailed decisions, scope, and handoffs:
+[metadata removal](../../project%20docs/task-48-metadata.md),
+[key management](../../project%20docs/task-52-key-management.md),
+[verification/demo](../../project%20docs/verification-2026-10-26.md).
 
 ## What it does
 
 - `GET /health` returns `{"status": "ok"}`.
 - `POST /uploads` takes one image in a multipart form field named `file` and
-  returns a generated upload ID, the detected format, width, height, size, and
-  a resolution check.
+  sanitizes it and returns a generated upload ID, the source format/size,
+  orientation-applied dimensions, sanitized output details, and a resolution
+  check. The ID is not a saved-image lookup handle.
+- `POST /uploads/sanitize` takes the same input and returns the actual safe PNG
+  bytes with `no-store` caching and a fixed filename. The pixels may still show
+  printed patient information; this is the input to OCR/redaction, not its result.
 - The format is read from the file's bytes. The file name and the
   client-supplied Content-Type are ignored, because both are easy to fake.
 - The resolution check uses the same minimum as the capture screen
@@ -23,7 +33,9 @@ Docker) around a piece of our capstone's image-capture flow.
 
 - It does **not** check that the image shows an EKG. Any valid PNG or JPEG is
   accepted. The response says so (`"ekg_verified": false`).
-- It does **not** remove identifying information (no de-identification).
+- It does **not** remove printed identifiers. Embedded metadata removal is only
+  the first stage of de-identification. DICOM/HEIC/PDF and multi-frame images are
+  unsupported and rejected, not declared sanitized.
 - It does **not** extract waveforms, measure T-waves, or produce a risk score.
 - It is **not** HIPAA-compliant and has no authentication. Use synthetic
   images only. Never upload real patient images to it.
@@ -37,12 +49,14 @@ Docker) around a piece of our capstone's image-capture flow.
 | Not an image, or an image type other than PNG/JPEG (GIF, BMP, ...) | `415 Unsupported Media Type` |
 | PNG/JPEG that is cut off or damaged | `422 Unprocessable Content` |
 | Missing `file` field | `422 Unprocessable Content` |
-| File over 10 MB, or more than 50 megapixels | `413 Content Too Large` |
+| File over 10 MiB, more than 50 megapixels, or output over 64 MiB | `413 Content Too Large` |
 | No `Content-Length` header | `411 Length Required` |
+| Malformed multipart or invalid `Content-Length` | `400 Bad Request` |
 
 Size limit: **10 MB** per file (`MAX_UPLOAD_BYTES` in `app/main.py`). Requests
 are rejected from their `Content-Length` header before the body is parsed if
-they are clearly too big.
+they are clearly too big. The actual request stream is also bounded even if
+that header lies. Limits/format checks happen before downstream processing.
 
 Example success body:
 
@@ -54,10 +68,15 @@ Example success body:
   "width": 1200,
   "height": 600,
   "size_bytes": 9395,
+  "sanitized_format": "PNG",
+  "sanitized_media_type": "image/png",
+  "sanitized_size_bytes": 9200,
+  "embedded_metadata_removed": true,
+  "printed_identifiers_redacted": false,
   "resolution_check": {"long_side_px": 1200, "required_long_side_px": 2376, "meets_minimum": false},
   "stored": false,
   "ekg_verified": false,
-  "note": "Image format was checked. Content was not checked for an EKG."
+  "note": "Embedded metadata removed. Printed identifiers remain. EKG content is not verified."
 }
 ```
 
@@ -65,8 +84,11 @@ Example success body:
 
 | Path | Job |
 | --- | --- |
-| `app/main.py` | The API: routes, size limits, image checks. |
-| `tests/test_api.py` | 14 pytest tests. |
+| `app/main.py` | Routes, bounded multipart input, and sanitizer handoff. |
+| `app/sanitize.py` | Pixel-only PNG rebuild, orientation, and resource limits. |
+| `app/key_management.py` | Versioned key providers and lifecycle rules for #52. |
+| `tests/test_api.py`, `tests/test_sanitize.py`, `tests/test_key_management.py` | API, privacy/pixel preservation, and key lifecycle checks. |
+| `scripts/sprint3_demo.py` | Synthetic metadata + key rotation demo; no files or keys saved. |
 | `tests/synthetic.py` | Draws fake EKG-style images in code for tests. |
 | `scripts/make_synthetic_image.py` | Writes a synthetic image for manual testing. |
 | `requirements.txt` | Runtime dependencies (pinned). |
@@ -174,7 +196,7 @@ Nothing is pushed to a registry and nothing is deployed.
 
 ## Known limitations
 
-- No EKG detection. Any PNG or JPEG passes.
+- No EKG detection. Any valid static PNG or JPEG within the resource limits passes.
 - No authentication, rate limiting, or HTTPS. Local/demo use only.
 - Upload IDs are not saved anywhere; they cannot be looked up later.
 - The resolution minimum is copied from `src/config/resolution.ts`. If one
