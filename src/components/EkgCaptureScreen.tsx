@@ -1,345 +1,158 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import type { CSSProperties } from "react";
-
+import { useEffect, useRef, useState } from "react";
 import { MOVE_CLOSER } from "@/constants/captureMessages";
-import { checkResolution } from "@/lib/checkResolution";
-import type { ResolutionResult } from "@/lib/checkResolution";
-
-// Fallback capture screen for user story #2 (task #34).
-// Minimal camera input + basic crop. Wire onCapture to your upload/
-// de-identification pipeline once this is integrated.
-
-type Stage = "idle" | "crop" | "result";
-
-interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-interface DragState {
-  mode: "move" | "nw" | "ne" | "sw" | "se";
-  startPointer: { x: number; y: number };
-  startRect: Rect;
-}
+import { checkResolution, type ResolutionResult } from "@/lib/checkResolution";
+import { insetCorners, isWithinPhoto, orderCorners, type CaptureDetails, type Corners, type PhotoSize } from "@/lib/cropCorners";
+import { outputSize } from "@/lib/perspective";
+import QuadCropper from "./capture/QuadCropper";
+import { warpPreview } from "./capture/warpPreview";
+import styles from "./EkgCaptureScreen.module.css";
 
 interface EkgCaptureScreenProps {
-  onCapture?: (dataUrl: string) => void;
+  /** Detector proposal in orientation-applied source pixels: TL, TR, BR, BL. */
+  initialCorners?: Corners;
+  onCapture?: (dataUrl: string, details: CaptureDetails) => void;
 }
+type Stage = "idle" | "crop" | "processing" | "result";
 
-export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
+export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptureScreenProps) {
   const [stage, setStage] = useState<Stage>("idle");
   const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [resultSrc, setResultSrc] = useState<string | null>(null);
-  const [rect, setRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
+  const [size, setSize] = useState<PhotoSize | null>(null);
+  const [corners, setCorners] = useState<Corners | null>(null);
   const [count, setCount] = useState(0);
-  // Set when the current photo failed the resolution check (task #44).
   const [resolutionFailure, setResolutionFailure] = useState<ResolutionResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [proposalWarning, setProposalWarning] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const loadedImage = useRef<HTMLImageElement | null>(null);
+  const processing = useRef<AbortController | null>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const cropping = stage === "crop" || stage === "processing";
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef<DragState | null>(null);
+  useEffect(() => () => { processing.current?.abort(); }, []);
+  useEffect(() => () => { if (imageSrc) URL.revokeObjectURL(imageSrc); }, [imageSrc]);
+  useEffect(() => { titleRef.current?.focus(); }, [stage]);
 
-  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-
-  const handleOpenPicker = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  function openPicker() {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  }
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
     if (!file) return;
     setImageSrc(URL.createObjectURL(file));
+    loadedImage.current = null;
+    setImage(null);
+    setSize(null);
+    setCorners(null);
     setResolutionFailure(null);
+    setError(null);
+    setProposalWarning(false);
     setStage("crop");
-  };
-
-  const handleImageLoad = () => {
-    const wrap = wrapRef.current;
-    const img = imgRef.current;
-    if (!wrap || !img) return;
-
-    // Resolution check (task #44). It looks at the whole photo, not the
-    // crop, because cropping does not change the resolution. So we run it
-    // once, as soon as the photo loads. A failed photo cannot be fixed by
-    // moving the crop box; the user has to retake it.
-    const resolution = checkResolution({ width: img.naturalWidth, height: img.naturalHeight });
+  }
+  function handleImageLoad() {
+    const img = imageRef.current;
+    if (!img || loadedImage.current === img) return;
+    loadedImage.current = img;
+    const photo = { width: img.naturalWidth, height: img.naturalHeight };
+    // Task #44: exactly once per loaded photo, using the whole original photo.
+    const resolution = checkResolution(photo);
     setResolutionFailure(resolution.pass ? null : resolution);
-
-    const w = wrap.clientWidth;
-    const h = wrap.clientHeight;
-    const bw = w * 0.7;
-    const bh = h * 0.5;
-    setRect({ x: (w - bw) / 2, y: (h - bh) / 2, w: bw, h: bh });
-  };
-
-  const onDragMove = useCallback((e: PointerEvent) => {
-    const ds = dragState.current;
-    const wrap = wrapRef.current;
-    if (!ds || !wrap) return;
-
-    const dx = e.clientX - ds.startPointer.x;
-    const dy = e.clientY - ds.startPointer.y;
-    const bounds = { w: wrap.clientWidth, h: wrap.clientHeight };
-    const r: Rect = { ...ds.startRect };
-
-    if (ds.mode === "move") {
-      r.x = clamp(ds.startRect.x + dx, 0, bounds.w - ds.startRect.w);
-      r.y = clamp(ds.startRect.y + dy, 0, bounds.h - ds.startRect.h);
-    } else {
-      if (ds.mode.startsWith("n")) {
-        r.y = clamp(ds.startRect.y + dy, 0, ds.startRect.y + ds.startRect.h - 40);
-        r.h = ds.startRect.h - (r.y - ds.startRect.y);
+    setSize(photo);
+    setImage(img);
+    const validProposal = initialCorners && isWithinPhoto(initialCorners, photo);
+    setCorners(validProposal ? initialCorners.map(p => ({ ...p })) as unknown as Corners : insetCorners(photo));
+    setProposalWarning(Boolean(initialCorners && !validProposal));
+  }
+  function canConfirm() {
+    if (!size || !corners || !isWithinPhoto(corners, size) || resolutionFailure) return false;
+    try { outputSize(corners); return true; } catch { return false; }
+  }
+  async function confirmCrop() {
+    if (!image || !size || !corners || processing.current || !canConfirm()) return;
+    const controller = new AbortController();
+    processing.current = controller;
+    setStage("processing");
+    setError(null);
+    const details: CaptureDetails = { ...size, corners: orderCorners(corners) };
+    let dataUrl: string;
+    try {
+      dataUrl = await warpPreview(image, details.corners, controller.signal);
+      controller.signal.throwIfAborted();
+    } catch {
+      if (!controller.signal.aborted) {
+        setError("Could not process this crop. Please try again.");
+        setStage("crop");
       }
-      if (ds.mode.startsWith("s")) {
-        r.h = clamp(ds.startRect.h + dy, 40, bounds.h - ds.startRect.y);
-      }
-      if (ds.mode.includes("w")) {
-        r.x = clamp(ds.startRect.x + dx, 0, ds.startRect.x + ds.startRect.w - 40);
-        r.w = ds.startRect.w - (r.x - ds.startRect.x);
-      }
-      if (ds.mode.includes("e")) {
-        r.w = clamp(ds.startRect.w + dx, 40, bounds.w - ds.startRect.x);
-      }
+      return;
+    } finally {
+      processing.current = null;
     }
-    setRect(r);
-  }, []);
-
-  const onDragEnd = useCallback(() => {
-    dragState.current = null;
-    window.removeEventListener("pointermove", onDragMove);
-    window.removeEventListener("pointerup", onDragEnd);
-  }, [onDragMove]);
-
-  const startDrag = (mode: DragState["mode"]) => (e: React.PointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragState.current = { mode, startPointer: { x: e.clientX, y: e.clientY }, startRect: rect };
-    window.addEventListener("pointermove", onDragMove);
-    window.addEventListener("pointerup", onDragEnd);
-  };
-
-  const handleConfirmCrop = () => {
-    const img = imgRef.current;
-    if (!img) return;
-    // Photo failed the resolution check (task #44): no result, no save.
-    if (resolutionFailure) return;
-
-    const scaleX = img.naturalWidth / img.clientWidth;
-    const scaleY = img.naturalHeight / img.clientHeight;
-    const sx = rect.x * scaleX;
-    const sy = rect.y * scaleY;
-    const sw = rect.w * scaleX;
-    const sh = rect.h * scaleY;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = sw;
-    canvas.height = sh;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-
-    const dataUrl = canvas.toDataURL("image/png");
     setResultSrc(dataUrl);
-    setCount((c) => c + 1);
+    setCount(c => c + 1);
     setStage("result");
-    onCapture?.(dataUrl);
-  };
+    onCapture?.(dataUrl, details);
+  }
+  function reset() {
+    setStage("idle");
+    setImageSrc(null);
+    setResultSrc(null);
+    setError(null);
+  }
 
   return (
-    <div style={styles.wrap}>
-      <h1 style={styles.h1}>EKG capture, fallback prototype</h1>
-      <p style={styles.sub}>Photo capture plus a basic crop, no lab lighting needed.</p>
+    <main className={`${styles.screen} ${cropping ? styles.dark : ""}`} aria-busy={stage === "processing"}>
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFileChange} />
+      <header className={styles.header}>
+        <p className={styles.eyebrow}>EKG CAPTURE</p>
+        <h1 ref={titleRef} tabIndex={-1}>{cropping ? "Adjust page corners" : stage === "result" ? "Review your capture" : "Capture a clear EKG"}</h1>
+        <p className={styles.subtitle}>{cropping ? "Drag corners to the paper edges. Keep every waveform inside." : stage === "result" ? "Check that the full waveform is included before saving." : "Place the paper flat and fit the entire printout in your photo."}</p>
+      </header>
 
-      <div style={styles.card}>
-        {stage === "idle" && (
-          <>
-            <div style={styles.placeholder}>Take a photo of the EKG strip or on-screen waveform.</div>
-            <button style={styles.btnPrimary} onClick={handleOpenPicker}>
-              Take / choose photo
-            </button>
-            {/* Camera resolution (task #44): this input opens the phone's own
-                camera app, which takes the photo at the highest resolution
-                the device allows. There is no setting to ask for more.
-                A live getUserMedia preview would give smaller video frames. */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-            />
-          </>
-        )}
+      {stage === "idle" && <section className={styles.idleContent} aria-label="Take an EKG photo">
+        <div className={styles.documentIcon} aria-hidden="true">
+          <svg viewBox="0 0 160 180" fill="none"><rect x="25" y="15" width="110" height="150" rx="8" stroke="currentColor" strokeWidth="2" /><path d="M43 44H117M43 57H87M40 106H60L68 92L78 128L88 77L99 106H120M43 143H91" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </div>
+        <p>One photo. All four corners.</p>
+        <span>You can fine-tune the page boundary next.</span>
+      </section>}
 
-        {stage === "crop" && imageSrc && (
-          <>
-            <div ref={wrapRef} style={styles.stageImgWrap}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                ref={imgRef}
-                src={imageSrc}
-                onLoad={handleImageLoad}
-                alt="Captured EKG"
-                style={styles.img}
-              />
-              <div
-                style={{ ...styles.cropBox, left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
-                onPointerDown={startDrag("move")}
-              >
-                <div style={{ ...styles.handle, top: -9, left: -9, cursor: "nwse-resize" }} onPointerDown={startDrag("nw")} />
-                <div style={{ ...styles.handle, top: -9, right: -9, cursor: "nesw-resize" }} onPointerDown={startDrag("ne")} />
-                <div style={{ ...styles.handle, bottom: -9, left: -9, cursor: "nesw-resize" }} onPointerDown={startDrag("sw")} />
-                <div style={{ ...styles.handle, bottom: -9, right: -9, cursor: "nwse-resize" }} onPointerDown={startDrag("se")} />
-              </div>
-            </div>
-            {resolutionFailure && (
-              <div role="alert" style={styles.warning}>
-                <strong>{MOVE_CLOSER}</strong>
-                <div style={styles.warningDetail}>{resolutionFailure.reason}</div>
-              </div>
-            )}
-            <div style={styles.row}>
-              <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
-                Retake
-              </button>
-              <button
-                style={resolutionFailure ? styles.btnPrimaryFlexDisabled : styles.btnPrimaryFlex}
-                onClick={handleConfirmCrop}
-                disabled={resolutionFailure !== null}
-              >
-                Confirm crop
-              </button>
-            </div>
-          </>
-        )}
+      {cropping && imageSrc && <QuadCropper key={imageSrc} src={imageSrc} imageRef={imageRef} image={image} size={size} corners={corners}
+        disabled={stage === "processing"} onLoad={handleImageLoad} onChange={setCorners} />}
 
-        {stage === "result" && resultSrc && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={resultSrc} alt="Cropped result" style={{ width: "100%", borderRadius: 8, display: "block" }} />
-            <div style={styles.row}>
-              <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
-                Capture another
-              </button>
-              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-capture-${Date.now()}.png`}>
-                Save image
-              </a>
-            </div>
-          </>
-        )}
-      </div>
+      {stage === "result" && resultSrc && <section className={styles.resultContent}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={resultSrc} alt="Perspective-corrected EKG capture" className={styles.resultImage} />
+      </section>}
 
-      <div style={styles.count}>
-        {count} {count === 1 ? "image" : "images"} captured this session
-      </div>
-    </div>
+      <footer className={styles.actionBar}>
+        <div className={styles.actionsInner}>
+          {cropping && resolutionFailure && <div role="alert" className={styles.warning}>
+            <strong>{MOVE_CLOSER}</strong><p>{resolutionFailure.reason}</p>
+          </div>}
+          {cropping && proposalWarning && <p className={styles.hint}>The suggested boundary was invalid. Adjust the starting corners to the page.</p>}
+          {error && <p role="alert" className={styles.warning}>{error}</p>}
+          {cropping && <p className={styles.hint} role="status">{stage === "processing" ? "Processing full-resolution image…" : "Each corner moves independently. Drag inside to move the selection."}</p>}
+          <div className={styles.actions}>
+            {stage === "idle" && <button className={styles.primary} onClick={openPicker}>Take / choose photo</button>}
+            {cropping && <>
+              <button className={styles.secondary} onClick={reset} disabled={stage === "processing"}>Retake</button>
+              <button className={styles.primary} onClick={confirmCrop} disabled={stage === "processing" || !canConfirm()}>{stage === "processing" ? "Processing…" : "Confirm crop"}</button>
+            </>}
+            {stage === "result" && <>
+              <button className={styles.secondary} onClick={reset}>Capture another</button>
+              <a className={styles.primary} href={resultSrc ?? undefined} download={`ekg-capture-${count}.png`}>Save image</a>
+            </>}
+          </div>
+          <p className={styles.count}>{count} {count === 1 ? "image" : "images"} captured this session</p>
+        </div>
+      </footer>
+    </main>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  wrap: { maxWidth: 480, margin: "0 auto", padding: "24px 20px 40px" },
-  h1: { fontSize: 20, margin: "0 0 4px" },
-  sub: { color: "#5b6672", fontSize: 14, margin: "0 0 24px" },
-  card: { background: "#fff", border: "1px solid #dde1e4", borderRadius: 10, padding: 20 },
-  placeholder: {
-    aspectRatio: "4 / 3",
-    border: "1px dashed #dde1e4",
-    borderRadius: 8,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#5b6672",
-    fontSize: 14,
-    textAlign: "center",
-    padding: 16,
-  },
-  btnPrimary: {
-    background: "#2f6f5e",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    padding: "12px 18px",
-    width: "100%",
-    marginTop: 16,
-    cursor: "pointer",
-    font: "inherit",
-  },
-  btnPrimaryFlex: {
-    background: "#2f6f5e",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    padding: "12px 18px",
-    flex: 1,
-    cursor: "pointer",
-    font: "inherit",
-  },
-  btnPrimaryFlexDisabled: {
-    background: "#2f6f5e",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    padding: "12px 18px",
-    flex: 1,
-    cursor: "not-allowed",
-    font: "inherit",
-    opacity: 0.5,
-  },
-  btnPrimaryLink: {
-    background: "#2f6f5e",
-    color: "#fff",
-    borderRadius: 8,
-    padding: "12px 18px",
-    flex: 1,
-    textAlign: "center",
-    textDecoration: "none",
-    cursor: "pointer",
-  },
-  btnSecondary: {
-    background: "transparent",
-    border: "1px solid #dde1e4",
-    color: "#16202a",
-    borderRadius: 8,
-    padding: "12px 18px",
-    flex: 1,
-    cursor: "pointer",
-    font: "inherit",
-  },
-  row: { display: "flex", gap: 10, marginTop: 16 },
-  stageImgWrap: { position: "relative", borderRadius: 8, overflow: "hidden", touchAction: "none" },
-  img: { display: "block", width: "100%", height: "auto", userSelect: "none" },
-  cropBox: {
-    position: "absolute",
-    border: "2px solid #2f6f5e",
-    boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
-    cursor: "move",
-  },
-  handle: {
-    position: "absolute",
-    width: 18,
-    height: 18,
-    background: "#2f6f5e",
-    border: "2px solid #fff",
-    borderRadius: "50%",
-  },
-  warning: {
-    marginTop: 16,
-    padding: "10px 12px",
-    borderRadius: 8,
-    background: "#fdecea",
-    border: "1px solid #f1b0a8",
-    color: "#8a1c12",
-    fontSize: 15,
-  },
-  warningDetail: { fontSize: 13, marginTop: 2 },
-  count: { fontSize: 13, color: "#5b6672", marginTop: 18, textAlign: "center" },
-};
