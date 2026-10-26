@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.main import MAX_REQUEST_BYTES, MAX_UPLOAD_BYTES, MIN_PHOTO_LONG_SIDE_PX, app
 from tests.synthetic import synthetic_ekg_like_image
+from tests.metadata_fixtures import MARKER, png_chunks, tagged_image
 
 client = TestClient(app)
 
@@ -37,6 +38,9 @@ def test_upload_synthetic_image(fmt, media_type):
     assert len(body["upload_id"]) == 36
     assert body["stored"] is False
     assert body["ekg_verified"] is False
+    assert body["embedded_metadata_removed"] is True
+    assert body["printed_identifiers_redacted"] is False
+    assert body["sanitized_format"] == "PNG"
     # 600 px is far below the Taiga #44 minimum, so the check reports a fail.
     assert body["resolution_check"]["meets_minimum"] is False
 
@@ -78,7 +82,7 @@ def test_non_image_rejected_even_with_image_name():
 def test_valid_but_unsupported_format_rejected():
     response = post_file(synthetic_ekg_like_image("GIF"), "synthetic.gif", "image/gif")
     assert response.status_code == 415
-    assert "GIF" in response.json()["detail"]
+    assert "PNG or JPEG" in response.json()["detail"]
 
 
 def test_truncated_png_rejected():
@@ -108,3 +112,86 @@ def test_request_over_limit_rejected_before_parsing():
 def test_missing_file_field_rejected():
     response = client.post("/uploads", data={"not_file": "x"})
     assert response.status_code == 422
+
+
+def test_sanitized_bytes_endpoint_never_returns_metadata_or_filename(caplog):
+    import logging
+    with caplog.at_level(logging.INFO, logger="upload_api"):
+        response = client.post("/uploads/sanitize", files={"file": (MARKER + ".jpg", tagged_image("JPEG", 6), "image/jpeg")})
+        summary = post_file(tagged_image("JPEG"), MARKER + ".jpg", "image/jpeg")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["content-disposition"] == 'attachment; filename="ekg-sanitized.png"'
+    assert MARKER.encode() not in response.content
+    assert MARKER not in str(response.headers) + summary.text + caplog.text
+    assert set(png_chunks(response.content)) == {b"IHDR", b"IDAT", b"IEND"}
+    assert "upload sanitized" in caplog.text
+
+
+def test_resolution_uses_orientation_applied_dimensions():
+    body = post_file(tagged_image("JPEG", 6)).json()
+    assert (body["width"], body["height"]) == (30, 60)
+    assert body["resolution_check"]["long_side_px"] == 60
+
+
+def test_multiple_file_parts_rejected():
+    data = synthetic_ekg_like_image("PNG", 10, 10)
+    response = client.post("/uploads", files=[("file", ("one.png", data)), ("file", ("two.png", data))])
+    assert response.status_code == 400
+
+
+def test_fake_content_length_cannot_bypass_actual_request_cap():
+    response = client.post("/uploads", content=b"x" * (MAX_REQUEST_BYTES + 1),
+        headers={"content-type": "multipart/form-data; boundary=test", "content-length": "1"})
+    assert response.status_code == 413
+
+
+@pytest.mark.parametrize("value", ["-1", "invalid"])
+def test_invalid_content_length_rejected(value):
+    response = client.post("/uploads", content=b"", headers={"content-length": value})
+    assert response.status_code == 400
+
+
+def test_missing_content_length_rejected():
+    from starlette.requests import Request
+    import asyncio
+    from fastapi import HTTPException
+    from app.main import read_image
+    request = Request({"type": "http", "headers": []})
+    with pytest.raises(HTTPException) as caught:
+        asyncio.run(read_image(request))
+    assert caught.value.status_code == 411
+
+
+def test_sanitization_failure_does_not_report_success(monkeypatch):
+    from app import main
+    from app.sanitize import SanitizationError
+    def failure(_):
+        raise SanitizationError(422, "Image could not be sanitized.")
+    monkeypatch.setattr(main, "sanitize_image", failure)
+    response = post_file(synthetic_ekg_like_image("PNG", 10, 10))
+    assert response.status_code == 422
+    assert "upload_id" not in response.json()
+
+
+def test_upload_file_never_spools_to_disk(monkeypatch):
+    import starlette.formparsers
+    original = starlette.formparsers.SpooledTemporaryFile
+    files = []
+    def tracked_file(*args, **kwargs):
+        file = original(*args, **kwargs)
+        files.append(file)
+        return file
+    monkeypatch.setattr(starlette.formparsers, "SpooledTemporaryFile", tracked_file)
+    # Valid image followed by discarded bytes, larger than Starlette's default 1 MB.
+    response = post_file(synthetic_ekg_like_image("PNG", 10, 10) + b"x" * (2 * 1024 * 1024))
+    assert response.status_code == 201
+    assert files and all(file.closed and not file._rolled for file in files)
+
+
+def test_sanitize_endpoint_has_binary_openapi_contract():
+    spec = client.get("/openapi.json").json()
+    response = spec["paths"]["/uploads/sanitize"]["post"]["responses"]["200"]
+    assert "image/png" in response["content"]
