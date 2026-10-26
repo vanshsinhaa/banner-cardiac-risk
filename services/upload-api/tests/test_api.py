@@ -154,6 +154,18 @@ def test_invalid_content_length_rejected(value):
     assert response.status_code == 400
 
 
+@pytest.mark.parametrize("value,status", [(b"\xb2", 400), (b"9" * 5000, 413)], ids=["non-ascii", "huge-integer"])
+def test_content_length_cannot_trigger_integer_parse_errors(value, status):
+    from starlette.requests import Request
+    import asyncio
+    from fastapi import HTTPException
+    from app.main import read_image
+    request = Request({"type": "http", "headers": [(b"content-length", value)]})
+    with pytest.raises(HTTPException) as caught:
+        asyncio.run(read_image(request))
+    assert caught.value.status_code == status
+
+
 def test_missing_content_length_rejected():
     from starlette.requests import Request
     import asyncio

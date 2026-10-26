@@ -67,9 +67,11 @@ async def read_image(request: Request) -> bytes:
     content_length = request.headers.get("content-length")
     if content_length is None:
         raise HTTPException(411, "Content-Length header is required.")
-    if not content_length.isdigit():
+    if not content_length.isascii() or not content_length.isdigit():
         raise HTTPException(400, "Content-Length header is invalid.")
-    if int(content_length) > MAX_REQUEST_BYTES:
+    normalized_length = content_length.lstrip("0") or "0"
+    # Avoid converting an attacker-controlled, arbitrarily long integer.
+    if len(normalized_length) > len(str(MAX_REQUEST_BYTES)) or int(normalized_length) > MAX_REQUEST_BYTES:
         raise HTTPException(413, too_large_message())
     if not request.headers.get("content-type", "").lower().startswith("multipart/form-data"):
         raise HTTPException(422, "Send the image as a multipart form field named 'file'.")
