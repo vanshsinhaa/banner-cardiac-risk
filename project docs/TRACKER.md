@@ -12,11 +12,11 @@ reviewed through code, reproducible checks, and the explanations linked here.
 
 | Area | Verified state | Remaining work |
 | --- | --- | --- |
-| Working branch | `vansh/bannerwork`; local Git author/committer is `vanshsinhaa` | This is the slash spelling requested for new work. The older remote branch is still `origin/vansh-bannerwork`. No push was made in this session. |
+| Working branch | `vansh/bannerwork`; local Git author/committer is `vanshsinhaa` | School handoff target is `origin/vansh/bannerwork` (slash). The older `origin/vansh-bannerwork` (hyphen) is separate. |
 | Repository update | Fetched origin and merged `origin/main` at `379b14d`, merge `d8e518e` | Teammates' unmerged branches remain separate. |
 | #48: embedded metadata | Implemented and tested for accepted static PNG/JPEG uploads; sanitized PNG available through the API | #51 connects the capture/de-identification flow. DICOM ingestion is explicitly unsupported. |
 | #52: key management | Versioned provider, local injection adapter, secret-store refresh adapter, enforced lifecycle, rotation tests, policy and demo | Hosting-specific secret-store SDK, workload identity, permissions, and restore exercise require deployment selection. #50 owns application payload encryption. |
-| Capture screen | Extensive existing local changes preserved; 31 frontend tests, lint, type check, and build pass | Capture changes remain uncommitted and were not rewritten as part of these tasks. Physical-device acceptance remains separate. |
+| Capture screen | Existing capture work saved in its own commit; 31 frontend tests, lint, type check, and build passed on this state | Physical-device acceptance and #51 integration remain separate. |
 | Verification | 112 Python tests pass; executable synthetic demo passes | Local Docker daemon unavailable; no new container execution or hosted CI result claimed. |
 | Taiga | Public read access works; #48 and #52 were both **New**, assigned to `vanshsinhaa` | No Taiga status, comment, or assignment was changed. |
 
@@ -24,8 +24,30 @@ Board: [Sprint 3](https://tree.taiga.io/project/gshale-sprint-0-backlog/taskboar
 Detailed scope and evidence:
 [metadata removal](task-48-metadata.md), [key management](task-52-key-management.md),
 [verification and instructor demo](verification-2026-10-26.md).
+For setup on another computer, use [the device handoff](DEVICE-HANDOFF.md).
 
 ## Work log — newest first
+
+### 2026-10-26 — Save complete working state for school
+
+**What changed:** Saved the previously uncommitted capture/crop implementation,
+its CSS, worker/PNG encoder, geometry tests, optional browser verification script,
+and capture notes in a dedicated commit. Saved the revised competency DOCX/PDF
+and alternate report PDF, plus the generated synthetic manual-upload PNG.
+The PNG was checked against its generator and contains no patient data.
+Added `DEVICE-HANDOFF.md` with fresh-checkout commands, environment setup,
+both local servers, test commands, and the correct slash branch name.
+
+**Repository state:** Fetched origin again; no newer main commits were missing.
+The complete state is prepared for `origin/vansh/bannerwork` under the user's
+GitHub identity. The older hyphen branch and teammates' branches are unchanged.
+Build dependencies, local environment files, virtual environments, and generated
+build/browser artifacts stay outside Git and are recreated on the next device.
+
+**After standup:** Record the team's DICOM scope decision, Faith's #51 integration
+contract, and the #52/#50 encryption/secret-store handoff. Existing local tests
+passed as recorded below; no additional feature work or completed integration is
+implied by this save. Hosted CI results are separate from local verification.
 
 ### 2026-10-26 — Sprint 3 implementation and verification
 

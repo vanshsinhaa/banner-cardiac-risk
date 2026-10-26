@@ -7,6 +7,8 @@ with dated decisions, verification, and remaining team handoffs. Sprint 3 detail
 [image metadata removal (#48)](project%20docs/task-48-metadata.md),
 [key management (#52)](project%20docs/task-52-key-management.md), and
 [reproducible instructor demo](project%20docs/verification-2026-10-26.md).
+For continuing on another computer, follow the
+[device handoff](project%20docs/DEVICE-HANDOFF.md) on branch `vansh/bannerwork`.
 
 ## EKG upload API prototype and CI
 
