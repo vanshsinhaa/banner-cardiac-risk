@@ -2,21 +2,28 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 
 // Fallback capture screen for user story #2 (task #34).
 // Crop, preprocess, and assess lead-label readability through the local API.
 
+const MAX_SCAN_BYTES = 10 * 1024 * 1024;
+const SCAN_TIMEOUT_MS = 120_000;
+const TIMEOUT_MESSAGE = "No scan result was received within 2 minutes. Please try again.";
+function scanError(error: unknown, fallback: string) {
+  return error instanceof Error
+    ? (["TimeoutError", "AbortError"].includes(error.name) ? TIMEOUT_MESSAGE : error.message)
+    : fallback;
+}
+
 type Stage = "idle" | "crop" | "processing" | "result";
 
 interface Assessment {
-  accepted: boolean;
-  status: "passed" | "failed" | "needs_review";
   uncertain_leads: string[];
   rotation_degrees: number;
   ocr_timed_out: boolean;
   reasons: string[];
   detected_leads: string[];
-  missing_leads: string[];
   boundary_found: boolean;
   width: number;
   height: number;
@@ -27,8 +34,14 @@ const reasonLabels: Record<string, string> = {
   invalid_image: "The image could not be assessed.",
   resolution_too_low: "The crop is too small. Keep at least 600 pixels on each side.",
   insufficient_contrast: "The image has too little contrast. Retake it with clearer lighting.",
-  lead_labels_unreadable_or_missing: "OCR could not confirm all 12 labels. This can happen on a readable scan. Check the unconfirmed labels below; a partial ECG page cannot pass the full 12-lead check.",
 };
+
+interface Digitization {
+  modelRecognition?: { status: string; leads: string[] };
+  recognition: {
+    leads: Record<string, { status: "success" | "needs_review"; label: string | null }>;
+  };
+}
 
 interface Rect {
   x: number;
@@ -43,11 +56,7 @@ interface DragState {
   startRect: Rect;
 }
 
-interface EkgCaptureScreenProps {
-  onCapture?: (dataUrl: string) => void;
-}
-
-export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
+export default function EkgCaptureScreen() {
   const [stage, setStage] = useState<Stage>("idle");
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [resultSrc, setResultSrc] = useState<string | null>(null);
@@ -55,6 +64,42 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const [count, setCount] = useState(0);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [digitization, setDigitization] = useState<Digitization | null>(null);
+  const [digitizing, setDigitizing] = useState(false);
+  const [digitizerError, setDigitizerError] = useState<string | null>(null);
+  const [cropBlob, setCropBlob] = useState<Blob | null>(null);
+  const digitizeGeneration = useRef(0);
+  const resetDigitization = () => {
+    digitizeGeneration.current += 1;
+    setDigitization(null);
+    setDigitizerError(null);
+    setDigitizing(false);
+  };
+  const verifyWaveforms = async (blob = cropBlob) => {
+    if (!blob || digitizing) return;
+    if (blob.size > MAX_SCAN_BYTES) {
+      setDigitizerError("The crop exceeds 10 MB. Choose a smaller image or crop.");
+      return;
+    }
+    const generation = ++digitizeGeneration.current;
+    setDigitizing(true);
+    setDigitization(null);
+    setDigitizerError(null);
+    try {
+      const response = await fetch("/api/ecg/digitize", {
+        method: "POST", headers: { "Content-Type": "image/png" },
+        body: blob, signal: AbortSignal.timeout(SCAN_TIMEOUT_MS),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Digitization failed.");
+      if (generation === digitizeGeneration.current) setDigitization(result);
+    } catch (err) {
+      if (generation === digitizeGeneration.current) setDigitizerError(scanError(err, "Digitization unavailable."));
+    } finally {
+      if (generation === digitizeGeneration.current) setDigitizing(false);
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -73,6 +118,17 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_SCAN_BYTES) {
+      setError("The image exceeds 10 MB. Choose a smaller image.");
+      e.target.value = "";
+      return;
+    }
+    if (!file.size) {
+      setError("The selected image is empty. Choose another image.");
+      return;
+    }
+    resetDigitization();
+    setCropBlob(null);
     if (imageSrc) URL.revokeObjectURL(imageSrc);
     setImageSrc(URL.createObjectURL(file));
     setAssessment(null);
@@ -123,13 +179,13 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     setRect(r);
   }, []);
 
-  const onDragEnd = useCallback(() => {
+  const onDragEnd = useCallback(function endDrag() {
     dragState.current = null;
     window.removeEventListener("pointermove", onDragMove);
-    window.removeEventListener("pointerup", onDragEnd);
+    window.removeEventListener("pointerup", endDrag);
   }, [onDragMove]);
 
-  const startDrag = (mode: DragState["mode"]) => (e: React.PointerEvent) => {
+  const startDrag = (mode: DragState["mode"], e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     dragState.current = { mode, startPointer: { x: e.clientX, y: e.clientY }, startRect: rect };
@@ -155,38 +211,54 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     if (!ctx) return;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
+    resetDigitization();
+    setCropBlob(null);
     setAssessment(null);
     setError(null);
     setResultSrc(canvas.toDataURL("image/png"));
     setStage("processing");
+    let digitizationTask: Promise<void> | undefined;
     try {
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not create the crop.")), "image/png");
       });
+      if (blob.size > MAX_SCAN_BYTES) {
+        throw new Error("The crop exceeds 10 MB. Choose a smaller image or crop.");
+      }
+      setCropBlob(blob);
+      // Both requests run together, each with the existing two-minute limit.
+      digitizationTask = verifyWaveforms(blob);
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "image/png" },
         body: blob,
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(SCAN_TIMEOUT_MS),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "The image check could not complete.");
       setAssessment(result as Assessment);
       setResultSrc(result.processed_image);
       setCount((c) => c + 1);
-      if (result.accepted) onCapture?.(result.processed_image);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The image check could not complete. Try again.");
+      setError(scanError(err, "The image check could not complete. Try again."));
     } finally {
+      await digitizationTask;
       setStage("result");
     }
   };
+
+  const labels = combinedLeadLabels(assessment?.detected_leads, digitization);
+  const qualityFailed = assessment?.reasons.some(reason => reason !== "lead_labels_unreadable_or_missing") ?? false;
+  const allLabelsFound = labels.missing.length === 0;
+  const uncertain = combinedLeadLabels(assessment?.uncertain_leads).confirmed.filter(name => !labels.confirmed.includes(name));
 
   return (
     <div style={styles.wrap}>
       <h1 style={styles.h1}>EKG capture, fallback prototype</h1>
       <p style={styles.sub}>Crop the full 12-lead ECG to automatically check label readability.</p>
 
+      <p style={{ fontSize: 13 }}>Images and crops: maximum 10 MB. Each scan check waits up to 2 minutes for a result.</p>
+      {error && stage !== "result" && <p role="alert">{error}</p>}
       <div style={styles.card}>
         {stage === "idle" && (
           <>
@@ -218,16 +290,16 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
               />
               <div
                 style={{ ...styles.cropBox, left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
-                onPointerDown={startDrag("move")}
+                onPointerDown={(event) => startDrag("move", event)}
               >
-                <div style={{ ...styles.handle, top: -9, left: -9, cursor: "nwse-resize" }} onPointerDown={startDrag("nw")} />
-                <div style={{ ...styles.handle, top: -9, right: -9, cursor: "nesw-resize" }} onPointerDown={startDrag("ne")} />
-                <div style={{ ...styles.handle, bottom: -9, left: -9, cursor: "nesw-resize" }} onPointerDown={startDrag("sw")} />
-                <div style={{ ...styles.handle, bottom: -9, right: -9, cursor: "nwse-resize" }} onPointerDown={startDrag("se")} />
+                <div style={{ ...styles.handle, top: -9, left: -9, cursor: "nwse-resize" }} onPointerDown={(event) => startDrag("nw", event)} />
+                <div style={{ ...styles.handle, top: -9, right: -9, cursor: "nesw-resize" }} onPointerDown={(event) => startDrag("ne", event)} />
+                <div style={{ ...styles.handle, bottom: -9, left: -9, cursor: "nesw-resize" }} onPointerDown={(event) => startDrag("sw", event)} />
+                <div style={{ ...styles.handle, bottom: -9, right: -9, cursor: "nwse-resize" }} onPointerDown={(event) => startDrag("se", event)} />
               </div>
             </div>
             <div style={styles.row}>
-              <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
+              <button style={styles.btnSecondary} onClick={() => { resetDigitization(); setCropBlob(null); setStage("idle"); }}>
                 Retake
               </button>
               <button style={styles.btnPrimaryFlex} onClick={handleConfirmCrop}>
@@ -239,7 +311,7 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
 
         {stage === "processing" && (
           <div role="status" aria-live="polite" style={{ padding: 24 }}>
-            Processing image and checking lead labels… This may take up to 45 seconds.
+            Processing image and checking lead labels… This may take up to 2 minutes.
           </div>
         )}
 
@@ -247,38 +319,45 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
           <>
             <div role="status" aria-live="polite" style={{
               padding: 16, marginBottom: 16, borderRadius: 8,
-              background: error || assessment?.status === "needs_review" ? "#fff4dc" : assessment?.accepted ? "#e7f5ec" : "#fff0ef",
+              background: qualityFailed ? "#fff0ef" : error || !allLabelsFound ? "#fff4dc" : "#e7f5ec",
               color: "#16202a", display: "grid", gap: 10,
             }}>
-              <strong>{error ? "Check unavailable" : assessment?.accepted ? "Passed — lead labels readable" : assessment?.status === "needs_review" ? "Needs review — OCR incomplete" : "Failed — image quality check"}</strong>
+              <strong>{error && !digitization ? "Check unavailable" : qualityFailed ? "Failed — image quality check" : digitizing ? "Checking built-in recognition…" : allLabelsFound ? "Success — all 12 labels recognized" : "Needs review — labels incomplete"}</strong>
               {error && <p>{error}</p>}
+              {(assessment || digitization) && <>
+                <p>Confirmed labels — built-in + Tesseract ({labels.confirmed.length}/12): {labels.confirmed.join(", ") || "None"}</p>
+                {labels.missing.length > 0 && <p>{digitizing ? "Not yet confirmed" : "Not confirmed"}: {labels.missing.join(", ")}</p>}
+                {!allLabelsFound && !digitizing && <p>These labels were not recognized by either available system. Try a clearer image or adjust the crop.</p>}
+                {uncertain.length > 0 && <p>Seen with low confidence: {uncertain.join(", ")}</p>}
+              </>}
               {assessment && (
                 <>
-                  {assessment.reasons.map((reason) => <p key={reason}>{reasonLabels[reason] || reason}</p>)}
-                  <p>Confirmed labels ({assessment.detected_leads.length}/12): {assessment.detected_leads.join(", ") || "None"}</p>
-                  {assessment.uncertain_leads?.length > 0 && <p>Seen with low confidence: {assessment.uncertain_leads.join(", ")}</p>}
-                  {assessment.ocr_timed_out && <p>Some OCR attempts timed out. The label list may be incomplete; try a tighter crop around the full ECG.</p>}
-                  {assessment.missing_leads.length > 0 && <p>Not confirmed: {assessment.missing_leads.join(", ")}</p>}
+                  {assessment.reasons.filter(reason => reason !== "lead_labels_unreadable_or_missing").map((reason) => <p key={reason}>{reasonLabels[reason] || reason}</p>)}
+                  {assessment.ocr_timed_out && <p>Some Tesseract attempts timed out. Built-in recognition is included where available.</p>}
                   <p style={{ fontSize: 13 }}>
                     {assessment.boundary_found ? "Perspective corrected." : "No page boundary found; used your crop."}
                     {" "}{assessment.rotation_degrees > 0 && `Rotated ${assessment.rotation_degrees}° clockwise for reading. `}Lighting adjusted. Output: {assessment.width} × {assessment.height} pixels.
                   </p>
-                  <p style={{ fontSize: 13 }}>This checks lead-label readability, not waveform accuracy or heart health.</p>
+                  <p style={{ fontSize: 13 }}>A label is counted when either system recognizes it. This does not validate waveform accuracy or heart health.</p>
                 </>
               )}
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={resultSrc} alt={assessment ? "Processed ECG" : "Original crop; check unavailable"} style={{ width: "100%", borderRadius: 8, display: "block" }} />
             <div style={styles.row}>
-              <button style={styles.btnSecondary} onClick={() => setStage("crop")}>
+              <button style={styles.btnSecondary} onClick={() => { resetDigitization(); setStage("crop"); }}>
                 {error ? "Retry / adjust crop" : "Adjust crop"}
               </button>
-              <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
+              <button style={styles.btnSecondary} onClick={() => { resetDigitization(); setCropBlob(null); setStage("idle"); }}>
                 Capture another
               </button>
             </div>
+            <button style={styles.btnPrimary} onClick={() => void verifyWaveforms()} disabled={digitizing || !cropBlob}>
+              {digitizing ? "Extracting and checking lead assignments… (up to 2 minutes)" : "Extract waveforms and check lead assignments"}
+            </button>
+            {digitizerError && <p role="alert">{digitizerError}</p>}
             <div style={styles.row}>
-              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-${assessment ? "processed" : "crop"}-${Date.now()}.png`}>
+              <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-${assessment ? "processed" : "crop"}-${count}.png`}>
                 {assessment ? "Save processed image" : "Save original crop"}
               </a>
             </div>
@@ -297,7 +376,7 @@ const styles: Record<string, CSSProperties> = {
   wrap: { maxWidth: 480, margin: "0 auto", padding: "24px 20px 40px" },
   h1: { fontSize: 20, margin: "0 0 4px" },
   sub: { color: "#5b6672", fontSize: 14, margin: "0 0 24px" },
-  card: { background: "#fff", border: "1px solid #dde1e4", borderRadius: 10, padding: 20 },
+  card: { background: "#fff", color: "#16202a", border: "1px solid #dde1e4", borderRadius: 10, padding: 20 },
   placeholder: {
     aspectRatio: "4 / 3",
     border: "1px dashed #dde1e4",

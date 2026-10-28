@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Installed external model checkout and its Python environment.
+    "Open-ECG-Digitizer/**",
   ]),
   {
     // EkgCaptureScreen is imperative by design: it drives pointer drags and a

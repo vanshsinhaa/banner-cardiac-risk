@@ -18,7 +18,7 @@ class LeadOcrTests(unittest.TestCase):
         self.image[50:80, 50:100] = 0
 
     def test_rotations_are_not_combined_to_invent_complete_scan(self):
-        responses = [data(('aVR',)), data(('V1','V2','V3')), data(('aVF',)), data(('V6',)), data(('V4',))]
+        responses = [data(('aVR',)), data(('V1','V2','V3')), data(('aVF',)), data(('V6',)), data(('V4',)), data(()), data(())]
         with patch('pytesseract.image_to_data', side_effect=responses):
             result = read_labels(self.image)
         self.assertEqual(result['rotation_degrees'], 90)
@@ -27,16 +27,54 @@ class LeadOcrTests(unittest.TestCase):
 
     def test_height_is_measured_in_original_pixels(self):
         image = np.zeros((1000,6000),np.uint8)
-        with patch('pytesseract.image_to_data', return_value=data(('V1',), height=6)):
+        with patch('pytesseract.image_to_data', side_effect=lambda view, **kw: data(('V1',), height=6 * max(view.shape) / 3000)):
             result = read_labels(image)
         self.assertTrue(all(height == 12 for height in result['height']))
 
     def test_partial_timeout_keeps_evidence_and_reports_incomplete_attempts(self):
-        responses = [data(('V1',)), RuntimeError('Tesseract process timeout'), data(()), data(()), data(())]
+        responses = [data(('V1',)), RuntimeError('Tesseract process timeout'), data(()), data(()), data(()), data(()), data(())]
         with patch('pytesseract.image_to_data', side_effect=responses):
             result = read_labels(self.image)
         self.assertTrue(result['ocr_timed_out'])
         self.assertIn('V1', result['text'])
+
+    def test_enlargement_recovers_label_without_inflating_original_height(self):
+        responses = [data(('V1',)), data(()), data(()), data(()), data(()),
+                     data(('V2',), height=12), data(('V3',), height=30)]
+        with patch('pytesseract.image_to_data', side_effect=responses):
+            result = read_labels(self.image)
+        evidence = dict(zip(result['text'], result['height']))
+        self.assertEqual(evidence['V2'], 6)
+        self.assertEqual(evidence['V3'], 10)
+        quality = check_scan_quality(self.image, expected_leads=('V1', 'V2', 'V3'),
+                                     ocr=lambda _: result)
+        self.assertEqual(quality.detected_leads, ('V1', 'V3'))
+        self.assertEqual(quality.uncertain_leads, ('V2',))
+
+    def test_complete_evidence_skips_enlargement(self):
+        from lead_ocr import LEAD_TOKENS
+        with patch('pytesseract.image_to_data', return_value=data(LEAD_TOKENS)) as read:
+            result = read_labels(self.image)
+        self.assertEqual(read.call_count, 5)
+        self.assertFalse(result['ocr_timed_out'])
+
+    def test_enlarged_views_respect_pixel_cap(self):
+        shapes = []
+        def read(view, **kwargs):
+            shapes.append(view.shape)
+            return data(())
+        with patch('pytesseract.image_to_data', side_effect=read):
+            read_labels(np.zeros((2000, 3000), np.uint8))
+        self.assertEqual(len(shapes), 5)
+        self.assertTrue(all(h * w <= 12_000_000 for h, w in shapes))
+
+    def test_enlargement_timeout_preserves_original_evidence(self):
+        responses = [data(('V1',)), data(()), data(()), data(()), data(()),
+                     RuntimeError('Tesseract process timeout'), data(())]
+        with patch('pytesseract.image_to_data', side_effect=responses):
+            result = read_labels(self.image)
+        self.assertEqual(result['text'], ['V1'])
+        self.assertTrue(result['ocr_timed_out'])
 
     def test_total_timeout_is_operational_error(self):
         with patch('pytesseract.image_to_data', side_effect=RuntimeError('Tesseract process timeout')):

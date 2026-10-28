@@ -12,7 +12,7 @@ import numpy as np
 from preprocess import find_boundary, normalize_lighting, warp
 from quality import check_scan_quality
 
-MAX_BYTES = 48 * 1024 * 1024
+MAX_BYTES = 10 * 1024 * 1024
 MAX_PIXELS = 24_000_000
 
 
@@ -20,7 +20,7 @@ def decode_crop(raw):
     # The browser sends canvas PNGs. Check dimensions before OpenCV allocates.
     if (len(raw) < 33 or len(raw) > MAX_BYTES
             or raw[:8] != b"\x89PNG\r\n\x1a\n" or raw[12:16] != b"IHDR"):
-        raise ValueError("Send a valid PNG crop no larger than 48 MB.")
+        raise ValueError("Send a valid PNG crop no larger than 10 MB.")
     width, height = struct.unpack(">II", raw[16:24])
     if not width or not height or width * height > MAX_PIXELS:
         raise ValueError("The crop must contain between 1 and 24 million pixels.")

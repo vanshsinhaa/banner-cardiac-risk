@@ -42,12 +42,12 @@ def blue_foreground(image):
         mask = cv2.subtract(mask, lines)
     return 255 - mask
 
-
+    
 def rotate(image, degrees):
     return np.ascontiguousarray(np.rot90(image, -(degrees // 90)))
 
 
-def read_labels(image, *, budget_seconds=28):
+def read_labels(image, *, budget_seconds=28, regions=None):
     import pytesseract
 
     deadline = time.monotonic() + budget_seconds
@@ -55,9 +55,10 @@ def read_labels(image, *, budget_seconds=28):
     working = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA) if scale < 1 else image
     filtered = foreground(working)
     attempts = []
+    detections = []
     timed_out = False
 
-    def read(view, degrees, psm):
+    def read(view, degrees, psm, enlargement=1.0):
         nonlocal timed_out
         remaining = deadline - time.monotonic()
         if remaining < .2:
@@ -74,7 +75,23 @@ def read_labels(image, *, budget_seconds=28):
             timed_out = True
             return None
         data = dict(data)
-        data["height"] = [float(height) / scale for height in data["height"]]
+        # Preserve localized evidence in the caller's original image frame.
+        factor = scale * enlargement
+        for i, word in enumerate(data["text"]):
+            name = token(word)
+            if name not in LEAD_TOKENS or float(data["conf"][i]) < 35:
+                continue
+            if not all(key in data for key in ("left", "top", "width", "height")):
+                continue
+            x, y, w, h = [float(data[key][i]) / factor
+                          for key in ("left", "top", "width", "height")]
+            ih, iw = image.shape[:2]
+            box = {0: [x, y, w, h], 90: [y, ih-x-w, h, w],
+                   180: [iw-x-w, ih-y-h, w, h],
+                   270: [iw-y-h, x, h, w]}[degrees]
+            detections.append((degrees, {"lead": name, "confidence": float(data["conf"][i]),
+                                         "height": h, "box": box}))
+        data["height"] = [float(height) / (scale * enlargement) for height in data["height"]]
         attempts.append((degrees, data))
         return data
 
@@ -104,9 +121,37 @@ def read_labels(image, *, budget_seconds=28):
         read(blue, degrees, 6)
     gray = cv2.cvtColor(upright, cv2.COLOR_BGR2GRAY) if upright.ndim == 3 else upright
     read(gray, degrees, 11)
+    # Small printed glyphs are often legible but below Tesseract's useful
+    # character size. Enlarge the same evidence; do not lower confidence or
+    # infer labels. Keep the input and height checks in original pixels.
+    selected = rotate(filtered, degrees)
+    for enlargement in (2, 3):
+        confirmed = {
+            token(word)
+            for angle, data in attempts if angle == degrees
+            for word, confidence, height in zip(data["text"], data["conf"], data["height"])
+            if float(confidence) >= 70 and height >= 10
+        }
+        if LEAD_TOKENS <= confirmed:
+            break
+        if deadline - time.monotonic() < .2:
+            timed_out = True
+            break
+        # Bound memory and runtime on high-resolution phone photographs.
+        if selected.size * enlargement ** 2 > 12_000_000:
+            break
+        enlarged = cv2.resize(selected, None, fx=enlargement, fy=enlargement,
+                              interpolation=cv2.INTER_LINEAR)
+        read(enlarged, degrees, 11, enlargement)
     merged = {"text": [], "conf": [], "height": [], "rotation_degrees": degrees, "ocr_timed_out": timed_out}
     for angle, data in attempts:
         if angle == degrees:
             for key in ("text", "conf", "height"):
                 merged[key].extend(data[key])
+    merged["detections"] = [item for angle, item in detections if angle == degrees]
+    merged["coordinate_space"] = "input_pixels"
+    if regions is not None:
+        from region_ocr import refine_labels
+        merged = refine_labels(image, regions, merged,
+                               budget_seconds=max(0, min(20, deadline-time.monotonic())))
     return merged
