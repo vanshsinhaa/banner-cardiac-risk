@@ -96,8 +96,16 @@ Notes:
   a machine with a dedicated GPU.
 - For every digitized image the service saves a comparison plot to
   `digitizer-service/trace-plots/` (ignored by git): the original image, the
-  straightened image, the detected trace pixels, and the digitized traces. Set
-  `SAVE_TRACE_PLOTS = False` in `server.py` to turn this off.
+  straightened image, the detected trace pixels, and the digitized traces. Next
+  to it, `<name>_t-waves.png` shows each lead's median beat with its T wave
+  shaded and its peak marked (from `t_wave.py`; needs `neurokit2` in the
+  digitizer's `.venv`). Set `SAVE_TRACE_PLOTS = False` in `server.py` to turn
+  both off.
+- The digitizer always returns 5000 samples per lead. The service works out the
+  real sampling rate from the strip's measured width and the paper speed, which
+  defaults to 25 mm/s. For a 50 mm/s printout, send `paper_speed=50` as a form
+  field next to `image`, e.g.
+  `curl -F image=@ecg.png -F paper_speed=50 http://127.0.0.1:8000/digitize`.
 - The Next.js adapter in `src/lib/ecg-digitizer/digitize.ts` calls this service
   when `ECG_DIGITIZER_URL=http://127.0.0.1:8000` is set in `.env.local`.
 - Open-ECG-Digitizer is licensed under CC BY-SA 4.0 and asks that its paper be
