@@ -2,10 +2,13 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import {
+  isEcgDigitizationResult,
+  type EcgDigitizationResult,
+} from "@/lib/ecg-digitizer/types";
 
 // Fallback capture screen for user story #2 (task #34).
-// Minimal camera input + basic crop. Wire onCapture to your upload/
-// de-identification pipeline once this is integrated.
+// The optional callback remains available for additional capture handling.
 
 type Stage = "idle" | "crop" | "result";
 
@@ -30,6 +33,9 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
   const [stage, setStage] = useState<Stage>("idle");
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [resultSrc, setResultSrc] = useState<string | null>(null);
+  const [digitization, setDigitization] = useState<EcgDigitizationResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [rect, setRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
   const [count, setCount] = useState(0);
 
@@ -125,14 +131,59 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
     canvas.width = sw;
     canvas.height = sh;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      setErrorMessage("Could not prepare the cropped image.");
+      return;
+    }
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
     const dataUrl = canvas.toDataURL("image/png");
     setResultSrc(dataUrl);
+    setDigitization(null);
+    setErrorMessage(null);
     setCount((c) => c + 1);
     setStage("result");
     onCapture?.(dataUrl);
+
+    setIsSubmitting(true);
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setErrorMessage("Could not prepare the cropped image for upload.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append("image", blob, "ecg-capture.png");
+        const response = await fetch("/api/ecg/digitize", {
+          method: "POST",
+          body: formData,
+        });
+        const payload: unknown = await response.json();
+
+        if (!response.ok) {
+          const message =
+            typeof payload === "object" &&
+            payload !== null &&
+            "error" in payload &&
+            typeof payload.error === "string"
+              ? payload.error
+              : `Digitization request failed (${response.status}).`;
+          setErrorMessage(message);
+        } else if (isEcgDigitizationResult(payload)) {
+          setDigitization(payload);
+        } else {
+          setErrorMessage("The digitizer returned data in an unexpected format.");
+        }
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error ? error.message : "The digitization request could not be completed.",
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    }, "image/png");
   };
 
   return (
@@ -194,8 +245,22 @@ export default function EkgCaptureScreen({ onCapture }: EkgCaptureScreenProps) {
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={resultSrc} alt="Cropped result" style={{ width: "100%", borderRadius: 8, display: "block" }} />
+            {isSubmitting && <p role="status">Sending image to the ECG digitizer…</p>}
+            {errorMessage && <p role="alert" style={styles.error}>{errorMessage}</p>}
+            {digitization && (
+              <section aria-label="Digitized ECG details" style={styles.details}>
+                <h2 style={styles.detailsHeading}>Digitized ECG details</h2>
+                <p>Sampling rate: {digitization.samplingRateHz} Hz</p>
+                <p>Units: {digitization.units}</p>
+                <pre style={styles.waveforms}>{JSON.stringify(digitization.leads, null, 2)}</pre>
+              </section>
+            )}
             <div style={styles.row}>
-              <button style={styles.btnSecondary} onClick={() => setStage("idle")}>
+              <button
+                style={styles.btnSecondary}
+                onClick={() => setStage("idle")}
+                disabled={isSubmitting}
+              >
                 Capture another
               </button>
               <a style={styles.btnPrimaryLink} href={resultSrc} download={`ekg-capture-${Date.now()}.png`}>
@@ -289,4 +354,15 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "50%",
   },
   count: { fontSize: 13, color: "#5b6672", marginTop: 18, textAlign: "center" },
+  error: { color: "#a12525", fontSize: 14 },
+  details: { marginTop: 16, overflow: "hidden" },
+  detailsHeading: { fontSize: 16, margin: "0 0 8px" },
+  waveforms: {
+    maxHeight: 240,
+    overflow: "auto",
+    padding: 12,
+    borderRadius: 8,
+    background: "#f4f6f5",
+    fontSize: 12,
+  },
 };

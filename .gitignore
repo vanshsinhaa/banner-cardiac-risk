@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+
+# ECG digitizer tool, cloned separately (see README)
+/Open-ECG-Digitizer/
+
+# trace plots saved by the digitizer service (images of ECGs)
+/digitizer-service/trace-plots/
