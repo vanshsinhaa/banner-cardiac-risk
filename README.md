@@ -71,6 +71,8 @@ Both the original upload and each processing payload have a 10 MB limit. A
 full-resolution lossless PNG can exceed the limit even when its JPEG source does
 not. Such a crop is rejected explicitly; it is never silently resized or converted
 to a lossy image. Confirm the team's processing-size policy before merging.
+Measurements and proposed stage-specific limits are in
+[the image-size follow-up](project%20docs/task-upload-size-limits.md).
 
 The digitizer returns tentative `leads`, `samplingRateHz`, `units`, and a
 `requiresReview` gate. Missing/conflicting spatial evidence requires review;

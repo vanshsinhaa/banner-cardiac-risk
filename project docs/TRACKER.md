@@ -28,6 +28,28 @@ For setup on another computer, use [the device handoff](DEVICE-HANDOFF.md).
 
 ## Work log — newest first
 
+### 2026-10-31 — Review combined UI and document upload-size policy
+
+**What changed:** Prepared the combined workflow on
+`integration/team-sync-2026-10-30`, preserving the latest four-corner screen and
+the histories of Faith's, Roberto's and Arsen's branches. Vansh reviewed the
+local combined UI demo and approved moving forward with draft PR publication.
+Backend replies in that demo are simulated, not real OCR/model acceptance.
+
+**Size finding:** Documented the 10 MiB limits, their resource purpose, and three
+repository JPEGs expanding to approximately 23 MiB as full-resolution PNGs.
+Proposed separate 32 MiB original and 64 MiB processed caps for benchmarking,
+aligned pixel/memory budgets, lossless compression assessment and clearer errors.
+**Runtime limits remain unchanged.** See [image size limits](task-upload-size-limits.md).
+
+**Evidence and remaining work:** The integration records 224 passing automated
+tests, 11 redaction checks, lint/build, and Chromium/WebKit workflow/pixel checks.
+Seven pinned-upstream service tests were skipped. Real de-identification,
+model/OCR checks, size policy, schema mapping and phone acceptance remain
+pre-merge decisions. See [integration review](../docs/integration-review.md).
+Main merge, deployment, closing existing PRs and teammate branch rewrites are
+outside this draft-publication step.
+
 ### 2026-10-26 — Save complete working state for school
 
 **What changed:** Saved the previously uncommitted capture/crop implementation,

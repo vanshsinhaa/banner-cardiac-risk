@@ -20,5 +20,10 @@ digitizer/OCR inference, phone testing, the 10 MB PNG policy, and the canonical
 schema mapping need team confirmation. The app fails closed where privacy is not
 confirmed. No risk scoring or model-ready export is enabled.
 
+The combined UI demo has been reviewed. The size follow-up is documented in
+`project docs/task-upload-size-limits.md`: three 3.40–6.03 MiB JPEGs became
+22.73–23.54 MiB full-resolution PNGs. Separate 32 MiB original / 64 MiB processed
+caps are proposed for benchmarking; runtime limits remain unchanged.
+
 See `docs/integration-review.md` for source tips, conflict decisions, service
 contracts and owner-specific merge gates. No teammate branch needs rewriting.

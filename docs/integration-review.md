@@ -1,7 +1,9 @@
 # Team integration review — 2026-10-30
 
-Status: **local draft, not approved for main**. Nothing pushed, no PR changed,
-no teammate branch rewritten, and no deployment performed during preparation.
+Status: **integration draft, not approved for main**. Prepared locally on October
+30; Vansh reviewed the combined UI demo and authorized draft publication on
+October 31. Main and teammate branches remain unchanged; no deployment is part
+of this publication. The reviewed demo used simulated backend responses.
 
 ## Branches included
 
@@ -88,7 +90,10 @@ weights, or de-identification HTTP backend was provisioned during preparation.
    tests do not substitute for this check.
 3. **Vansh + team:** confirm 10 MB processing payloads are intended. Full-resolution
    PNGs can be larger than their JPEG inputs. Current behavior blocks explicitly
-   without loss, downscaling, or forwarding the oversized image.
+   without loss, downscaling, or forwarding the oversized image. Measurements
+   and provisional 32 MiB original / 64 MiB processed targets are in
+   [the size-policy follow-up](../project%20docs/task-upload-size-limits.md);
+   no limits have been changed.
 4. **Model owner + Vansh:** decide raw digitizer-to-v0.1 export mapping, null gaps,
    calibration and confidence. The baseline schema is preserved, and no invented
    confidence/calibration or model-ready export is emitted.
@@ -119,10 +124,10 @@ proposal requiring Faith's confirmation, not an assertion that a service exists.
 
 ## Approval and rollout
 
-Next proposed action requires Vansh's confirmation: push **only** the new
-integration branch and open a **draft** PR targeting `main`, using
-[the prepared description](integration-pr.md). Leave PRs #1–#5 and all teammate
-branches alone. Do not request reviewers or send messages without authorization.
+Vansh authorized pushing **only** the new integration branch and opening a
+**draft** PR targeting `main`, using [the prepared description](integration-pr.md).
+Leave PRs #1–#5 and all teammate branches alone. Do not request reviewers or send
+messages without authorization. Publication is not approval to merge `main`.
 
 After team checks and separate explicit approval, merge the reviewed integration
 PR with a regular merge commit so source history is retained. Then reconcile the
