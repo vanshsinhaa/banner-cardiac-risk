@@ -1,0 +1,1417 @@
+[
+  {
+    "image": "blurry_1.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Maria Mockwell",
+        "box": [
+          60.0,
+          39.0,
+          480.0,
+          74.0
+        ],
+        "confidence": 0.873,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 7686722",
+        "box": [
+          60.0,
+          97.0,
+          328.0,
+          132.0
+        ],
+        "confidence": 0.86,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 10/20/1946",
+        "box": [
+          60.0,
+          155.0,
+          368.0,
+          191.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/22/2026",
+        "box": [
+          60.0,
+          213.0,
+          365.0,
+          248.0
+        ],
+        "confidence": 0.955,
+        "identifying": true
+      },
+      {
+        "text": "124ead ECG",
+        "box": [
+          63.0,
+          290.0,
+          290.0,
+          327.0
+        ],
+        "confidence": 0.625,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bom",
+        "box": [
+          60.0,
+          349.0,
+          299.0,
+          390.0
+        ],
+        "confidence": 0.877,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          60.0,
+          407.0,
+          269.0,
+          442.0
+        ],
+        "confidence": 0.947,
+        "identifying": false
+      },
+      {
+        "text": "ORS: 90 ms",
+        "box": [
+          59.0,
+          464.0,
+          278.0,
+          501.0
+        ],
+        "confidence": 0.89,
+        "identifying": false
+      },
+      {
+        "text": "QT/OTc: 380/410 ms",
+        "box": [
+          59.0,
+          522.0,
+          431.0,
+          559.0
+        ],
+        "confidence": 0.867,
+        "identifying": false
+      },
+      {
+        "text": "4",
+        "box": [
+          56.0,
+          706.0,
+          419.0,
+          935.0
+        ],
+        "confidence": 0.19,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "blurry_2.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Alex Fakerton",
+        "box": [
+          60.0,
+          39.0,
+          452.0,
+          74.0
+        ],
+        "confidence": 0.937,
+        "identifying": true
+      },
+      {
+        "text": "MRN 4460444",
+        "box": [
+          60.0,
+          97.0,
+          327.0,
+          132.0
+        ],
+        "confidence": 0.925,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 11/25/1948",
+        "box": [
+          60.0,
+          155.0,
+          368.0,
+          191.0
+        ],
+        "confidence": 0.95,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/19/2026",
+        "box": [
+          60.0,
+          213.0,
+          365.0,
+          248.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "124ead ECG",
+        "box": [
+          63.0,
+          286.0,
+          293.0,
+          338.0
+        ],
+        "confidence": 0.625,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bom",
+        "box": [
+          60.0,
+          345.0,
+          299.0,
+          395.0
+        ],
+        "confidence": 0.877,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          60.0,
+          403.0,
+          273.0,
+          452.0
+        ],
+        "confidence": 0.947,
+        "identifying": false
+      },
+      {
+        "text": "ORS: 90 ms",
+        "box": [
+          59.0,
+          458.0,
+          281.0,
+          511.0
+        ],
+        "confidence": 0.89,
+        "identifying": false
+      },
+      {
+        "text": "QT/OTc: 380/410 ms",
+        "box": [
+          59.0,
+          518.0,
+          435.0,
+          571.0
+        ],
+        "confidence": 0.867,
+        "identifying": false
+      },
+      {
+        "text": "4",
+        "box": [
+          56.0,
+          706.0,
+          419.0,
+          935.0
+        ],
+        "confidence": 0.19,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "clean_1.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Jane Mockwell",
+        "box": [
+          63.0,
+          42.0,
+          464.0,
+          72.0
+        ],
+        "confidence": 0.937,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 7933063",
+        "box": [
+          63.0,
+          100.0,
+          325.0,
+          130.0
+        ],
+        "confidence": 0.94,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 02/11/2005",
+        "box": [
+          63.0,
+          157.0,
+          366.0,
+          188.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/26/2026",
+        "box": [
+          63.0,
+          216.0,
+          363.0,
+          246.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "12-lead ECG",
+        "box": [
+          64.0,
+          293.0,
+          287.0,
+          324.0
+        ],
+        "confidence": 0.94,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bpm",
+        "box": [
+          63.0,
+          352.0,
+          296.0,
+          389.0
+        ],
+        "confidence": 0.873,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          63.0,
+          410.0,
+          267.0,
+          440.0
+        ],
+        "confidence": 0.96,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          62.0,
+          467.0,
+          276.0,
+          499.0
+        ],
+        "confidence": 0.953,
+        "identifying": false
+      },
+      {
+        "text": "QT/QTc: 380/410 ms",
+        "box": [
+          62.0,
+          525.0,
+          429.0,
+          557.0
+        ],
+        "confidence": 0.937,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "clean_2.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Jane Testcase",
+        "box": [
+          63.0,
+          42.0,
+          463.0,
+          72.0
+        ],
+        "confidence": 0.937,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 5629295",
+        "box": [
+          63.0,
+          100.0,
+          326.0,
+          130.0
+        ],
+        "confidence": 0.935,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 03/15/1945",
+        "box": [
+          63.0,
+          157.0,
+          366.0,
+          188.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/21/2026",
+        "box": [
+          63.0,
+          216.0,
+          363.0,
+          246.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "12-lead ECG",
+        "box": [
+          64.0,
+          293.0,
+          287.0,
+          324.0
+        ],
+        "confidence": 0.94,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bpm",
+        "box": [
+          63.0,
+          352.0,
+          296.0,
+          389.0
+        ],
+        "confidence": 0.873,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          63.0,
+          410.0,
+          267.0,
+          440.0
+        ],
+        "confidence": 0.96,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          62.0,
+          467.0,
+          276.0,
+          499.0
+        ],
+        "confidence": 0.953,
+        "identifying": false
+      },
+      {
+        "text": "QT/QTc: 380/410 ms",
+        "box": [
+          62.0,
+          525.0,
+          429.0,
+          557.0
+        ],
+        "confidence": 0.937,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "lowcontrast_noisy_1.jpg",
+    "missed": [
+      "Patient: Maria Fakerton",
+      "MRN: 9938395",
+      "DOB: 06/05/2002",
+      "Date: 10/08/2026"
+    ],
+    "regions": []
+  },
+  {
+    "image": "lowcontrast_noisy_2.jpg",
+    "missed": [
+      "Patient: Maria Mockwell",
+      "MRN: 8334406",
+      "DOB: 10/16/2003",
+      "Date: 10/25/2026"
+    ],
+    "regions": []
+  },
+  {
+    "image": "rotated_1.jpg",
+    "missed": [
+      "DOB: 10/10/1987",
+      "Date: 10/13/2026"
+    ],
+    "regions": [
+      {
+        "text": "Patient: Sam Fakerton",
+        "box": [
+          14.0,
+          89.0,
+          405.0,
+          156.0
+        ],
+        "confidence": 0.933,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 4677048",
+        "box": [
+          20.0,
+          158.0,
+          284.0,
+          222.0
+        ],
+        "confidence": 0.935,
+        "identifying": true
+      },
+      {
+        "text": "pos: 10/1 0/1987",
+        "box": [
+          26.0,
+          212.0,
+          328.0,
+          271.0
+        ],
+        "confidence": 0.917,
+        "identifying": false
+      },
+      {
+        "text": "Date: 10/1 3/2026",
+        "box": [
+          33.0,
+          270.0,
+          333.0,
+          329.0
+        ],
+        "confidence": 0.96,
+        "identifying": false
+      },
+      {
+        "text": "42-lead ECG",
+        "box": [
+          42.0,
+          354.0,
+          266.0,
+          406.0
+        ],
+        "confidence": 0.88,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bpm",
+        "box": [
+          47.0,
+          418.0,
+          281.0,
+          464.0
+        ],
+        "confidence": 0.77,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          53.0,
+          479.0,
+          258.0,
+          522.0
+        ],
+        "confidence": 0.917,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          59.0,
+          536.0,
+          273.0,
+          579.0
+        ],
+        "confidence": 0.793,
+        "identifying": false
+      },
+      {
+        "text": "qT/Qtc: 380/410 ms",
+        "box": [
+          65.0,
+          578.0,
+          431.0,
+          642.0
+        ],
+        "confidence": 0.733,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "rotated_2.jpg",
+    "missed": [
+      "Date: 10/11/2026"
+    ],
+    "regions": [
+      {
+        "text": "Patient: Jane Samplesmith",
+        "box": [
+          14.0,
+          76.0,
+          482.0,
+          156.0
+        ],
+        "confidence": 0.927,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 331 5054",
+        "box": [
+          20.0,
+          159.0,
+          284.0,
+          214.0
+        ],
+        "confidence": 0.93,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 02/1 4/1988",
+        "box": [
+          26.0,
+          212.0,
+          329.0,
+          271.0
+        ],
+        "confidence": 0.943,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/11 (2026",
+        "box": [
+          33.0,
+          270.0,
+          333.0,
+          329.0
+        ],
+        "confidence": 0.637,
+        "identifying": false
+      },
+      {
+        "text": "42-lead ECG",
+        "box": [
+          42.0,
+          354.0,
+          266.0,
+          406.0
+        ],
+        "confidence": 0.88,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bpm",
+        "box": [
+          47.0,
+          418.0,
+          281.0,
+          464.0
+        ],
+        "confidence": 0.77,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          53.0,
+          479.0,
+          258.0,
+          522.0
+        ],
+        "confidence": 0.917,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          59.0,
+          536.0,
+          273.0,
+          579.0
+        ],
+        "confidence": 0.793,
+        "identifying": false
+      },
+      {
+        "text": "qT/Qtc: 380/410 ms",
+        "box": [
+          65.0,
+          578.0,
+          431.0,
+          642.0
+        ],
+        "confidence": 0.733,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "shadow_1.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Alex Mockwell",
+        "box": [
+          63.0,
+          42.0,
+          456.0,
+          72.0
+        ],
+        "confidence": 0.937,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 1373384",
+        "box": [
+          63.0,
+          100.0,
+          326.0,
+          130.0
+        ],
+        "confidence": 0.94,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 09/05/1941",
+        "box": [
+          63.0,
+          157.0,
+          359.0,
+          188.0
+        ],
+        "confidence": 0.95,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/07/2026",
+        "box": [
+          63.0,
+          216.0,
+          363.0,
+          246.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "12-lead ECG",
+        "box": [
+          64.0,
+          293.0,
+          287.0,
+          324.0
+        ],
+        "confidence": 0.935,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bom",
+        "box": [
+          63.0,
+          352.0,
+          296.0,
+          389.0
+        ],
+        "confidence": 0.843,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          63.0,
+          410.0,
+          267.0,
+          440.0
+        ],
+        "confidence": 0.957,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          62.0,
+          467.0,
+          276.0,
+          499.0
+        ],
+        "confidence": 0.953,
+        "identifying": false
+      },
+      {
+        "text": "QT/QTc: 380/410 ms",
+        "box": [
+          61.0,
+          525.0,
+          429.0,
+          557.0
+        ],
+        "confidence": 0.94,
+        "identifying": false
+      },
+      {
+        "text": "ioe sees",
+        "box": [
+          864.0,
+          608.0,
+          910.0,
+          822.0
+        ],
+        "confidence": 0.02,
+        "identifying": false
+      },
+      {
+        "text": "SESS ees",
+        "box": [
+          864.0,
+          758.0,
+          896.0,
+          922.0
+        ],
+        "confidence": 0.08,
+        "identifying": false
+      },
+      {
+        "text": "ee",
+        "box": [
+          888.0,
+          905.0,
+          910.0,
+          951.0
+        ],
+        "confidence": 0.0,
+        "identifying": false
+      },
+      {
+        "text": "See Soe",
+        "box": [
+          864.0,
+          929.0,
+          910.0,
+          1052.0
+        ],
+        "confidence": 0.135,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "shadow_2.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Jane Mockwell",
+        "box": [
+          63.0,
+          42.0,
+          464.0,
+          72.0
+        ],
+        "confidence": 0.933,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 2055656",
+        "box": [
+          63.0,
+          100.0,
+          326.0,
+          130.0
+        ],
+        "confidence": 0.93,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 01/23/1987",
+        "box": [
+          63.0,
+          157.0,
+          366.0,
+          188.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/23/2026",
+        "box": [
+          63.0,
+          216.0,
+          363.0,
+          246.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "12-lead ECG",
+        "box": [
+          64.0,
+          293.0,
+          287.0,
+          324.0
+        ],
+        "confidence": 0.935,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bom",
+        "box": [
+          63.0,
+          352.0,
+          296.0,
+          389.0
+        ],
+        "confidence": 0.843,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          63.0,
+          410.0,
+          267.0,
+          440.0
+        ],
+        "confidence": 0.957,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          62.0,
+          467.0,
+          276.0,
+          499.0
+        ],
+        "confidence": 0.953,
+        "identifying": false
+      },
+      {
+        "text": "QT/QTc: 380/410 ms",
+        "box": [
+          61.0,
+          525.0,
+          429.0,
+          557.0
+        ],
+        "confidence": 0.94,
+        "identifying": false
+      },
+      {
+        "text": "ioe sees",
+        "box": [
+          864.0,
+          608.0,
+          910.0,
+          822.0
+        ],
+        "confidence": 0.02,
+        "identifying": false
+      },
+      {
+        "text": "SESS ees",
+        "box": [
+          864.0,
+          758.0,
+          896.0,
+          922.0
+        ],
+        "confidence": 0.08,
+        "identifying": false
+      },
+      {
+        "text": "ee",
+        "box": [
+          888.0,
+          905.0,
+          910.0,
+          951.0
+        ],
+        "confidence": 0.0,
+        "identifying": false
+      },
+      {
+        "text": "See Soe",
+        "box": [
+          864.0,
+          929.0,
+          910.0,
+          1052.0
+        ],
+        "confidence": 0.135,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "small_font_1.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Priya Testcase",
+        "box": [
+          61.0,
+          41.0,
+          244.0,
+          58.0
+        ],
+        "confidence": 0.937,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 8334300",
+        "box": [
+          61.0,
+          77.0,
+          180.0,
+          90.0
+        ],
+        "confidence": 0.935,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 06/27/1949",
+        "box": [
+          61.0,
+          113.0,
+          198.0,
+          126.0
+        ],
+        "confidence": 0.955,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/16/2026",
+        "box": [
+          61.0,
+          149.0,
+          197.0,
+          162.0
+        ],
+        "confidence": 0.95,
+        "identifying": true
+      },
+      {
+        "text": "12-lead ECG",
+        "box": [
+          62.0,
+          205.0,
+          163.0,
+          218.0
+        ],
+        "confidence": 0.925,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bpm",
+        "box": [
+          61.0,
+          241.0,
+          167.0,
+          258.0
+        ],
+        "confidence": 0.957,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          61.0,
+          277.0,
+          153.0,
+          290.0
+        ],
+        "confidence": 0.95,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          61.0,
+          313.0,
+          157.0,
+          327.0
+        ],
+        "confidence": 0.93,
+        "identifying": false
+      },
+      {
+        "text": "QT/QTc: 380/410 ms",
+        "box": [
+          61.0,
+          349.0,
+          227.0,
+          363.0
+        ],
+        "confidence": 0.88,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "small_font_2.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: John Dummyfield",
+        "box": [
+          61.0,
+          41.0,
+          264.0,
+          58.0
+        ],
+        "confidence": 0.92,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 5996703",
+        "box": [
+          61.0,
+          77.0,
+          180.0,
+          90.0
+        ],
+        "confidence": 0.935,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 12/16/1960",
+        "box": [
+          61.0,
+          113.0,
+          198.0,
+          126.0
+        ],
+        "confidence": 0.955,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/09/2026",
+        "box": [
+          61.0,
+          149.0,
+          197.0,
+          162.0
+        ],
+        "confidence": 0.96,
+        "identifying": true
+      },
+      {
+        "text": "12-lead ECG",
+        "box": [
+          62.0,
+          205.0,
+          163.0,
+          218.0
+        ],
+        "confidence": 0.925,
+        "identifying": false
+      },
+      {
+        "text": "Rate: 72 bpm",
+        "box": [
+          61.0,
+          241.0,
+          167.0,
+          258.0
+        ],
+        "confidence": 0.957,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          61.0,
+          277.0,
+          153.0,
+          290.0
+        ],
+        "confidence": 0.95,
+        "identifying": false
+      },
+      {
+        "text": "QRS: 90 ms",
+        "box": [
+          61.0,
+          313.0,
+          157.0,
+          327.0
+        ],
+        "confidence": 0.93,
+        "identifying": false
+      },
+      {
+        "text": "QT/QTc: 380/410 ms",
+        "box": [
+          61.0,
+          349.0,
+          227.0,
+          363.0
+        ],
+        "confidence": 0.88,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "tiny_font_1.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Maria Fakerton",
+        "box": [
+          61.0,
+          41.0,
+          185.0,
+          50.0
+        ],
+        "confidence": 0.91,
+        "identifying": true
+      },
+      {
+        "text": "MBN: 4157565,",
+        "box": [
+          61.0,
+          71.0,
+          142.0,
+          80.0
+        ],
+        "confidence": 0.565,
+        "identifying": true
+      },
+      {
+        "text": "DOB: 11/06/1987",
+        "box": [
+          61.0,
+          101.0,
+          153.0,
+          110.0
+        ],
+        "confidence": 0.495,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/12/2026,",
+        "box": [
+          61.0,
+          131.0,
+          153.0,
+          140.0
+        ],
+        "confidence": 0.825,
+        "identifying": true
+      },
+      {
+        "text": "1zlead ECG",
+        "box": [
+          61.0,
+          181.0,
+          130.0,
+          190.0
+        ],
+        "confidence": 0.62,
+        "identifying": false
+      },
+      {
+        "text": "Rale:72 bpm",
+        "box": [
+          61.0,
+          211.0,
+          132.0,
+          223.0
+        ],
+        "confidence": 0.705,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          61.0,
+          241.0,
+          122.0,
+          250.0
+        ],
+        "confidence": 0.89,
+        "identifying": false
+      },
+      {
+        "text": "ORS: 90 ms",
+        "box": [
+          61.0,
+          271.0,
+          125.0,
+          280.0
+        ],
+        "confidence": 0.293,
+        "identifying": false
+      },
+      {
+        "text": "\u2018aT/aTe:380/410 ms",
+        "box": [
+          60.0,
+          301.0,
+          171.0,
+          310.0
+        ],
+        "confidence": 0.545,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "tiny_font_2.jpg",
+    "missed": [],
+    "regions": [
+      {
+        "text": "Patient: Jane Fakerton",
+        "box": [
+          61.0,
+          41.0,
+          181.0,
+          50.0
+        ],
+        "confidence": 0.797,
+        "identifying": true
+      },
+      {
+        "text": "MRN: 2951202",
+        "box": [
+          61.0,
+          71.0,
+          142.0,
+          80.0
+        ],
+        "confidence": 0.0,
+        "identifying": true
+      },
+      {
+        "text": "DoB: 0319/1973,",
+        "box": [
+          61.0,
+          101.0,
+          153.0,
+          110.0
+        ],
+        "confidence": 0.475,
+        "identifying": true
+      },
+      {
+        "text": "Date: 10/25/2026,",
+        "box": [
+          61.0,
+          131.0,
+          153.0,
+          140.0
+        ],
+        "confidence": 0.825,
+        "identifying": true
+      },
+      {
+        "text": "1zlead ECG",
+        "box": [
+          61.0,
+          181.0,
+          130.0,
+          190.0
+        ],
+        "confidence": 0.62,
+        "identifying": false
+      },
+      {
+        "text": "Rale:72 bpm",
+        "box": [
+          61.0,
+          211.0,
+          132.0,
+          223.0
+        ],
+        "confidence": 0.705,
+        "identifying": false
+      },
+      {
+        "text": "PR: 160 ms",
+        "box": [
+          61.0,
+          241.0,
+          122.0,
+          250.0
+        ],
+        "confidence": 0.89,
+        "identifying": false
+      },
+      {
+        "text": "ORS: 90 ms",
+        "box": [
+          61.0,
+          271.0,
+          125.0,
+          280.0
+        ],
+        "confidence": 0.293,
+        "identifying": false
+      },
+      {
+        "text": "\u2018aT/aTe:380/410 ms",
+        "box": [
+          60.0,
+          301.0,
+          171.0,
+          310.0
+        ],
+        "confidence": 0.545,
+        "identifying": false
+      }
+    ]
+  },
+  {
+    "image": "very_blurry_1.jpg",
+    "missed": [
+      "Patient: Alex Mockwell",
+      "MRN: 2746462",
+      "DOB: 02/23/1992",
+      "Date: 10/16/2026"
+    ],
+    "regions": []
+  },
+  {
+    "image": "very_blurry_2.jpg",
+    "missed": [
+      "Patient: Alex Testcase",
+      "MRN: 2197518",
+      "DOB: 11/08/1971",
+      "Date: 10/14/2026"
+    ],
+    "regions": []
+  }
+]

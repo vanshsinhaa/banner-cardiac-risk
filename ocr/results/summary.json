@@ -1,0 +1,50 @@
+{
+  "tesseract": {
+    "recall": 0.703,
+    "precision": 1.0,
+    "text_similarity": 0.99,
+    "seconds_per_image": 0.19,
+    "recall_by_variant": {
+      "blurry": "8/8",
+      "clean": "8/8",
+      "lowcontrast_noisy": "0/8",
+      "rotated": "5/8",
+      "shadow": "8/8",
+      "small_font": "8/8",
+      "tiny_font": "8/8",
+      "very_blurry": "0/8"
+    }
+  },
+  "easyocr": {
+    "recall": 0.859,
+    "precision": 0.965,
+    "text_similarity": 0.972,
+    "seconds_per_image": 1.8,
+    "recall_by_variant": {
+      "blurry": "8/8",
+      "clean": "8/8",
+      "lowcontrast_noisy": "8/8",
+      "rotated": "7/8",
+      "shadow": "8/8",
+      "small_font": "8/8",
+      "tiny_font": "8/8",
+      "very_blurry": "0/8"
+    }
+  },
+  "paddleocr": {
+    "recall": 0.984,
+    "precision": 1.0,
+    "text_similarity": 0.989,
+    "seconds_per_image": 5.98,
+    "recall_by_variant": {
+      "blurry": "8/8",
+      "clean": "8/8",
+      "lowcontrast_noisy": "8/8",
+      "rotated": "8/8",
+      "shadow": "8/8",
+      "small_font": "8/8",
+      "tiny_font": "8/8",
+      "very_blurry": "7/8"
+    }
+  }
+}
