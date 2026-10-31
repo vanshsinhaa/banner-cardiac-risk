@@ -43,6 +43,19 @@ test('verified assignments retain samples and pass', async () => {
     assert.deepEqual(body.leads, payload.leads);
   });
 });
+
+test('Roberto multipart uploads receive waveform data and the review gate', async () => {
+  await withService(result(), async () => {
+    const form = new FormData();
+    form.append('image', new Blob(['pixels'], { type: 'image/png' }), 'ecg.png');
+    const response = await POST(new Request('http://localhost/api/ecg/digitize', { method: 'POST', body: form }));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.deepEqual(body.leads, result().leads);
+    assert.equal(body.requiresReview, true);
+    assert.equal(body.message, undefined);
+  });
+});
 test('a conflicting lead cannot pass even with an inconsistent summary', async () => {
   const payload = { ...result(), requiresReview: false, leadVerification: { status: 'verified', leads: { V1: { status: 'conflict' } } } };
   await withService(payload, async () => {

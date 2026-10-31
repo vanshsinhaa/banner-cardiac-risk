@@ -1,7 +1,7 @@
 // Bridge between the Next.js backend and the Python digitizer service
 // (digitizer-service/server.py). Called by src/app/api/ecg/digitize/route.ts.
 
-import { isEcgDigitizationResult, type EcgDigitizationResult } from "./types";
+import { isEcgDigitizationResult, type EcgDigitizationResult } from "./types.ts";
 
 // Thrown when ECG_DIGITIZER_URL is not set, so the route can answer 501.
 export class DigitizerNotConfiguredError extends Error {
@@ -47,7 +47,7 @@ export async function digitizeEcgImage(image: File): Promise<EcgDigitizationResu
   // `response` is declared outside the try block so it can be used after it.
   let response: Response;
   try {
-    response = await fetch(`${url}/digitize`, { method: "POST", body: formData });
+    response = await fetch(`${url.replace(/\/$/, "")}/digitize`, { method: "POST", body: formData, signal: AbortSignal.timeout(120_000) });
   } catch {
     throw new DigitizerUnavailableError();
   }

@@ -21,6 +21,10 @@ export interface EcgDigitizationResult {
   leads: Partial<Record<EcgLead, (number | null)[]>>;
   samplingRateHz: number;
   units: "mV";
+  requiresReview?: boolean;
+  leadVerification?: { status: string; reason?: string; leads: Record<string, { status: string; reason?: string; observedLabels?: string[] }> };
+  modelRecognition?: { status: string; leads: string[] };
+  recognition?: { leads: Record<string, { status: string; label: string | null }> };
 }
 
 export function isEcgDigitizationResult(value: unknown): value is EcgDigitizationResult {
@@ -33,7 +37,7 @@ export function isEcgDigitizationResult(value: unknown): value is EcgDigitizatio
     result.samplingRateHz <= 0 ||
     result.units !== "mV" ||
     typeof result.leads !== "object" ||
-    result.leads === null
+    result.leads === null || Array.isArray(result.leads)
   ) {
     return false;
   }
@@ -46,6 +50,8 @@ export function isEcgDigitizationResult(value: unknown): value is EcgDigitizatio
       ([lead, samples]) =>
         ECG_LEADS.some((knownLead) => knownLead === lead) &&
         Array.isArray(samples) &&
+        samples.length > 0 &&
+        samples.some(sample => typeof sample === "number" && Number.isFinite(sample)) &&
         samples.every(
           (sample) => sample === null || (typeof sample === "number" && Number.isFinite(sample)),
         ),

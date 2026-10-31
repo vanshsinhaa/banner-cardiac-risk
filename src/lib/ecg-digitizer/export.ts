@@ -1,7 +1,7 @@
 // Converts a digitized ECG into other file formats for download.
 // Used by src/app/api/ecg/digitize/route.ts (server)
 
-import { ECG_LEADS, type EcgDigitizationResult } from "./types";
+import { ECG_LEADS, type EcgDigitizationResult } from "./types.ts";
 
 // Turns a digitized ECG into CSV text: one row per sample, one column per lead.
 //

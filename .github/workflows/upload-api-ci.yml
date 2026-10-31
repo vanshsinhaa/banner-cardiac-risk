@@ -14,6 +14,42 @@ permissions:
   contents: read
 
 jobs:
+  frontend:
+    name: Frontend and route integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+
+  preprocessing:
+    name: Preprocessing, redaction, and signal conversion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -r preprocessing/requirements.txt pillow
+      - run: python -m unittest discover -s preprocessing -p 'test_*.py'
+      - run: python -m unittest discover -s digitizer-service -p 'test_lead_verification.py'
+      - run: python -m unittest discover -s digitizer-service -p 'test_signal_result.py'
+      - run: python ocr/test_redact.py
+
   test:
     name: Run tests
     runs-on: ubuntu-latest
@@ -44,7 +80,7 @@ jobs:
   docker-build:
     name: Build Docker image
     runs-on: ubuntu-latest
-    needs: test # skipped if any test fails
+    needs: [test, frontend, preprocessing] # skipped if any test job fails
     steps:
       - name: Check out code
         uses: actions/checkout@v7

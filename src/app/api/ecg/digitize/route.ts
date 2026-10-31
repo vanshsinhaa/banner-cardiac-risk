@@ -7,8 +7,10 @@ const MAX_BYTES = 10 * 1024 * 1024;
 export async function POST(request: Request) {
   const url = process.env.ECG_DIGITIZER_URL;
   if (!url) return Response.json({ error: "The digitizer service is not configured." }, { status: 503, headers });
-  if (request.headers.get("content-type")?.split(";")[0] !== "image/png") {
-    return Response.json({ error: "Send a PNG crop." }, { status: 415, headers });
+  const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+  const multipart = contentType === "multipart/form-data";
+  if (contentType !== "image/png" && !multipart) {
+    return Response.json({ error: "Send a PNG crop or multipart image." }, { status: 415, headers });
   }
   const reader = request.body?.getReader();
   if (!reader) return Response.json({ error: "No image was sent." }, { status: 400, headers });
@@ -19,7 +21,7 @@ export async function POST(request: Request) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > MAX_BYTES) {
+      if (size > MAX_BYTES + (multipart ? 64 * 1024 : 0)) {
         await reader.cancel();
         return Response.json({ error: "The digitizer accepts crops up to 10 MB." }, { status: 413, headers });
       }
@@ -32,8 +34,20 @@ export async function POST(request: Request) {
   }
   if (!size) return Response.json({ error: "No image was sent." }, { status: 400, headers });
   try {
+    let image: Blob = new Blob([Buffer.concat(chunks)], { type: "image/png" });
+    if (multipart) {
+      let incoming: FormData;
+      try {
+        incoming = await new Response(Buffer.concat(chunks), { headers: { "Content-Type": request.headers.get("content-type")! } }).formData();
+      } catch { return Response.json({ error: "Invalid multipart upload." }, { status: 400, headers }); }
+      const file = incoming.get("image");
+      if (!(file instanceof File)) return Response.json({ error: "Send an image in the image field." }, { status: 400, headers });
+      if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return Response.json({ error: "Unsupported image type." }, { status: 415, headers });
+      if (!file.size || file.size > MAX_BYTES) return Response.json({ error: "Send an image up to 10 MB." }, { status: 413, headers });
+      image = file;
+    }
     const form = new FormData();
-    form.append("image", new Blob([Buffer.concat(chunks)], { type: "image/png" }), "crop.png");
+    form.append("image", image, "ekg-capture");
     const response = await fetch(`${url.replace(/\/$/, "")}/digitize`, {
       method: "POST", body: form, signal: AbortSignal.timeout(120_000),
     });

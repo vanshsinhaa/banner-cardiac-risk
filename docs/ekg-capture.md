@@ -1,8 +1,9 @@
 # EKG page-boundary capture
 
 `EkgCaptureScreen` accepts `initialCorners?: Corners` and calls
-`onCapture(dataUrl, details)` after a successful preview warp. A one-argument
-callback still works. `dataUrl` is a PNG data URL; `details` is:
+`onCapture(dataUrl, details)` after a successful preview warp **and confirmed real
+de-identification**. A one-argument callback still works. Test mocks never trigger
+the callback. `dataUrl` is the redacted PNG data URL; `details` is:
 
 ```ts
 {
@@ -39,8 +40,11 @@ image scale and sampled from the decoded original.
 `src/components/capture/warpPreview.ts` is the single replaceable adapter. The
 crop editor contains no warp or upload implementation. A backend integration
 can replace this adapter with an original-photo-plus-corners request. Keep the
-original photo available for that request; do not feed this preview PNG into a
-second geometric warp.
+original photo available for that replacement request. The current integration
+sends the corrected PNG through metadata sanitization and redaction, then runs
+readability/lighting assessment and digitization independently. Its optional
+lighting preview is never reused for digitization or the source-coordinate audit.
+See [integration review](integration-review.md) for service contracts and gates.
 
 Output width is the truncated longer top/bottom edge; height is the truncated
 longer left/right edge. There is no display-sized cap or other downscaling.

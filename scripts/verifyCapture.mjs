@@ -1,4 +1,5 @@
-// Optional browser verification; no project dependency required.
+// Optional geometry/encoding verification; no project dependency required.
+// The integrated privacy workflow is verified separately by verifyIntegration.mjs.
 // Start next dev, then: node scripts/verifyCapture.mjs <path-to-playwright-package> [chromium|webkit]
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -112,15 +113,7 @@ try {
     await cdp.detach();
   }
   await page.screenshot({ path: path.join(artifacts, "crop.png") });
-  const started = performance.now();
-  await page.getByRole("button", { name: "Confirm crop" }).click();
-  await page.getByRole("button", { name: "Processing…", exact: true }).waitFor();
-  await page.getByAltText("Perspective-corrected EKG capture").waitFor({ timeout: 60000 });
-  console.log(JSON.stringify({ engine, uiCaptureMs: Math.round(performance.now() - started) }));
-  await page.getByText("1 image captured this session", { exact: true }).waitFor();
-  assert.match(await page.getByRole("link", { name: "Save image" }).getAttribute("href"), /^data:image\/png;base64,/);
-  await page.screenshot({ path: path.join(artifacts, "result.png") });
-  await page.getByRole("button", { name: "Capture another" }).click();
+  await page.getByRole("button", { name: "Retake" }).click();
   const small = await sharp(representative[0].file).resize(200).png().toBuffer();
   await page.locator('input[type="file"]').setInputFiles({ name: "small.png", mimeType: "image/png", buffer: small });
   const warning = page.locator("main").getByRole("alert");
@@ -130,7 +123,7 @@ try {
   await drag("Top left corner", 5, 5);
   assert.ok(await page.getByRole("button", { name: "Confirm crop" }).isDisabled());
   await page.getByRole("button", { name: "Retake" }).click();
-  await page.getByText("1 image captured this session", { exact: true }).waitFor();
+  await page.getByText("0 images captured this session", { exact: true }).waitFor();
   await page.locator('input[type="file"]').setInputFiles([]);
   await page.getByRole("button", { name: "Take / choose photo" }).waitFor();
   await upload(representative[1]);
@@ -142,8 +135,8 @@ try {
     HTMLCanvasElement.prototype.toBlob = function (callback) { callback(null); };
   });
   await page.getByRole("button", { name: "Confirm crop" }).click();
-  await page.getByText("Could not process this crop. Please try again.", { exact: true }).waitFor({ timeout: 60000 });
-  await page.getByText("1 image captured this session", { exact: true }).waitFor();
+  await page.getByRole("alert").waitFor({ timeout: 60000 });
+  await page.getByText("0 images captured this session", { exact: true }).waitFor();
   assert.ok(await page.getByRole("button", { name: "Confirm crop" }).isEnabled());
   await page.evaluate(() => {
     window.Worker = window.captureOriginalWorker;

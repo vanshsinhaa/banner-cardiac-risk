@@ -1,10 +1,18 @@
 # Digitization with spatial lead-label verification
 
-This brings Rob's digitizer service into the lead-recognition branch and connects
-it to the capture screen through `POST /api/ecg/digitize`. Confirming a crop runs
-readability and digitization concurrently. The **Extract waveforms and check
-lead assignments** button reruns digitization on the original crop. The OCR
-preview is not reused as spatial evidence: OCR runs on the digitizer's aligned image.
+This combines Rob's digitizer with Arsen's spatial lead checks. The integrated
+four-corner screen calls `POST /api/ecg/digitize` only after metadata sanitization
+and confirmed printed-text redaction. Readability and digitization run concurrently
+on that redacted PNG; **Run scan checks again** repeats them. The lighting preview
+is not reused as spatial evidence: OCR runs on the digitizer's aligned image.
+
+Rob's strip-width/paper-speed calculation supplies the sampling rate (25 mm/s by
+default, `paper_speed` form field at the Python endpoint). An unavailable/implausible
+duration retains the existing 10-second fallback. Null gaps stay on the shared axis.
+
+Debug trace and T-wave plots are disabled by default. Set `ECG_SAVE_TRACE_PLOTS=1`
+only for synthetic verification; `pip install neurokit2` enables optional T-wave
+plots. Missing plotting dependencies cannot prevent normal service startup.
 
 ## Setup
 
@@ -27,7 +35,8 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 .venv/bin/python -m uvicorn server:app \
   --app-dir ../digitizer-service --host 127.0.0.1 --port 8000
 ```
 
-Install Tesseract on the host as for the existing preprocessing pipeline. Set
+Install Tesseract on the host as for the existing preprocessing pipeline. Keep the
+metadata API on a separate port (8001 in the integration setup). Set
 `ECG_DIGITIZER_URL=http://127.0.0.1:8000` in `.env.local`, restart Next.js, and use
 the capture screen. The OCR Python dependencies must be installed in the
 **digitizer's** environment as well as the preprocessing environment.
@@ -99,7 +108,8 @@ The adapters target the pinned revision, not arbitrary digitizer versions.
 
 The check does not validate voltages, signal fidelity, timing, or electrode
 placement. Rob's existing 500 Hz sampling-rate placeholder is unchanged and must
-be verified separately. Existing trace-plot saving behavior is also retained.
+be verified separately. Trace-plot generation is retained behind the opt-in
+`ECG_SAVE_TRACE_PLOTS=1` flag.
 
 ## Tests
 
@@ -122,6 +132,10 @@ Full neural inference with model weights and independent annotated scans is a
 separate validation step; these tests do not establish real-world accuracy.
 
 ## Installed local profile and real-image validation
+
+The following describes Arsen's prior Mac environment. It does not claim that
+weights or real inference were installed/tested in the Windows integration
+worktree; those checks remain pending in `docs/integration-review.md`.
 
 On the tested 8 GB Mac, start the installed environment and weights with:
 

@@ -10,7 +10,7 @@ const headers = { "Cache-Control": "no-store" };
 function runAnalysis(input: Buffer): Promise<string> {
   const folder = path.join(process.cwd(), "preprocessing");
   const venv = path.join(folder, "venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
-  const python = process.env.ECG_PYTHON || (existsSync(venv) ? venv : "python3");
+  const python = process.env.ECG_PYTHON || (existsSync(venv) ? venv : process.platform === "win32" ? "python" : "python3");
   return new Promise((resolve, reject) => {
     const child = execFile(python, ["-B", path.join(folder, "analyze.py")], {
       timeout: 120_000,

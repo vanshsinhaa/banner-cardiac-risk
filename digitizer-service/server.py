@@ -31,29 +31,24 @@ from lead_verification import source_regions, compare_labels, review
 from tracked_identifier import TrackedLeadIdentifier
 from tracked_extractor import TrackedSignalExtractor
 
+from signal_result import NUM_SAMPLES, strip_duration_s, to_result
 from src.config.default import get_cfg
 from src.digitize import save_png_plot
 from src.utils import import_class_from_path
 
 CONFIG_PATH = "src/config/inference_wrapper.yml"
 LAYOUTS_PATH = "src/config/lead_layouts_all.yml"
-LEAD_NAMES = ["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6"]
 
 #NOTE: If testing with a NVIDIA GPU, change resampling to 3000
 RESAMPLE_SIZE = int(os.environ.get("ECG_RESAMPLE_SIZE", "2000"))
 if not 512 <= RESAMPLE_SIZE <= 3000:
     raise ValueError("ECG_RESAMPLE_SIZE must be between 512 and 3000")
-NUM_SAMPLES = 5000  # the digitizer stretches every strip to this many samples per lead
 
 # The digitizer measures the grid (mm per pixel) and the strip's width in pixels, but not
 # how fast the paper ran. 25 mm/s is the standard speed; some printouts use 50 mm/s, which
 # can be passed in the request's paper_speed field. The strip's duration, and so the
 # sampling rate, follows from width in mm / paper speed.
 DEFAULT_PAPER_SPEED_MM_S = 25.0
-# A derived duration outside this range means the grid was measured wrong; fall back to
-# a standard 10 s strip.
-MIN_STRIP_S, MAX_STRIP_S = 2.0, 12.0
-FALLBACK_STRIP_S = 10.0
 
 # Trace plots: one PNG per digitized image, to compare the digitized traces with the original,
 # plus a second PNG showing the T wave found in each lead's median beat.
@@ -101,49 +96,6 @@ def decode_upload(data: bytes) -> torch.Tensor:
     return tensor.unsqueeze(0)
 
 
-def strip_duration_s(got: dict[str, Any], paper_speed_mm_s: float) -> float:
-    """Returns how many seconds of ECG the digitized strip covers.
-
-    The digitizer crops its traced lines to the columns where at least a few lines have
-    signal and stretches that span to NUM_SAMPLES. Measuring the same span here and
-    converting it to mm with the grid size gives the strip's real width.
-    """
-    identifier = wrapper.identifier
-    if "raw_lines" not in got["signal"] or "pixel_spacing_mm" not in got:
-        return FALLBACK_STRIP_S
-    lines = identifier._merge_nonoverlapping_lines(got["signal"]["raw_lines"].clone())
-    lines_per_column = torch.sum(~torch.isnan(lines), dim=0).numpy()
-    valid = np.flatnonzero(lines_per_column >= identifier.required_valid_samples)
-    if len(valid) == 0:
-        return FALLBACK_STRIP_S
-
-    width_px = valid[-1] - valid[0] + 1
-    width_mm = width_px * float(got["pixel_spacing_mm"]["x"])
-    duration = width_mm / paper_speed_mm_s
-    if not MIN_STRIP_S <= duration <= MAX_STRIP_S:
-        print(f"Strip duration {duration:.2f} s looks wrong; assuming {FALLBACK_STRIP_S} s")
-        return FALLBACK_STRIP_S
-    return duration
-
-
-def to_result(canonical: torch.Tensor, sampling_rate_hz: float) -> dict[str, Any]:
-    """Converts the digitizer's 12x5000 microvolt tensor into the app's EcgDigitizationResult shape."""
-    lines = canonical.squeeze().cpu().numpy()  # (12, 5000), NaN where there is no signal
-    leads: dict[str, list[float | None]] = {}
-
-    for name, samples in zip(LEAD_NAMES, lines):
-        if np.isnan(samples).all():  # lead is not on the page
-            continue
-
-        # Same layout as the digitizer's own output: every lead stays on the shared
-        # 5000-sample time axis, and samples with no signal are left empty rather than
-        # filled in. JSON cannot represent NaN, so those samples are sent as null.
-        millivolts = samples / 1000  # convert microvolts to millivolts
-        leads[name] = [None if np.isnan(value) else float(value) for value in millivolts]
-
-    return {"leads": leads, "samplingRateHz": sampling_rate_hz, "units": "mV"}
-
-
 def plot_basepath(upload_name: str | None) -> Path:
     """Returns the path (without extension) the plots for one request are saved under."""
     TRACE_PLOTS_DIR.mkdir(exist_ok=True)
@@ -183,7 +135,7 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
             got = wrapper(tensor, layout_should_include_substring=None)
             provenance = wrapper.identifier.provenance
             source_offset = wrapper.signal_extractor.source_offset
-            duration = strip_duration_s(got, paper_speed)
+            duration = strip_duration_s(got, paper_speed, wrapper.identifier)
         canonical = got["signal"]["canonical_lines"]
         sampling_rate = round(NUM_SAMPLES / duration, 1)
         print(f"Strip: {duration:.2f} s at {paper_speed:g} mm/s -> {sampling_rate} Hz")

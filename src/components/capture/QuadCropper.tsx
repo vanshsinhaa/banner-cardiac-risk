@@ -12,6 +12,7 @@ interface Props {
   corners: Corners | null;
   disabled: boolean;
   onLoad: () => void;
+  onError: () => void;
   onChange: (corners: Corners) => void;
 }
 interface Drag {
@@ -23,7 +24,7 @@ interface Drag {
 }
 const cornerNames = ["Top left", "Top right", "Bottom right", "Bottom left"];
 
-export default function QuadCropper({ src, imageRef, image, size, corners, disabled, onLoad, onChange }: Props) {
+export default function QuadCropper({ src, imageRef, image, size, corners, disabled, onLoad, onError, onChange }: Props) {
   const viewport = useRef<HTMLDivElement>(null);
   const [bounds, setBounds] = useState({ width: 1, height: 1 });
   const [active, setActive] = useState<CropHandle | null>(null);
@@ -109,7 +110,7 @@ export default function QuadCropper({ src, imageRef, image, size, corners, disab
         <foreignObject x={size ? offset.x : 24} y={size ? offset.y : 24} width={size ? size.width * scale : Math.max(1, bounds.width - 48)} height={size ? size.height * scale : Math.max(1, bounds.height - 48)}>
           {/* Native image preserves the existing object-URL/orientation path. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img ref={imageRef} src={src} alt="Original EKG photo" onLoad={onLoad} draggable={false} className={styles.sourceImage} />
+          <img ref={imageRef} src={src} alt="Original EKG photo" onLoad={onLoad} onError={onError} draggable={false} className={styles.sourceImage} />
         </foreignObject>
         {points && size && corners && <>
           <path d={`M${offset.x} ${offset.y}h${size.width * scale}v${size.height * scale}h${-size.width * scale}Z M${points.map(p => `${p.x} ${p.y}`).join("L")}Z`} fill="rgba(0,0,0,.62)" fillRule="evenodd" pointerEvents="none" />
