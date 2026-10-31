@@ -45,4 +45,4 @@ cv2.imwrite("samples/angled_strong.jpg", strong)
 cv2.imwrite("samples/shadow_mild.jpg", add_shadow(mild))
 cv2.imwrite("samples/shadow_strong.jpg", add_shadow(strong))
 
-print("Saved 5 test images to samples/")
+print("Saved 4 test images to samples/")

@@ -46,7 +46,7 @@ def find_boundary(img):
                         return approx.reshape(4, 2).astype("float32")
                     break
             
-        return None
+    return None
 
 
 def warp(img, pts):
@@ -64,7 +64,13 @@ def normalize_lighting(img):
     # then boost local contrast so trace stays visible
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
-    bg = cv2.GaussianBlur(l, (0,0), sigmaX=max(l.shape) // 10)
+    # Estimate the smooth illumination field at bounded resolution. Blurring a
+    # full phone photo with a thousand-pixel kernel can exceed the API timeout.
+    scale = min(1.0, 512 / max(l.shape))
+    small = cv2.resize(l, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA) if scale < 1 else l
+    bg = cv2.GaussianBlur(small, (0, 0), sigmaX=max(1, max(small.shape) / 10))
+    if bg.shape != l.shape:
+        bg = cv2.resize(bg, (l.shape[1], l.shape[0]), interpolation=cv2.INTER_LINEAR)
     flat = cv2.divide(l, bg, scale=200)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     flat = clahe.apply(flat)
