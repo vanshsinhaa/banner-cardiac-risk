@@ -1,0 +1,46 @@
+{
+  "readability": {
+    "http": 200,
+    "seconds": 4.67,
+    "status": "needs_review",
+    "detected_leads": [
+      "aVR",
+      "aVL",
+      "aVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ],
+    "reasons": [
+      "lead_labels_unreadable_or_missing"
+    ],
+    "error": null
+  },
+  "digitizer": {
+    "http": 200,
+    "seconds": 58.72,
+    "units": "mV",
+    "samplingRateHz": 504.3,
+    "requiresReview": true,
+    "assignment_status": "needs_review",
+    "sample_counts": {
+      "I": 5000,
+      "II": 5000,
+      "III": 5000,
+      "aVR": 5000,
+      "aVL": 5000,
+      "aVF": 5000,
+      "V1": 5000,
+      "V2": 5000,
+      "V3": 5000,
+      "V4": 5000,
+      "V5": 5000,
+      "V6": 5000
+    },
+    "detail": null
+  },
+  "passed": true
+}

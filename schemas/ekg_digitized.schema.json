@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Digitized EKG",
+  "description": "One EKG photo turned into numbers. Times are in milliseconds (ms) from the start of the strip. Amplitudes are in millivolts (mV). Positive amplitude points up on the paper. 0 mV is the baseline.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "image_id", "calibration", "sample_rate_hz", "leads", "quality"],
+  "properties": {
+    "schema_version": {
+      "description": "Version of this schema the file was written for. No unit. Must match the version of this schema file exactly. The number goes up on every field change.",
+      "const": "0.1.0"
+    },
+    "image_id": {
+      "description": "ID of the source photo this data came from. No unit. Must not contain patient information.",
+      "type": "string",
+      "minLength": 1
+    },
+    "calibration": {
+      "description": "How pixels in the photo were turned into time and voltage.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mm_per_s", "mm_per_mv", "px_per_mm", "source"],
+      "properties": {
+        "mm_per_s": {
+          "description": "Paper speed in millimeters per second (mm/s). Standard EKG paper is 25.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "mm_per_mv": {
+          "description": "Gain in millimeters per millivolt (mm/mV). Standard EKG paper is 10.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "px_per_mm": {
+          "description": "Image pixels per millimeter of grid paper (px/mm).",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "source": {
+          "description": "Where the calibration values came from. No unit. default = standard paper values were assumed. detected = measured from the grid in the photo. manual = entered by a person.",
+          "enum": ["default", "detected", "manual"]
+        }
+      }
+    },
+    "sample_rate_hz": {
+      "description": "Samples per second, in hertz (Hz). The same for every lead. The time of sample i in a lead is start_ms + i * 1000 / sample_rate_hz. This is the time axis, so no time array is stored.",
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "leads": {
+      "description": "The digitized leads. Any of the 12 standard leads may be present. None is required on its own, but there must be at least one.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/lead" }
+    },
+    "quality": {
+      "description": "Quality of the whole digitization.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall_confidence", "flags"],
+      "properties": {
+        "overall_confidence": {
+          "description": "Confidence in the whole result. No unit. 0 = no confidence, 1 = full confidence.",
+          "$ref": "#/$defs/confidence"
+        },
+        "flags": {
+          "description": "Problems found in the photo. No unit. Empty array when no problem was found.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["glare", "skew", "low_resolution", "crease"] }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "lead": {
+      "description": "One lead of the EKG.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "start_ms", "amplitude_mv", "confidence", "beats"],
+      "properties": {
+        "name": {
+          "description": "Standard lead name. No unit.",
+          "enum": ["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6"]
+        },
+        "start_ms": {
+          "description": "Time of the first sample of this lead, in milliseconds (ms) from the start of the strip.",
+          "type": "number",
+          "minimum": 0
+        },
+        "amplitude_mv": {
+          "description": "The signal, one number per sample, in millivolts (mV). Positive values point up. 0 is the baseline. Samples are evenly spaced at sample_rate_hz.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number" }
+        },
+        "confidence": {
+          "description": "Confidence in this lead's signal. No unit. 0 = no confidence, 1 = full confidence.",
+          "$ref": "#/$defs/confidence"
+        },
+        "beats": {
+          "description": "Heartbeats found in this lead, in time order. Empty array when wave boundaries have not been detected.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/beat" }
+        }
+      }
+    },
+    "beat": {
+      "description": "One heartbeat. All three keys must be present. Use null for p or t when that wave is missing.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p", "qrs", "t"],
+      "properties": {
+        "p": {
+          "description": "P wave, or null when no P wave exists.",
+          "oneOf": [{ "$ref": "#/$defs/wave" }, { "type": "null" }]
+        },
+        "qrs": {
+          "description": "QRS complex. Its peak is the R peak. Never null, because a beat is found by its QRS.",
+          "$ref": "#/$defs/wave"
+        },
+        "t": {
+          "description": "T wave, or null when no T wave was found.",
+          "oneOf": [{ "$ref": "#/$defs/wave" }, { "type": "null" }]
+        }
+      }
+    },
+    "wave": {
+      "description": "Boundaries of one wave. Order must be onset, then peak, then offset. JSON Schema cannot check that order; the checkWaveOrder helper does.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["onset_ms", "peak_ms", "offset_ms", "amplitude_mv"],
+      "properties": {
+        "onset_ms": {
+          "description": "Where the wave starts, in milliseconds (ms) from the start of the strip.",
+          "type": "number",
+          "minimum": 0
+        },
+        "peak_ms": {
+          "description": "Where the wave is furthest from the baseline, in milliseconds (ms) from the start of the strip.",
+          "type": "number",
+          "minimum": 0
+        },
+        "offset_ms": {
+          "description": "Where the wave ends, in milliseconds (ms) from the start of the strip.",
+          "type": "number",
+          "minimum": 0
+        },
+        "amplitude_mv": {
+          "description": "Signal value at the peak, in millivolts (mV). Positive points up. Negative for a wave that points down.",
+          "type": "number"
+        }
+      }
+    }
+  }
+}

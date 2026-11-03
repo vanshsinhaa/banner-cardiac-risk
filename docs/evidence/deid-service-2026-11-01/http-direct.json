@@ -1,0 +1,101 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case": "blurry_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.59
+    },
+    {
+      "case": "blurry_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.84
+    },
+    {
+      "case": "clean_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 10.64
+    },
+    {
+      "case": "clean_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 10.34
+    },
+    {
+      "case": "lowcontrast_noisy_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 11.72
+    },
+    {
+      "case": "lowcontrast_noisy_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 10.55
+    },
+    {
+      "case": "rotated_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.88
+    },
+    {
+      "case": "rotated_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.84
+    },
+    {
+      "case": "shadow_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.72
+    },
+    {
+      "case": "shadow_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 10.24
+    },
+    {
+      "case": "small_font_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 10.61
+    },
+    {
+      "case": "small_font_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 12.28
+    },
+    {
+      "case": "tiny_font_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 10.45
+    },
+    {
+      "case": "tiny_font_2.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.19
+    },
+    {
+      "case": "very_blurry_1.jpg",
+      "outcome": "blocked",
+      "code": "uncertain_text",
+      "seconds": 4.77
+    },
+    {
+      "case": "very_blurry_2.jpg",
+      "outcome": "blocked",
+      "code": "uncertain_text",
+      "seconds": 5.09
+    }
+  ]
+}

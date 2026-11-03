@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python (services/upload-api)
+__pycache__/
+*.pyc
+.venv/
+ocr/.models/
+.pytest_cache/
+.local-run/
+# preprocessing prototype
+preprocessing/venv/
+preprocessing/output/
+
+/Open-ECG-Digitizer/
+
+/digitizer-service/trace-plots/
+
+# Local nested worktrees
+/.integration/
