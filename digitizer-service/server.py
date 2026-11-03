@@ -15,6 +15,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Upstream emits Unicode arrows inside its rhythm-assignment try block. On a
+# Windows cp1252 stdout, UnicodeEncodeError is caught as ValueError and silently
+# skips assignment. Keep numerical behavior independent of console encoding.
+if sys.platform == "win32":
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
 import matplotlib
 
 matplotlib.use("Agg")  # draw plots to files only; must be set before pyplot is imported
@@ -66,6 +74,12 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu" #Any other CPU
 
+if device == "cpu":
+    cpu_threads = int(os.environ.get("ECG_CPU_THREADS", "2"))
+    if not 1 <= cpu_threads <= 8:
+        raise ValueError("ECG_CPU_THREADS must be between 1 and 8")
+    torch.set_num_threads(cpu_threads)
+
 cfg = get_cfg(CONFIG_PATH)
 cfg.merge_from_list(
     [
@@ -86,6 +100,12 @@ model_lock = threading.Lock()
 plot_lock = threading.Lock()
 app = FastAPI()
 print(f"Digitizer loaded on {device}")
+
+
+@app.get("/health")
+def health():
+    # This module completes model loading before uvicorn serves requests.
+    return {"status": "ready", "device": device, "resample_size": RESAMPLE_SIZE}
 
 
 # --- Helpers ----------------------------------------------------------------

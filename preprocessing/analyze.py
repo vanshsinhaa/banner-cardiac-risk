@@ -9,7 +9,7 @@ import sys
 import cv2
 import numpy as np
 
-from preprocess import find_boundary, normalize_lighting, warp
+from preprocess import normalize_lighting
 from quality import check_scan_quality
 
 MAX_BYTES = 10 * 1024 * 1024
@@ -31,11 +31,12 @@ def decode_crop(raw):
 
 
 def analyze_image(image, *, ocr=None):
-    points = find_boundary(image)
-    rectified = warp(image, points) if points is not None else image
+    # The browser already rectified this crop. A second boundary detector/warp
+    # could select an internal grid rectangle and discard useful content.
+    rectified = image
     # Preserve the original contrast for the readability decision.
     quality = check_scan_quality(rectified, ocr=ocr)
-    # With no page boundary, use the user's manual crop for lighting correction.
+    # Rotate to the selected reading orientation for the separate lighting preview.
     from lead_ocr import rotate
     rectified = rotate(rectified, quality.rotation_degrees)
     processed = normalize_lighting(rectified)
@@ -47,7 +48,7 @@ def analyze_image(image, *, ocr=None):
         "status": "passed" if quality.accepted else (
             "needs_review" if quality.reasons == ("lead_labels_unreadable_or_missing",) else "failed"
         ),
-        "boundary_found": points is not None,
+        "boundary_found": False,  # compatibility: no second boundary detector
         "width": int(rectified.shape[1]),
         "height": int(rectified.shape[0]),
         "processed_image": "data:image/png;base64," + base64.b64encode(encoded).decode("ascii"),

@@ -1,64 +1,52 @@
-// Tests for checkResolution. Run with: npm test
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-
-import { FALLBACK_MIN_PHOTO_LONG_SIDE_PX, MIN_PIXELS_PER_MM } from "../config/resolution.ts";
+import { PHOTO_LONG_SIDE_REFERENCE_PX, REFERENCE_PIXELS_PER_MM } from "../config/resolution.ts";
 import { checkResolution } from "./checkResolution.ts";
 
-describe("checkResolution, photo size fallback", () => {
-  it("passes a photo above the limit", () => {
-    const result = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX + 500, height: 800 });
-    assert.equal(result.pass, true);
+describe("source-image detail advice", () => {
+  it("lets the native 1700 x 1100 privacy-fixture dimensions proceed with advice", () => {
+    const result = checkResolution({ width: 1700, height: 1100 });
+    assert.equal(result.status, "advisory");
     assert.equal(result.measure, "photoLongSidePx");
-    assert.equal(result.measured, FALLBACK_MIN_PHOTO_LONG_SIDE_PX + 500);
-    assert.equal(result.required, FALLBACK_MIN_PHOTO_LONG_SIDE_PX);
+    assert.equal(result.measured, 1700);
+    assert.match(result.reason, /You can crop it/);
   });
 
-  it("passes a photo exactly at the limit", () => {
-    const result = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX, height: 800 });
-    assert.equal(result.pass, true);
+  it("does not certify quality at or above the old cutoff", () => {
+    for (const width of [PHOTO_LONG_SIDE_REFERENCE_PX, PHOTO_LONG_SIDE_REFERENCE_PX + 500]) {
+      const result = checkResolution({ width, height: 800 });
+      assert.equal(result.status, "unassessed");
+      assert.equal(result.reference, PHOTO_LONG_SIDE_REFERENCE_PX);
+      assert.match(result.reason, /assessed during processing/);
+    }
   });
 
-  it("fails a photo below the limit and gives a reason", () => {
-    const result = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX - 1, height: 800 });
-    assert.equal(result.pass, false);
-    assert.equal(result.measured, FALLBACK_MIN_PHOTO_LONG_SIDE_PX - 1);
-    assert.equal(result.required, FALLBACK_MIN_PHOTO_LONG_SIDE_PX);
-    assert.match(result.reason, /Photo too small/);
-    assert.match(result.reason, new RegExp(String(FALLBACK_MIN_PHOTO_LONG_SIDE_PX)));
+  it("gives the same advice in portrait and landscape without changing the input", () => {
+    const original = Object.freeze({ width: 1700, height: 1100 });
+    assert.deepEqual(checkResolution(original), checkResolution({ width: 1100, height: 1700 }));
   });
 
-  it("uses the long side, so a portrait photo passes like a landscape one", () => {
-    const landscape = checkResolution({ width: FALLBACK_MIN_PHOTO_LONG_SIDE_PX, height: 800 });
-    const portrait = checkResolution({ width: 800, height: FALLBACK_MIN_PHOTO_LONG_SIDE_PX });
-    assert.equal(portrait.pass, true);
-    assert.equal(portrait.measured, landscape.measured);
+  it("rejects invalid source dimensions, independently of the quality heuristic", () => {
+    for (const value of [0, -1, NaN, Infinity, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+      assert.equal(checkResolution({ width: value, height: 1100 }).status, "invalid");
+      assert.equal(checkResolution({ width: 1700, height: value }).status, "invalid");
+    }
   });
 
-  it("fails when both sides are below the limit", () => {
-    const side = FALLBACK_MIN_PHOTO_LONG_SIDE_PX - 1;
-    assert.equal(checkResolution({ width: side, height: side }).pass, false);
-  });
-});
-
-// Calibration does not exist yet. These tests make sure the swap to
-// pixels per millimeter works when it arrives.
-describe("checkResolution, pixels per millimeter", () => {
-  it("passes above the limit", () => {
-    const result = checkResolution({ width: 100, height: 100, pixelsPerMm: MIN_PIXELS_PER_MM + 2 });
-    assert.equal(result.pass, true);
-    assert.equal(result.measure, "pixelsPerMm");
+  it("uses measured source-grid density as advice rather than a quality pass", () => {
+    const low = checkResolution({ width: 5000, height: 2000, pixelsPerMm: REFERENCE_PIXELS_PER_MM - .5 });
+    assert.equal(low.status, "advisory");
+    assert.equal(low.measure, "pixelsPerMm");
+    assert.equal(low.reference, REFERENCE_PIXELS_PER_MM);
+    const high = checkResolution({ width: 100, height: 100, pixelsPerMm: REFERENCE_PIXELS_PER_MM });
+    assert.equal(high.status, "unassessed");
   });
 
-  it("passes exactly at the limit", () => {
-    const result = checkResolution({ width: 100, height: 100, pixelsPerMm: MIN_PIXELS_PER_MM });
-    assert.equal(result.pass, true);
-  });
-
-  it("fails below the limit and gives a reason, even if the image is wide", () => {
-    const result = checkResolution({ width: 5000, height: 2000, pixelsPerMm: MIN_PIXELS_PER_MM - 0.5 });
-    assert.equal(result.pass, false);
-    assert.equal(result.required, MIN_PIXELS_PER_MM);
-    assert.match(result.reason, /Resolution too low/);
+  it("ignores unusable grid calibration instead of reporting false quality evidence", () => {
+    for (const pixelsPerMm of [0, -1, NaN, Infinity]) {
+      const result = checkResolution({ width: 1700, height: 1100, pixelsPerMm });
+      assert.equal(result.measure, "photoLongSidePx");
+      assert.equal(result.status, "advisory");
+    }
   });
 });

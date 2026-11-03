@@ -15,6 +15,8 @@ export interface Assessment {
   status: "passed" | "needs_review" | "failed";
   detected_leads: string[];
   reasons: string[];
+  advisories?: string[];
+  missing_leads?: string[];
   processed_image: string;
 }
 
@@ -61,6 +63,8 @@ export async function analyzeCapture(capture: DeidentifiedCapture, signal: Abort
   if (!["passed", "needs_review", "failed"].includes(String(data.status)) ||
       !Array.isArray(data.detected_leads) || !data.detected_leads.every(item => typeof item === "string") ||
       !Array.isArray(data.reasons) || !data.reasons.every(item => typeof item === "string") ||
+      (data.advisories !== undefined && (!Array.isArray(data.advisories) || !data.advisories.every(item => typeof item === "string"))) ||
+      (data.missing_leads !== undefined && (!Array.isArray(data.missing_leads) || !data.missing_leads.every(item => typeof item === "string"))) ||
       typeof data.processed_image !== "string" || !PNG.test(data.processed_image)) {
     throw new Error("The readability service returned an invalid assessment.");
   }

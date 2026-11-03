@@ -32,11 +32,14 @@ test("downstream requests carry the redacted pixels and preserve review metadata
   globalThis.fetch = async (url, options) => {
     assert.equal(await (options?.body as Blob).text(), "sanitized-redacted-pixels");
     assert.equal((options?.headers as Record<string, string>)["Content-Type"], "image/png");
-    if (url === "/api/analyze") return Response.json({ status: "needs_review", detected_leads: ["V1"], reasons: [], processed_image: image });
+    if (url === "/api/analyze") return Response.json({ status: "needs_review", detected_leads: ["V1"], missing_leads: ["V2"], advisories: ["limited_image_dimensions"], reasons: [], processed_image: image });
     return Response.json({ leads: { V1: [0.1, null, 0.3] }, samplingRateHz: 250, units: "mV", requiresReview: true });
   };
   try {
-    assert.equal((await analyzeCapture(confirmed, signal())).status, "needs_review");
+    const assessment = await analyzeCapture(confirmed, signal());
+    assert.equal(assessment.status, "needs_review");
+    assert.deepEqual(assessment.advisories, ["limited_image_dimensions"]);
+    assert.deepEqual(assessment.missing_leads, ["V2"]);
     const result = await digitizeCapture(confirmed, signal());
     assert.equal(result.requiresReview, true);
     assert.deepEqual(result.leads.V1, [0.1, null, 0.3]);
@@ -48,4 +51,14 @@ test("empty, all-missing, and non-finite leads cannot pass validation", () => {
   for (const leads of [[], { V1: [] }, { V1: [null, null] }, { V1: [Infinity] }]) {
     assert.equal(isEcgDigitizationResult({ leads, samplingRateHz: 500, units: "mV" }), false);
   }
+});
+
+test("malformed readability advice is rejected instead of reaching result rendering", async () => {
+  const previous = globalThis.fetch;
+  try {
+    for (const extra of [{ advisories: "limited" }, { missing_leads: [null] }]) {
+      globalThis.fetch = async () => Response.json({ status: "needs_review", detected_leads: [], reasons: [], processed_image: image, ...extra });
+      await assert.rejects(analyzeCapture(confirmed, signal()), /invalid assessment/);
+    }
+  } finally { globalThis.fetch = previous; }
 });

@@ -1,5 +1,11 @@
 # Task #44: Low-resolution handling
 
+**Historical implementation below.** On October 31 the early size rejection was
+replaced with a non-blocking advisory, following review of native 1700 x 1100 OCR
+fixtures and the provisional threshold assumptions. The current helper returns
+`status`, `measure`, `measured`, `reference`, and `reason`; it no longer returns a
+quality pass/fail. See [current implementation and verification](../project%20docs/capture-quality-implementation.md).
+
 Part of user story #3, handling imperfect printouts.
 
 ## What we did

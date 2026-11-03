@@ -8,7 +8,17 @@ entries below were reconstructed from Git and existing documents on October 26,
 2026; they are not contemporaneous time logs. AI-assisted implementation is
 reviewed through code, reproducible checks, and the explanations linked here.
 
-## Current state — October 26, 2026
+## Current state - November 3, 2026
+
+Vansh authorized merging the integration into `main` as a development baseline.
+[PR #6](https://github.com/vanshsinhaa/banner-cardiac-risk/pull/6) records final
+status; the [team handoff](../docs/team-handoff.md) describes contribution history,
+setup, verification and unfinished tasks. The real privacy service and downstream
+runtimes now work on the tested local fixtures. Privacy acceptance, #60/#65,
+#61, #64, phone testing and other listed limits remain. No deployment or Taiga
+status/assignment change is included.
+
+## Historical state - October 26, 2026
 
 | Area | Verified state | Remaining work |
 | --- | --- | --- |
@@ -27,6 +37,93 @@ Detailed scope and evidence:
 For setup on another computer, use [the device handoff](DEVICE-HANDOFF.md).
 
 ## Work log — newest first
+
+### 2026-11-03 - Document and publish the development baseline
+
+**Scope:** Explicit user authorization to merge into main, with known limits
+carried forward. Added a team-facing handoff covering attribution, architecture,
+setup, expected test outcomes and owner-specific follow-ups; updated the README,
+historical-status notices and PR description. Preserve source histories and
+unrelated local files; no deployment is included.
+
+**Validation:** 64 frontend/API tests, 140 upload/key/metadata/privacy tests,
+34 preprocessing tests, 25 digitizer tests without skips, and 11 redaction smoke
+checks passed. Lint, TypeScript and production build passed. Real-service
+evidence remains dated November 1-2 and its limits are explicit in the handoff.
+Hosted checks and final merge commit are recorded on PR #6.
+
+### 2026-11-02 — Provision Tesseract and the real CPU digitizer
+
+**Result:** Installed Tesseract, downloaded the pinned upstream checkout and both
+LFS models with matching hashes, prepared a separate CPU environment, configured
+readability/digitizer URLs and paths, and added a hidden-process launcher.
+Fixed Windows stdout encoding so an upstream Unicode log cannot interrupt rhythm
+assignment. Added loaded-runtime health and CPU thread bounds.
+
+**Evidence:** 34 preprocessing and 25 digitizer tests passed with no skips;
+the seven formerly skipped upstream service tests now run. Actual twelve-lead
+inference returned 12 x 5000-sample arrays at 504.3 Hz with review required.
+Actual Tesseract confirmed nine labels on that synthetic page. The browser ran
+all stages on the original one-trace privacy fixture with exact PNG digest
+checks. A real digitizer outage returned 503/no waveforms; the service was restored.
+
+**Limits:** The generated twelve-lead page is still blocked by conservative
+privacy checks that treat some waveform detections as uncertain text. Its
+numerical-stage test is separate from the browser privacy acceptance test.
+Broader privacy policy, independent controls and assignment/measurement acceptance
+remain merge gates. See [setup, evidence and manual tests](local-services-2026-11-02.md).
+No main merge, commit, push, deployment or Taiga update was performed.
+
+### 2026-11-01 — Implement the separate HTTP de-identification service task
+
+**Scope:** Vansh added a separate Sprint 4 service task after clarifying that
+Faith's earlier tickets did not explicitly assign an HTTP backend. Implemented
+the local service on the integration branch, preserving prior capture-quality
+changes. Faith's #60/#61 and Vansh's full #64/#65 remain separate deliverables.
+
+**Result:** Actual uploaded PNG pixels now go through shared OCR grouping/rules,
+validated masking, verification and final metadata sanitization. Added readiness,
+bounded admission/deadlines, safe errors, pinned CPU OCR/model provisioning,
+service/adapter regressions, and real HTTP/browser checks. Next.js displays fixed
+safe messages for recognized blocked outcomes.
+
+**Evidence:** 140 Python tests, 64 frontend/API tests, 11 existing redaction checks,
+lint, TypeScript and production build passed. Real OCR across all 16 synthetic corpus images
+released 14 outputs with all 56 known identifiers fully covered and blocked the
+two very-blurry cases. Actual Chromium upload/crop/save and failure behavior
+passed without response interception. See
+[implementation and evidence](http-deidentify-implementation.md).
+
+**Remaining:** Real downstream digitizer/readability provisioning, measurement
+contract/#64, independent full #60/#65 controls, #61 audit sink/events, direct-route
+privacy provenance, capacity policy and broader real-layout/privacy acceptance.
+No commit, push, main merge, deployment or Taiga change was performed by this work.
+
+### 2026-10-31 — Implement capture-quality advice on the integration branch
+
+**Authorized change:** After discovery, Vansh approved implementation on
+`integration/team-sync-2026-10-30`. Fetched origin and verified that the branch
+contains all current remote team feature tips and matches its remote baseline.
+
+**What changed:** Replaced the provisional 2376 px early rejection with advice
+and **Use this crop**. Made the downstream 600 px check advisory while retaining
+label/contrast checks. Removed the second warp of browser-corrected crops. Added
+source-appropriate replacement guidance, preserved crop edits after privacy
+failure, and retained results when the replacement picker is canceled. Documented
+Roberto's response as the runtime contract; v0.1 remains a legacy reference.
+
+**Evidence:** 62 frontend/API tests, 33 preprocessing, 13 spatial verification,
+4 signal conversion and 112 upload/key/metadata tests passed, plus 11 existing
+redaction checks. Lint, standalone TypeScript and production build passed.
+Chromium/WebKit workflow and pixel-preservation checks passed, including native
+1700 px inputs and failure/retry paths. Browser services/OCR are fixtures; real
+privacy/model acceptance is not claimed. See
+[implementation and verification](capture-quality-implementation.md).
+
+**Remaining:** Real de-identification backend, agreed T-wave/provenance contract
+for #64, independent full privacy workflow for #65/#60, processing-size policy,
+model-quality benchmarks and phone acceptance. No Taiga changes, commit, push,
+main merge or deployment is implied by this local implementation.
 
 ### 2026-10-31 — Review combined UI and document upload-size policy
 

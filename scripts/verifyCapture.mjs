@@ -90,7 +90,7 @@ try {
     return Math.abs(svg.viewBox.baseVal.width - svg.getBoundingClientRect().width) < 1;
   });
   await page.screenshot({ path: path.join(artifacts, "landscape.png") });
-  assert.ok(await page.getByRole("button", { name: "Confirm crop" }).isVisible());
+  assert.ok(await page.getByRole("button", { name: "Use this crop" }).isVisible());
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => {
     const svg = document.querySelector('svg[aria-label="Adjust EKG page boundary"]');
@@ -113,16 +113,16 @@ try {
     await cdp.detach();
   }
   await page.screenshot({ path: path.join(artifacts, "crop.png") });
-  await page.getByRole("button", { name: "Retake" }).click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   const small = await sharp(representative[0].file).resize(200).png().toBuffer();
   await page.locator('input[type="file"]').setInputFiles({ name: "small.png", mimeType: "image/png", buffer: small });
-  const warning = page.locator("main").getByRole("alert");
+  const warning = page.locator("main").getByRole("status").filter({ hasText: "This file may have limited detail" });
   await warning.waitFor();
-  assert.match(await warning.innerText(), /Move closer[\s\S]*Photo too small/);
-  assert.ok(await page.getByRole("button", { name: "Confirm crop" }).isDisabled());
+  assert.match(await warning.innerText(), /You can crop it/);
+  assert.ok(await page.getByRole("button", { name: "Use this crop" }).isEnabled());
   await drag("Top left corner", 5, 5);
-  assert.ok(await page.getByRole("button", { name: "Confirm crop" }).isDisabled());
-  await page.getByRole("button", { name: "Retake" }).click();
+  assert.ok(await page.getByRole("button", { name: "Use this crop" }).isEnabled());
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page.getByText("0 images captured this session", { exact: true }).waitFor();
   await page.locator('input[type="file"]').setInputFiles([]);
   await page.getByRole("button", { name: "Take / choose photo" }).waitFor();
@@ -134,15 +134,15 @@ try {
     window.captureOriginalToBlob = HTMLCanvasElement.prototype.toBlob;
     HTMLCanvasElement.prototype.toBlob = function (callback) { callback(null); };
   });
-  await page.getByRole("button", { name: "Confirm crop" }).click();
-  await page.getByRole("alert").waitFor({ timeout: 60000 });
+  await page.getByRole("button", { name: "Use this crop" }).click();
+  await page.locator("main").getByRole("alert").waitFor({ timeout: 60000 });
   await page.getByText("0 images captured this session", { exact: true }).waitFor();
-  assert.ok(await page.getByRole("button", { name: "Confirm crop" }).isEnabled());
+  assert.ok(await page.getByRole("button", { name: "Use this crop" }).isEnabled());
   await page.evaluate(() => {
     window.Worker = window.captureOriginalWorker;
     HTMLCanvasElement.prototype.toBlob = window.captureOriginalToBlob;
   });
-  await page.getByRole("button", { name: "Retake" }).click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   // Compile the actual adapter and pure math into in-page modules for reproducible
   // full-photo timing and canvas crop comparison without adding a production route.
   const modulePaths = ["src/lib/cropCorners.ts", "src/lib/perspective.ts", "src/components/capture/warpPreview.ts", "src/components/capture/warpPreview.worker.ts", "src/components/capture/encodePng.ts"];
@@ -194,7 +194,7 @@ try {
     assert.ok(result.eventLoopTicks > 2, "UI event loop must remain active during the warp");
   }
   assert.deepEqual(errors, []);
-  console.log(`${engine}: capture interaction, keyboard, loupe, resolution gate, PNG, counter, cancellation, processing failure, and full-photo pixel checks passed. ${photos.length} valid photos; 2-byte files ignored.`);
+  console.log(`${engine}: capture interaction, keyboard, loupe, resolution advisory, PNG, counter, cancellation, processing failure, and full-photo pixel checks passed. ${photos.length} valid photos; 2-byte files ignored.`);
 } finally {
   await browser.close();
 }

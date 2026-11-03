@@ -1,5 +1,6 @@
 """Bounded, local Tesseract passes for small labels among ECG grid lines."""
 
+import os
 import time
 
 import cv2
@@ -49,6 +50,10 @@ def rotate(image, degrees):
 
 def read_labels(image, *, budget_seconds=28, regions=None):
     import pytesseract
+
+    # Next.js passes its environment to this subprocess; the digitizer uses the
+    # same explicit executable path, without requiring a machine-wide PATH edit.
+    pytesseract.pytesseract.tesseract_cmd = os.environ.get("TESSERACT_CMD", "tesseract")
 
     deadline = time.monotonic() + budget_seconds
     scale = min(1.0, 3000 / max(image.shape[:2]))

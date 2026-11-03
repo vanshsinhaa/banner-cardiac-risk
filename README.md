@@ -1,13 +1,15 @@
 # Banner cardiac risk: EKG capture integration
 
-This local integration combines Vansh's four-corner capture workflow with Faith's
+This integration combines Vansh's four-corner capture workflow with Faith's
 camera/de-identification work, Arsen's readability and spatial lead checks, and
 Roberto's digitizer, sampling-rate calculation, and optional T-wave plots.
 
-**Review status:** the real de-identification HTTP backend is still missing.
-The app blocks saving and downstream processing until that backend confirms
-redaction. See [integration review](docs/integration-review.md) for merge gates,
-test evidence, and the proposed rollout. Nothing has been deployed.
+**Team handoff:** start with [what changed, setup, tests and remaining tasks](docs/team-handoff.md).
+Vansh authorized merging this shared development baseline on November 3, 2026;
+[PR #6](https://github.com/vanshsinhaa/banner-cardiac-risk/pull/6) records merge status.
+The real HTTP privacy service, Tesseract and digitizer have been exercised locally.
+Broader privacy/layout and measurement acceptance remain; the generated twelve-lead
+fixture still blocks at privacy. Nothing has been deployed.
 
 ## Run the app
 
@@ -19,8 +21,10 @@ npm run dev
 ```
 
 Open http://localhost:3000. Capture a photo, adjust all four corners, and confirm.
-Resolution is checked against the original photo. The corrected crop stays PNG.
-Unreadable photos return to the picker with an error.
+Original dimensions provide a non-blocking detail advisory. Smaller images can
+be cropped and assessed; large dimensions do not certify quality. The corrected
+crop stays PNG. Invalid files show an error, and scan/service failures have retry
+and replacement actions. See [capture quality](project%20docs/capture-quality-implementation.md).
 
 For a synthetic preview without privacy services, add `DEID_MOCK=success` to
 `.env.local` and restart `next dev`. The result is visibly marked TEST MODE;
@@ -53,10 +57,12 @@ If omitted, the app checks `preprocessing/venv`, then the platform Python comman
   Start with `python -m uvicorn app.main:app --port 8001` from
   `services/upload-api`. `/uploads/sanitize` returns a metadata-free PNG;
   it does not redact printed text or encrypt images.
-- **Printed-text redaction (#49, #54, #51):** [OCR prototype](ocr/README.md)
-  and [redactor](ocr/redact.py). These are offline prototypes, **not a running
-  `/deidentify` HTTP server**. `DEID_BACKEND_URL` is a proposed future service;
-  setting the URL does not create it. The required contract is in the review doc.
+- **Printed-text service (new Sprint 4 service task):** wraps the reusable
+  [pipeline](ocr/pipeline.py), preserving Faith's detection/redaction operations.
+  Provision the pinned CPU models, then run `app.deidentify:app` on 8002.
+  [Exact setup, verification and limitations](project%20docs/http-deidentify-implementation.md).
+  No detection or uncertain/unsupported text blocks release. #60/#65 independent
+  verification and #61 audit events remain separate tasks.
 - **Readability/preprocessing:** [setup](preprocessing/README.md).
   Install Tesseract on the host and Python packages with
   `pip install -r preprocessing/requirements.txt`. The lighting-corrected preview
@@ -67,10 +73,15 @@ If omitted, the app checks `preprocessing/venv`, then the platform Python comman
   Trace/T-wave plots are opt-in with `ECG_SAVE_TRACE_PLOTS=1` for synthetic tests;
   install `neurokit2` in that service environment for T-wave plots.
 
+On the configured Windows checkout, `scripts/start-local.ps1` starts missing
+services in hidden windows and reuses healthy ones. Local logs are in ignored
+`.local-run/`. The existing `ocr/samples/clean_1.jpg` exercises all three stages;
+it contains one schematic trace, so review/partial-recognition results are expected.
+
 Both the original upload and each processing payload have a 10 MB limit. A
 full-resolution lossless PNG can exceed the limit even when its JPEG source does
 not. Such a crop is rejected explicitly; it is never silently resized or converted
-to a lossy image. Confirm the team's processing-size policy before merging.
+to a lossy image. The team's processing-size policy remains a follow-up.
 Measurements and proposed stage-specific limits are in
 [the image-size follow-up](project%20docs/task-upload-size-limits.md).
 
@@ -79,9 +90,11 @@ The digitizer returns tentative `leads`, `samplingRateHz`, `units`, and a
 samples are not relabeled. Both raw PNG and Roberto's multipart `image` uploads
 are supported by `/api/ecg/digitize`, and both receive waveform JSON.
 
-The [v0.1 output schema](schemas/README.md) remains unchanged. Raw digitizer JSON
-is not a schema-compliant model export: calibration/confidence and handling of
-null gaps still require a team decision. No model export or risk scoring is enabled.
+Roberto's `EcgDigitizationResult` is the shared runtime contract. Preserve its
+nullable samples and shared axis when extending measurement validation; no
+conversion to the [legacy v0.1 schema](schemas/README.md) is required. T-wave
+measurement fields and calibration/fallback evidence still need a producer
+contract. No model export or risk scoring is enabled.
 
 ## Verification
 
@@ -95,7 +108,7 @@ python -m unittest discover -s digitizer-service -p 'test_signal_result.py'
 python ocr/test_redact.py
 ```
 
-Run the upload API's 112-test suite using its own environment from
+Run the upload API's 140-test suite using its own environment from
 `services/upload-api` with `python -m pytest -q`.
 
 Optional browser verification uses an existing Playwright installation:

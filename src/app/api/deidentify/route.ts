@@ -5,9 +5,17 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_BYTES + 64 * 1024;
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 const png = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
+const blockedReasons: Record<string, string> = {
+  nothing_detected: "Identifying text was not confirmed. Try a clearer image or adjust the crop.",
+  uncertain_text: "Some printed text could not be verified safely. Try a clearer image or adjust the crop.",
+  unsupported_pixels: "The privacy service needs an opaque PNG crop.",
+  redaction_failed: "Identifying text could not be covered safely. Try another crop.",
+  verification_failed: "The redacted image did not pass verification. Nothing was passed on.",
+  ocr_failed: "The text check could not complete. Retry or check the OCR service.",
+};
 
-function fail(status: number, error: string) {
-  return Response.json({ status: "failed", error }, { status, headers });
+function fail(status: number, error: string, code?: string) {
+  return Response.json({ status: "failed", error, ...(code ? { code } : {}) }, { status, headers });
 }
 
 export async function POST(request: Request) {
@@ -78,7 +86,17 @@ export async function POST(request: Request) {
     const upstream = await fetch(`${backend!.replace(/\/$/, "")}/deidentify`, {
       method: "POST", body: upload, signal, cache: "no-store",
     });
-    if (!upstream.ok) return fail(502, "De-identification failed. No image was passed on.");
+    if (!upstream.ok) {
+      if (upstream.status === 422) {
+        const blocked = await upstream.json();
+        const code = blocked?.code;
+        // Only our fixed wording crosses the boundary; never relay OCR/error text.
+        if (typeof code === "string" && Object.hasOwn(blockedReasons, code)) {
+          return fail(422, blockedReasons[code], code);
+        }
+      }
+      return fail(502, "De-identification failed. No image was passed on.");
+    }
     const data = await upstream.json();
     // Test backends cannot accidentally authorize real downstream processing.
     if (data?.status !== "redacted" || data.mock || typeof data.image !== "string" || !png.test(data.image) ||

@@ -1,0 +1,61 @@
+{
+  "packages": {
+    "paddleocr": "3.7.0",
+    "paddlepaddle": "3.3.1",
+    "paddlex": "3.7.2"
+  },
+  "models": [
+    "PP-OCRv5_mobile_det",
+    "en_PP-OCRv5_mobile_rec"
+  ],
+  "files": {
+    "official_models/PP-OCRv5_mobile_det/.gitattributes": {
+      "bytes": 1575,
+      "sha256": "a3a43406012ee8c7b9b38dfab1b11610f33e8245cd864a9a9302d042616a859e"
+    },
+    "official_models/PP-OCRv5_mobile_det/config.json": {
+      "bytes": 2871,
+      "sha256": "7ac1c33f377ba58561f4b89d3180b6add2b7c5c60a4edac90fa4e0ceccdc6665"
+    },
+    "official_models/PP-OCRv5_mobile_det/inference.json": {
+      "bytes": 229777,
+      "sha256": "05feef1acb00aa4cd7362b15f7f501fc4f99d7b1fa73c1c871e0c7b1504b0f5c"
+    },
+    "official_models/PP-OCRv5_mobile_det/inference.pdiparams": {
+      "bytes": 4692937,
+      "sha256": "afa1820cb16c1fd0dad589d0f8b389139061c1ef6d68019685fd07be997dda5b"
+    },
+    "official_models/PP-OCRv5_mobile_det/inference.yml": {
+      "bytes": 903,
+      "sha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699"
+    },
+    "official_models/PP-OCRv5_mobile_det/README.md": {
+      "bytes": 16243,
+      "sha256": "4cc20ad6d41af86b3ce9885ffb0956e152574a2eb14179aeb07fd2d3956161ca"
+    },
+    "official_models/en_PP-OCRv5_mobile_rec/.gitattributes": {
+      "bytes": 1575,
+      "sha256": "a3a43406012ee8c7b9b38dfab1b11610f33e8245cd864a9a9302d042616a859e"
+    },
+    "official_models/en_PP-OCRv5_mobile_rec/config.json": {
+      "bytes": 10455,
+      "sha256": "16103ac291a82fca50f0bb000d62a4b8168f6042f03c89c44cf32f241d1eb1f2"
+    },
+    "official_models/en_PP-OCRv5_mobile_rec/inference.json": {
+      "bytes": 217712,
+      "sha256": "fd1b6ec722ea841a72d3ba43e527df1d1066d5d7808e0503ee3eec7265188753"
+    },
+    "official_models/en_PP-OCRv5_mobile_rec/inference.pdiparams": {
+      "bytes": 7772315,
+      "sha256": "3ec8a97ed6cefe8568d3e2ee90bb193299b566a7661aa4fd52d224b96b59f66b"
+    },
+    "official_models/en_PP-OCRv5_mobile_rec/inference.yml": {
+      "bytes": 3964,
+      "sha256": "27e91d0582f40168aa218303c76e184bc78fa7a5d105aad0cfbad8458b441067"
+    },
+    "official_models/en_PP-OCRv5_mobile_rec/README.md": {
+      "bytes": 6908,
+      "sha256": "4c1cfd6e103b0966fe97505b5254cfa35a931d47d7effca97a9db47fb57dd699"
+    }
+  }
+}

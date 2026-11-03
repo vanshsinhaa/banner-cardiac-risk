@@ -1,11 +1,37 @@
 # Team integration review — 2026-10-30
 
-Status: **integration draft, not approved for main**. Prepared locally on October
-30; Vansh reviewed the combined UI demo and authorized draft publication on
-October 31. Main and teammate branches remain unchanged; no deployment is part
-of this publication. The reviewed demo used simulated backend responses.
+**Current status - November 3:** Vansh explicitly authorized merging PR #6 as a
+shared development baseline, accepting the documented remaining work. See the
+[current team handoff](team-handoff.md) for setup, ownership and verification.
+PR #6 records final merge status. No deployment is included.
+
+The review below is a **dated October 30 snapshot**, with subsequent follow-ups.
+Its original draft-only authorization and pre-merge checklist are historical;
+they do not describe the November 3 decision. The original reviewed demo used
+simulated responses; later actual-service evidence is linked below.
+
+**October 31 follow-up:** Vansh authorized implementation on this integration
+branch. The original-photo resolution gate is now advisory, the readability
+bridge preserves the provided crop, and Roberto's response is the runtime
+contract. The review below records the earlier snapshot. Current changes and
+verification are in [capture quality](../project%20docs/capture-quality-implementation.md).
 
 ## Branches included
+
+**November 2 follow-up:** Tesseract and the real pinned CPU digitizer are installed
+and running; all seven previously skipped service tests pass. A real browser run
+on the schematic privacy fixture reaches all three services. The generated
+twelve-lead page tests numerical stages independently because its waveform
+detections still trigger privacy blocking. See [current evidence and limits](../project%20docs/local-services-2026-11-02.md).
+Broader privacy/assignment acceptance remains unfinished and is carried forward
+under the November 3 development-baseline merge decision.
+
+**November 1 follow-up:** the separate Sprint 4 HTTP-service task now has a real
+local implementation and weight-loaded OCR verification. The historical missing
+backend gate below is superseded by [service implementation and evidence](../project%20docs/http-deidentify-implementation.md).
+At that snapshot the real digitizer was still missing; its November 2 setup is
+described above. Full #60/#65 verification, downstream privacy provenance,
+capacity policy and phone acceptance remain follow-ups.
 
 Local branch: `integration/team-sync-2026-10-30`.
 Worktree: `.integration/team-sync` in the original repository.
@@ -78,7 +104,10 @@ and [blocked privacy check](evidence/integration-2026-10-30/blocked-chromium.png
 No live patient image was sent to a remote service. No real OCR engine, model
 weights, or de-identification HTTP backend was provisioned during preparation.
 
-## Required before approving a merge to main
+## Original pre-merge checklist (October 30 snapshot)
+
+The missing HTTP backend and local-runtime items were subsequently implemented.
+Remaining acceptance items are carried forward explicitly in the current handoff.
 
 1. **Faith:** review the ported camera/de-identification behavior and proposed
    `/deidentify` contract below. Implement or identify the real HTTP backend.
@@ -94,9 +123,10 @@ weights, or de-identification HTTP backend was provisioned during preparation.
    and provisional 32 MiB original / 64 MiB processed targets are in
    [the size-policy follow-up](../project%20docs/task-upload-size-limits.md);
    no limits have been changed.
-4. **Model owner + Vansh:** decide raw digitizer-to-v0.1 export mapping, null gaps,
-   calibration and confidence. The baseline schema is preserved, and no invented
-   confidence/calibration or model-ready export is emitted.
+4. **Model owner + Roberto + Vansh:** extend the existing digitizer response with
+   explicit T-wave measurements and calibration/fallback evidence. Preserve null
+   gaps and their time axis. The v0.1 schema is a legacy reference; no conversion
+   to it is required, and no model-ready export is emitted.
 5. Review the mobile preview and run the real backend flow on a phone, including
    camera permission denial, HEIC decode failure, save behavior, retake, and cancel.
 6. Run GitHub CI on the published draft, re-fetch `main` and all source tips, and
@@ -122,7 +152,7 @@ must return no usable image. A single 55-second Next.js service deadline and a
 10 MB, including the PNG returned by metadata sanitization. This contract is a
 proposal requiring Faith's confirmation, not an assertion that a service exists.
 
-## Approval and rollout
+## Original publication authorization (superseded November 3)
 
 Vansh authorized pushing **only** the new integration branch and opening a
 **draft** PR targeting `main`, using [the prepared description](integration-pr.md).

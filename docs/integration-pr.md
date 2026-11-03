@@ -1,29 +1,39 @@
-# Integrate current capture UI with team pipeline
+# Integrate capture, privacy service and local ECG pipeline
 
-The team branches each integrate an older rectangular capture screen. This draft
-combines them around the current four-corner screen, preserving each contributor's
-history and porting camera, privacy, readability, and digitizer behavior into that
-screen. It includes PRs #1–#5 and Arsen's lead-recognition branch.
+The combined capture UI previously had no live printed-text HTTP service, and
+local readability/digitization lacked Tesseract and model configuration. This
+integration connects the four-corner screen to metadata removal, a new fail-closed
+OCR/redaction HTTP service built on Faith's functions, and the team's readability
+and digitizer services. Source merge commits preserve contributors' history.
 
-Capture now gates saving/callbacks and analysis on metadata sanitization followed
-by confirmed printed-text redaction. The digitizer combines Rob's sampling-rate
-and T-wave work with Arsen's spatial lead audit; binary and multipart uploads both
-return waveform JSON. Missing/invalid evidence remains marked for review.
+Capture retains editable corners and full-resolution PNGs, treats dimension
+references as advisory, and preserves the crop through preprocessing. Saving,
+callbacks and automatic numerical checks require confirmed real privacy output.
+The digitizer preserves shared-axis null samples, sampling-rate calculation,
+spatial verification and review flags. Windows setup adds pinned CPU profiles,
+model provisioning, Tesseract configuration, health checks and a launcher, plus
+a fix for Windows encoding silently skipping upstream rhythm assignment.
 
-Validation: 63 frontend/API tests, 112 upload API tests, 32 preprocessing tests,
-13 spatial-verification tests, four signal-conversion tests, 11 redaction checks,
-lint and production build passed. Synthetic browser evidence is recorded in
-`docs/integration-review.md`. CI now runs frontend and lightweight Python checks.
+Vansh authorized merging this shared development baseline on November 3. Known
+remaining work: conservative privacy false positives, #60/#65 independent
+verification, #61 audit events, #64 measurement acceptance, trusted privacy proof
+for direct API callers, phone testing and image-capacity policy. The generated
+twelve-lead fixture still blocks at privacy; successful independent numerical
+inference is not full-flow acceptance. No model-ready export, cardiac-risk scoring
+or deployment is included.
 
-**Keep draft:** the real de-identification HTTP backend is missing; real pinned
-digitizer/OCR inference, phone testing, the 10 MB PNG policy, and the canonical
-schema mapping need team confirmation. The app fails closed where privacy is not
-confirmed. No risk scoring or model-ready export is enabled.
+Validation: 64 frontend/API tests, 140 upload/key/metadata/privacy tests, 34
+preprocessing tests, 25 digitizer tests without skips, 11 redaction smoke checks,
+lint, TypeScript and production build passed locally. Real OCR released 14/16
+synthetic cases, covering all 56 checked identifiers; two uncertain cases blocked.
+An actual browser run on the one-trace fixture reached all real services using
+the privacy output bytes. A separate numerical twelve-lead check and actual
+outage check are documented with their limits. Hosted CI runs on this PR; it does
+not install neural models or replace real-image acceptance.
 
-The combined UI demo has been reviewed. The size follow-up is documented in
-`project docs/task-upload-size-limits.md`: three 3.40–6.03 MiB JPEGs became
-22.73–23.54 MiB full-resolution PNGs. Separate 32 MiB original / 64 MiB processed
-caps are proposed for benchmarking; runtime limits remain unchanged.
-
-See `docs/integration-review.md` for source tips, conflict decisions, service
-contracts and owner-specific merge gates. No teammate branch needs rewriting.
+Start with the [team handoff](https://github.com/vanshsinhaa/banner-cardiac-risk/blob/integration/team-sync-2026-10-30/docs/team-handoff.md)
+for contribution attribution, setup, contracts, expected test results, ownership
+and remaining work. Detailed records are in `project docs/http-deidentify-implementation.md`,
+`project docs/local-services-2026-11-02.md`, and `docs/integration-review.md`.
+Environments, weights, logs and `.env.local` are ignored; teammates must provision
+their own runtimes. Source branches are preserved; none need rewriting.

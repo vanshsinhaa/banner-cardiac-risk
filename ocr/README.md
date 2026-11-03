@@ -1,5 +1,10 @@
 # Task #49: OCR prototype for printed patient information 
 
+The historical comparison below remains an experiment. A callable pipeline and
+real HTTP service were added on November 1 for the separate Sprint 4 service task:
+[setup, input policy, real tests and remaining limitations](../project%20docs/http-deidentify-implementation.md).
+Run the service rather than replaying stored detections for new uploads.
+
 Compares Tesseract, EasyOCR, and PaddleOCR on how well they find printed, patient-identyfying text on EKG pages. Only synthetic images with fake identifiers were used. No real patient data.
 
 ## How to run 

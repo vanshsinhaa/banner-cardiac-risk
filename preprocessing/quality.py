@@ -18,6 +18,7 @@ class QualityResult:
     uncertain_leads: tuple[str, ...] = ()
     rotation_degrees: int = 0
     ocr_timed_out: bool = False
+    advisories: tuple[str, ...] = ()
 
 
 def _read_labels(image):
@@ -27,7 +28,7 @@ def _read_labels(image):
 
 def check_scan_quality(
     image, *, expected_leads=LEADS, min_confidence=70.0,
-    min_short_side=600, min_label_height=10, ocr=None,
+    short_side_reference=600, min_label_height=10, ocr=None,
 ):
     """Check a cropped/rectified ECG before contrast enhancement.
 
@@ -39,6 +40,7 @@ def check_scan_quality(
     Rejection means label readability was not established, not proof of a bad
     scan. OCR is fallible; this does not verify lead positions or waveform quality.
     Missing/broken OCR raises RuntimeError rather than misreporting poor quality.
+    The short-side reference is advisory; label evidence determines readability.
     """
     expected_leads = tuple(expected_leads)
     if (not expected_leads or len(set(expected_leads)) != len(expected_leads)
@@ -46,18 +48,17 @@ def check_scan_quality(
         raise ValueError("expected_leads must be a nonempty unique subset of LEADS")
     if not 0 <= min_confidence <= 100:
         raise ValueError("min_confidence must be in [0, 100]")
-    if min_short_side < 1 or min_label_height < 1:
+    if short_side_reference < 1 or min_label_height < 1:
         raise ValueError("Minimum pixel dimensions must be positive")
     if (not isinstance(image, np.ndarray) or image.dtype != np.uint8
             or image.size == 0 or image.ndim not in (2, 3)
             or (image.ndim == 3 and image.shape[2] != 3)):
         return QualityResult(False, ("invalid_image",), missing_leads=expected_leads)
-    if min(image.shape[:2]) < min_short_side:
-        return QualityResult(False, ("resolution_too_low",), missing_leads=expected_leads)
+    advisories = ("limited_image_dimensions",) if min(image.shape[:2]) < short_side_reference else ()
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
     if int(gray.max()) - int(gray.min()) < 15:
-        return QualityResult(False, ("insufficient_contrast",), missing_leads=expected_leads)
+        return QualityResult(False, ("insufficient_contrast",), missing_leads=expected_leads, advisories=advisories)
     try:
         data = ocr(gray) if ocr is not None else _read_labels(image)
     except (ImportError, OSError, RuntimeError) as exc:
@@ -81,4 +82,5 @@ def check_scan_quality(
         tuple(lead for lead in LEADS if lead in detected), missing,
         tuple(lead for lead in LEADS if lead in uncertain and lead not in detected),
         int(data.get("rotation_degrees", 0)), bool(data.get("ocr_timed_out", False)),
+        advisories,
     )

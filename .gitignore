@@ -44,7 +44,9 @@ next-env.d.ts
 __pycache__/
 *.pyc
 .venv/
+ocr/.models/
 .pytest_cache/
+.local-run/
 # preprocessing prototype
 preprocessing/venv/
 preprocessing/output/

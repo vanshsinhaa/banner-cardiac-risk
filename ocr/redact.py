@@ -17,13 +17,18 @@ Out:    redacted/*.png and redacted/redaction_report.json
 
 import argparse
 import json
+import math
+from numbers import Real
 from pathlib import Path 
 
 import numpy as np
 from PIL import Image 
 
 #reuse helpers from task 49 prototype so both tasks use identical logic
-from ocr_compare import FACTORIES, area, looks_identifying, merge_rows, overlap
+if __package__:
+    from .ocr_compare import FACTORIES, area, looks_identifying, merge_rows, overlap
+else:
+    from ocr_compare import FACTORIES, area, looks_identifying, merge_rows, overlap
 
 SAMPLES_DIR = Path("samples")
 OUT_DIR = Path("redacted")
@@ -37,8 +42,13 @@ def padded_boxes(regions, width, height):
         if not r["identifying"]:
             continue
         x0, y0, x1, y1 = r["box"]
-        boxes.append([max(0, int(x0 - PAD)), max(0, int(y0 - PAD)),
-                    min(width, int(x1+PAD)),  min(height, int(y1 + PAD))])
+        if any(isinstance(v, bool) or not isinstance(v, Real) or not math.isfinite(v)
+               for v in (x0, y0, x1, y1)):
+            raise ValueError("Invalid redaction geometry.")
+        if x0 >= x1 or y0 >= y1 or x1 <= 0 or y1 <= 0 or x0 >= width or y0 >= height:
+            raise ValueError("Invalid redaction geometry.")
+        boxes.append([max(0, math.floor(x0 - PAD)), max(0, math.floor(y0 - PAD)),
+                      min(width, math.ceil(x1 + PAD)), min(height, math.ceil(y1 + PAD))])
     return boxes 
 
 """
@@ -59,8 +69,8 @@ def redact_image(img, regions):
             arr[y0:y1, x0:x1] = FILL
         return Image.fromarray(arr), {"status": "redacted", "boxes": boxes}
     #anything unexpected -> fail safe 
-    except Exception as e:
-        return None, {"status": "failed", "error": str(e), "boxes": []}
+    except Exception:
+        return None, {"status": "failed", "error": "Redaction could not be applied.", "boxes": []}
 
 
 def outside_unchanged(original, redacted, boxes):

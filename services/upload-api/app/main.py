@@ -18,8 +18,8 @@ MAX_REQUEST_BYTES = MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES
 # Raise that threshold above our request cap so accepted uploads stay in memory.
 MultiPartParser.spool_max_size = MAX_REQUEST_BYTES
 
-# Same number as FALLBACK_MIN_PHOTO_LONG_SIDE_PX in src/config/resolution.ts
-# (Taiga #44): 297 mm page long side x 8 pixels per mm. Keep the two in sync.
+# Same number as PHOTO_LONG_SIDE_REFERENCE_PX in src/config/resolution.ts
+# (Taiga #44): a provisional full-page reference, not a quality admission rule.
 MIN_PHOTO_LONG_SIDE_PX = 297 * 8
 
 logger = logging.getLogger("upload_api")
@@ -138,6 +138,8 @@ async def create_upload(request: Request) -> dict:
         "embedded_metadata_removed": True,
         "printed_identifiers_redacted": False,
         "resolution_check": {
+            "advisory_only": True,
+            "quality_assessed": False,
             "long_side_px": long_side,
             "required_long_side_px": MIN_PHOTO_LONG_SIDE_PX,
             "meets_minimum": long_side >= MIN_PHOTO_LONG_SIDE_PX,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MOVE_CLOSER } from "@/constants/captureMessages";
+import { CAMERA_DETAIL_RECOVERY, FILE_DETAIL_RECOVERY, LIMITED_DETAIL_TITLE } from "@/constants/captureMessages";
 import { checkResolution, type ResolutionResult } from "@/lib/checkResolution";
 import { insetCorners, isWithinPhoto, orderCorners, type CaptureDetails, type Corners, type PhotoSize } from "@/lib/cropCorners";
 import { outputSize } from "@/lib/perspective";
@@ -33,7 +33,8 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
   const [size, setSize] = useState<PhotoSize | null>(null);
   const [corners, setCorners] = useState<Corners | null>(null);
   const [count, setCount] = useState(0);
-  const [resolutionFailure, setResolutionFailure] = useState<ResolutionResult | null>(null);
+  const [resolution, setResolution] = useState<ResolutionResult | null>(null);
+  const [photoSource, setPhotoSource] = useState<"file" | "camera">("file");
   const [error, setError] = useState<string | null>(null);
   const [proposalWarning, setProposalWarning] = useState(false);
   const [capture, setCapture] = useState<DeidentifiedCapture | null>(null);
@@ -68,16 +69,17 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     }
     loadPhoto(URL.createObjectURL(file));
   }
-  function loadPhoto(src: string) {
+  function loadPhoto(src: string, source: "file" | "camera" = "file") {
     processing.current?.abort();
     processing.current = null;
     pendingCrop.current = null;
     setImageSrc(src);
+    setPhotoSource(source);
     loadedImage.current = null;
     setImage(null);
     setSize(null);
     setCorners(null);
-    setResolutionFailure(null);
+    setResolution(null);
     setError(null);
     setProposalWarning(false);
     setCapture(null);
@@ -94,17 +96,17 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     if (!img || loadedImage.current === img) return;
     loadedImage.current = img;
     const photo = { width: img.naturalWidth, height: img.naturalHeight };
-    // Task #44: exactly once per loaded photo, using the whole original photo.
-    const resolution = checkResolution(photo);
-    setResolutionFailure(resolution.pass ? null : resolution);
+    // Original dimensions provide advice, never a claim about ECG quality.
+    setResolution(checkResolution(photo));
     setSize(photo);
     setImage(img);
     const validProposal = initialCorners && isWithinPhoto(initialCorners, photo);
-    setCorners(validProposal ? initialCorners.map(p => ({ ...p })) as unknown as Corners : insetCorners(photo));
+    // Returning from a blocked privacy request preserves the user's edits.
+    setCorners(current => current ?? (validProposal ? initialCorners.map(p => ({ ...p })) as unknown as Corners : insetCorners(photo)));
     setProposalWarning(Boolean(initialCorners && !validProposal));
   }
   function canConfirm() {
-    if (!size || !corners || !isWithinPhoto(corners, size) || resolutionFailure) return false;
+    if (!size || !corners || !isWithinPhoto(corners, size) || resolution?.status === "invalid") return false;
     try { outputSize(corners); return true; } catch { return false; }
   }
   async function scan(confirmed: DeidentifiedCapture, controller = new AbortController()) {
@@ -163,6 +165,16 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     processing.current = controller;
     void sendForDeidentification(pendingCrop.current, controller);
   }
+  function adjustCrop() {
+    if (!pendingCrop.current || processing.current) return;
+    pendingCrop.current = null;
+    setError(null);
+    setStage("crop");
+  }
+  function replacePhoto() {
+    if (photoSource === "file") openPicker();
+    else { reset(); setStage("camera"); }
+  }
   async function confirmCrop() {
     if (!image || !size || !corners || processing.current || !canConfirm()) return;
     const controller = new AbortController();
@@ -196,6 +208,9 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     setImage(null);
     loadedImage.current = null;
     setCapture(null);
+    setSize(null);
+    setCorners(null);
+    setResolution(null);
     setScanning(false);
     setAssessment(null);
     setDigitization(null);
@@ -204,6 +219,11 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
   }
 
   const labels = combinedLeadLabels(assessment?.detected_leads, digitization);
+  const detailRecovery = photoSource === "camera" ? CAMERA_DETAIL_RECOVERY : FILE_DETAIL_RECOVERY;
+  const replacementLabel = photoSource === "camera" ? "Retake photo" : "Choose another image";
+  const readabilityMessage = assessment?.status === "passed" ? "Lead labels found." :
+    assessment?.reasons.includes("insufficient_contrast") ? "The ECG has too little contrast for the readability check. Try the original file or a better-lit photo." :
+    "Some lead labels could not be read. Check the crop includes the full ECG.";
 
   return (
     <main className={`${styles.screen} ${cropping ? styles.dark : ""}`} aria-busy={stage === "processing" || stage === "deidentifying"}>
@@ -211,7 +231,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
       <header className={styles.header}>
         <p className={styles.eyebrow}>EKG CAPTURE</p>
         <h1 ref={titleRef} tabIndex={-1}>{cropping ? "Adjust page corners" : stage === "result" ? "Review your capture" : stage === "deidentifying" ? "Removing identifying information" : stage === "blocked" ? "Image not sent on" : "Capture a clear EKG"}</h1>
-        <p className={styles.subtitle}>{cropping ? "Drag corners to the paper edges. Keep every waveform inside." : stage === "result" ? "Check that the full waveform is included before saving." : "Place the paper flat and fit the entire printout in your photo."}</p>
+        <p className={styles.subtitle}>{cropping ? "Drag corners to the paper edges. Keep every waveform and lead label inside." : stage === "result" ? "Review the image and scan checks before continuing." : "Choose an image or photograph the full printout. You can adjust the page boundary next."}</p>
       </header>
 
       {stage === "idle" && <section className={styles.idleContent} aria-label="Take an EKG photo">
@@ -222,7 +242,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
         <span>You can fine-tune the page boundary next.</span>
       </section>}
 
-      {stage === "camera" && <section className={styles.cameraContent}><CameraGuide onPhoto={loadPhoto} onCancel={reset} /></section>}
+      {stage === "camera" && <section className={styles.cameraContent}><CameraGuide onPhoto={src => loadPhoto(src, "camera")} onCancel={reset} /></section>}
 
       {stage === "deidentifying" && <section className={styles.idleContent} role="status" aria-live="polite">
         <p>Removing identifying information. This can take several seconds.</p>
@@ -243,25 +263,37 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
         <img src={resultSrc} alt="De-identified EKG capture" className={styles.resultImage} />
         {capture?.mock && <p role="alert" className={styles.warning}>TEST MODE: this preview was not de-identified. Saving, analysis, and digitization are disabled.</p>}
         {!capture?.mock && <div className={styles.scanResults} aria-label="Scan checks">
-          {scanning && <p role="status">Checking readability and extracting waveforms. Allow up to 2 minutes.</p>}
-          {assessment && <p>Readability: {assessment.status === "passed" ? "lead labels found" : assessment.status === "needs_review" ? "lead labels need review" : "retake recommended"}.</p>}
+          <p className={styles.privacyStatus}>Identifying information removed.</p>
+          {scanning && <p role="status">Checking the ECG: reading lead labels and extracting waveforms. Allow up to 2 minutes.</p>}
+          {assessment && <p>Readability: {readabilityMessage}</p>}
+          {!!assessment?.missing_leads?.length && <p className={styles.resultHint}>Not read by the readability check: {assessment.missing_leads.join(", ")}.</p>}
+          {assessment?.advisories?.includes("limited_image_dimensions") && <p className={styles.resultHint}>This crop has limited image dimensions. The readability result uses the labels found in it.</p>}
           {(assessment || digitization) && <p>{labels.confirmed.length}/12 lead labels recognized. Label presence does not confirm waveform assignments.</p>}
-          {analysisError && <p role="alert">Readability check: {analysisError}</p>}
-          {digitizerError && <p role="alert">Waveform extraction: {digitizerError}</p>}
+          {analysisError && <p role="alert">Readability check could not finish: {analysisError}</p>}
+          {digitizerError && <p role="alert">Waveform extraction could not finish: {digitizerError}</p>}
           {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz. {digitization.requiresReview !== false ? "Lead assignments need review." : "Printed labels agree with the extracted lead assignments."}</p>}
           {assessment && <details><summary>Lighting-corrected preview</summary>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={assessment.processed_image} alt="Lighting-corrected de-identified EKG" className={styles.resultImage} />
           </details>}
+          {(assessment?.status !== "passed" || analysisError || digitizerError || digitization?.requiresReview !== false) && !scanning && <p className={styles.resultHint}>You can retry the checks or use another image. {detailRecovery}</p>}
           {capture && <button className={styles.secondary} disabled={scanning} onClick={() => void scan(capture)}>Run scan checks again</button>}
         </div>}
+        {size && <details className={styles.imageDetails}><summary>Image details</summary>
+          <p>Original image: {size.width} × {size.height} pixels.</p>
+          <p>Dimensions alone do not confirm waveform quality. Cropping does not add missing detail.</p>
+        </details>}
       </section>}
 
       <footer className={styles.actionBar}>
         <div className={styles.actionsInner}>
-          {cropping && resolutionFailure && <div role="alert" className={styles.warning}>
-            <strong>{MOVE_CLOSER}</strong><p>{resolutionFailure.reason}</p>
+          {cropping && resolution?.status === "advisory" && <div role="status" className={styles.advisory}>
+            <strong>{LIMITED_DETAIL_TITLE}</strong><p>{resolution.reason}</p>
           </div>}
+          {cropping && resolution?.status === "invalid" && <p role="alert" className={styles.warning}>{resolution.reason}</p>}
+          {cropping && size && <details className={styles.imageDetails}><summary>Image details</summary>
+            <p>Original image: {size.width} × {size.height} pixels. {detailRecovery}</p>
+          </details>}
           {cropping && proposalWarning && <p className={styles.hint}>The suggested boundary was invalid. Adjust the starting corners to the page.</p>}
           {error && <p role="alert" className={styles.warning}>{error}</p>}
           {cropping && <p className={styles.hint} role="status">{stage === "processing" ? "Processing full-resolution image…" : "Each corner moves independently. Drag inside to move the selection."}</p>}
@@ -272,18 +304,20 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
             </>}
             {stage === "deidentifying" && <button className={styles.secondary} onClick={reset}>Cancel</button>}
             {stage === "blocked" && <>
-              <button className={styles.secondary} onClick={reset}>Retake</button>
+              <button className={styles.secondary} onClick={replacePhoto}>{replacementLabel}</button>
               <button className={styles.primary} onClick={retryDeidentification}>Try again</button>
             </>}
             {cropping && <>
-              <button className={styles.secondary} onClick={reset} disabled={stage === "processing"}>Retake</button>
-              <button className={styles.primary} onClick={confirmCrop} disabled={stage === "processing" || !canConfirm()}>{stage === "processing" ? "Processing…" : "Confirm crop"}</button>
+              <button className={styles.secondary} onClick={replacePhoto} disabled={stage === "processing"}>{replacementLabel}</button>
+              <button className={styles.primary} onClick={confirmCrop} disabled={stage === "processing" || !canConfirm()}>{stage === "processing" ? "Processing…" : "Use this crop"}</button>
             </>}
             {stage === "result" && <>
-              <button className={styles.secondary} onClick={reset}>Capture another</button>
+              <button className={styles.secondary} onClick={replacePhoto}>{replacementLabel}</button>
               {!capture?.mock && <a className={styles.primary} href={resultSrc ?? undefined} download={`ekg-capture-${count}.png`}>Save image</a>}
             </>}
           </div>
+          {stage === "blocked" && <button className={styles.textAction} onClick={adjustCrop}>Adjust crop</button>}
+          {cropping && stage !== "processing" && <button className={styles.textAction} onClick={reset}>Cancel</button>}
           <p className={styles.count}>{count} {count === 1 ? "image" : "images"} captured this session</p>
         </div>
       </footer>

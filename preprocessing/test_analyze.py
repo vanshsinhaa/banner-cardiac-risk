@@ -1,3 +1,4 @@
+import base64
 import struct
 import unittest
 from unittest.mock import patch
@@ -19,7 +20,7 @@ class AnalyzeTests(unittest.TestCase):
     def labels(self, image):
         return {"text": list(LEADS), "conf": [95] * 12, "height": [20] * 12}
 
-    def test_no_boundary_still_checks_manual_crop_then_normalizes(self):
+    def test_manual_crop_is_checked_then_normalized_without_a_second_warp(self):
         events = []
 
         def ocr(image):
@@ -31,25 +32,28 @@ class AnalyzeTests(unittest.TestCase):
             events.append("lighting")
             return image
 
-        with patch("analyze.find_boundary", return_value=None), patch("analyze.normalize_lighting", side_effect=normalize):
+        with patch("preprocess.find_boundary", side_effect=AssertionError("Already cropped")), patch("preprocess.warp", side_effect=AssertionError("Already warped")), patch("analyze.normalize_lighting", side_effect=normalize):
             result = analyze_image(self.image, ocr=ocr)
         self.assertTrue(result["accepted"])
         self.assertFalse(result["boundary_found"])
         self.assertEqual(events, ["ocr", "lighting"])
         self.assertTrue(result["processed_image"].startswith("data:image/png;base64,"))
 
-    def test_warped_dimensions_are_checked_without_upscaling(self):
-        with patch("analyze.find_boundary", return_value=np.zeros((4, 2))), patch("analyze.warp", return_value=self.image[:400, :400]):
-            result = analyze_image(self.image, ocr=self.labels)
-        self.assertTrue(result["boundary_found"])
-        self.assertFalse(result["accepted"])
-        self.assertEqual(result["reasons"], ("resolution_too_low",))
-        self.assertEqual((result["width"], result["height"]), (400, 400))
+    def test_small_manual_crop_keeps_its_pixels_and_only_advises_on_dimensions(self):
+        small = self.image[:400, :500]
+        with patch("analyze.normalize_lighting", side_effect=lambda image: image):
+            result = analyze_image(small, ocr=self.labels)
+        self.assertFalse(result["boundary_found"])
+        self.assertTrue(result["accepted"])
+        self.assertEqual(result["advisories"], ("limited_image_dimensions",))
+        self.assertEqual((result["width"], result["height"]), (500, 400))
+        output = cv2.imdecode(np.frombuffer(base64.b64decode(result["processed_image"].split(",")[1]), np.uint8), cv2.IMREAD_COLOR)
+        np.testing.assert_array_equal(output, small)
 
     def test_ocr_failure_does_not_become_rejection(self):
         def broken_ocr(image):
             raise OSError("OCR not installed")
-        with patch("analyze.find_boundary", return_value=None), self.assertRaises(RuntimeError):
+        with self.assertRaises(RuntimeError):
             analyze_image(self.image, ocr=broken_ocr)
 
     def test_invalid_and_oversized_png(self):

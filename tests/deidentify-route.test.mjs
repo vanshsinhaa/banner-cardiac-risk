@@ -51,6 +51,31 @@ test("sanitization failure stops before OCR and never returns an image", async (
   assert.equal((await response.json()).image, undefined);
 }));
 
+test("known backend blocks keep their safe reason without forwarding image or OCR text", async () => withEnv(async () => {
+  globalThis.fetch = async url => url.includes("sanitize")
+    ? new Response("clean pixels", { headers: { "Content-Type": "image/png" } })
+    : Response.json({ code: "uncertain_text", error: "SYNTHETIC PRIVATE TEXT", image }, { status: 422 });
+  const response = await POST(request());
+  const data = await response.json();
+  assert.equal(response.status, 422);
+  assert.equal(data.code, "uncertain_text");
+  assert.equal(data.image, undefined);
+  assert.ok(!JSON.stringify(data).includes("SYNTHETIC PRIVATE TEXT"));
+}));
+
+test("unknown backend errors cannot choose displayed messages", async () => withEnv(async () => {
+  for (const code of ["unknown", "__proto__", "constructor"]) {
+    globalThis.fetch = async url => url.includes("sanitize")
+      ? new Response("clean pixels", { headers: { "Content-Type": "image/png" } })
+      : Response.json({ code, error: "SYNTHETIC PRIVATE TEXT", image }, { status: 422 });
+    const response = await POST(request());
+    assert.equal(response.status, 502);
+    const data = await response.json();
+    assert.equal(data.image, undefined);
+    assert.ok(!JSON.stringify(data).includes("SYNTHETIC PRIVATE TEXT"));
+  }
+}));
+
 test("nothing-detected, malformed, and mock upstream results stay blocked", async () => withEnv(async () => {
   for (const result of [{ status: "nothing_detected", image }, { status: "redacted", image, regions_redacted: 0 }, { status: "redacted", image, regions_redacted: 1, mock: true }, { status: "redacted", image: "javascript:alert(1)", regions_redacted: 1 }]) {
     globalThis.fetch = async url => url.includes("sanitize")

@@ -1,0 +1,188 @@
+{
+  "synthetic": true,
+  "width": 2400,
+  "height": 1600,
+  "paper_speed_mm_s": 25,
+  "gain_mm_mv": 10,
+  "pixels_per_mm": 8,
+  "rate_bpm": 75,
+  "nominal_duration_s": 10,
+  "phi": [
+    {
+      "box": [
+        160,
+        41,
+        505,
+        66
+      ],
+      "text": "Patient: Jane Testcase"
+    },
+    {
+      "box": [
+        160,
+        93,
+        427,
+        118
+      ],
+      "text": "MRN: 123456789"
+    },
+    {
+      "box": [
+        160,
+        145,
+        422,
+        170
+      ],
+      "text": "DOB: 01/01/1970"
+    },
+    {
+      "box": [
+        160,
+        197,
+        420,
+        222
+      ],
+      "text": "Date: 11/02/2026"
+    }
+  ],
+  "layout": [
+    [
+      "I",
+      "aVR",
+      "V1",
+      "V4"
+    ],
+    [
+      "II",
+      "aVL",
+      "V2",
+      "V5"
+    ],
+    [
+      "III",
+      "aVF",
+      "V3",
+      "V6"
+    ]
+  ],
+  "rhythm_lead": "II",
+  "traces": {
+    "I": [
+      {
+        "left_px": 172.0,
+        "right_px": 651.5,
+        "baseline_y": 540,
+        "start_s": 0.0,
+        "amplitude_factor": 0.51
+      }
+    ],
+    "aVR": [
+      {
+        "left_px": 672.0,
+        "right_px": 1151.5,
+        "baseline_y": 540,
+        "start_s": 2.5,
+        "amplitude_factor": -0.42
+      }
+    ],
+    "V1": [
+      {
+        "left_px": 1172.0,
+        "right_px": 1651.5,
+        "baseline_y": 540,
+        "start_s": 5.0,
+        "amplitude_factor": 0.36
+      }
+    ],
+    "V4": [
+      {
+        "left_px": 1672.0,
+        "right_px": 2151.5,
+        "baseline_y": 540,
+        "start_s": 7.5,
+        "amplitude_factor": 0.75
+      }
+    ],
+    "II": [
+      {
+        "left_px": 172.0,
+        "right_px": 651.5,
+        "baseline_y": 800,
+        "start_s": 0.0,
+        "amplitude_factor": 0.6
+      },
+      {
+        "left_px": 172.0,
+        "right_px": 2151.5,
+        "baseline_y": 1320,
+        "start_s": 0,
+        "amplitude_factor": 0.6
+      }
+    ],
+    "aVL": [
+      {
+        "left_px": 672.0,
+        "right_px": 1151.5,
+        "baseline_y": 800,
+        "start_s": 2.5,
+        "amplitude_factor": 0.33
+      }
+    ],
+    "V2": [
+      {
+        "left_px": 1172.0,
+        "right_px": 1651.5,
+        "baseline_y": 800,
+        "start_s": 5.0,
+        "amplitude_factor": 0.54
+      }
+    ],
+    "V5": [
+      {
+        "left_px": 1672.0,
+        "right_px": 2151.5,
+        "baseline_y": 800,
+        "start_s": 7.5,
+        "amplitude_factor": 0.6
+      }
+    ],
+    "III": [
+      {
+        "left_px": 172.0,
+        "right_px": 651.5,
+        "baseline_y": 1060,
+        "start_s": 0.0,
+        "amplitude_factor": 0.39
+      }
+    ],
+    "aVF": [
+      {
+        "left_px": 672.0,
+        "right_px": 1151.5,
+        "baseline_y": 1060,
+        "start_s": 2.5,
+        "amplitude_factor": 0.48
+      }
+    ],
+    "V3": [
+      {
+        "left_px": 1172.0,
+        "right_px": 1651.5,
+        "baseline_y": 1060,
+        "start_s": 5.0,
+        "amplitude_factor": 0.66
+      }
+    ],
+    "V6": [
+      {
+        "left_px": 1672.0,
+        "right_px": 2151.5,
+        "baseline_y": 1060,
+        "start_s": 7.5,
+        "amplitude_factor": 0.51
+      }
+    ]
+  },
+  "generator": "scripts/makeFullFlowFixture.py",
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+}

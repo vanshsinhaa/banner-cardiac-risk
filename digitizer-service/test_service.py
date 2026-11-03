@@ -72,6 +72,13 @@ class ServiceTests(unittest.TestCase):
         self.assertIsNone(result['leads']['I'][-1])
         self.assertAlmostEqual(result['leads']['I'][1],fixture()[1][0,1]/1000)
 
+    def test_health_describes_loaded_runtime(self):
+        response = self.client.get('/health')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'ready')
+        self.assertEqual(response.json()['device'], self.server.device)
+        self.assertEqual(response.json()['resample_size'], self.server.RESAMPLE_SIZE)
+
     def test_service_reports_swapped_names_and_preserves_samples(self):
         baseline=self.post().json()['leads']
         def swapped(image, **kwargs):

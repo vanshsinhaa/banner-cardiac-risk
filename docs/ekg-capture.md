@@ -25,6 +25,13 @@ inset and show an explanation. Proposals never override an edit mid-drag.
 Moves clamp to the photo as a group; a move that would make a corner concave
 or cross an edge is rejected, retaining the last valid position.
 
+Original dimensions provide a non-blocking detail advisory, so a native 1700 px
+upload can use **Use this crop**. **Image details** preserves access to source
+dimensions. Privacy failure offers **Adjust crop** with the same corner edits or
+**Try again** with the same PNG. Canceling the replacement picker preserves the
+current crop/result. Readability receives the corrected crop without another
+page warp. See [current verification](../project%20docs/capture-quality-implementation.md).
+
 There are four independent corner handles. Midpoint/edge handles were removed
 at the user's request to retain the four-corner model without linked handles.
 Dragging inside moves the whole selection.
@@ -84,7 +91,7 @@ node scripts/verifyCapture.mjs <path-to-playwright-package> webkit
 
 `CAPTURE_TEST_URL` optionally overrides `http://localhost:3000`. Screenshots
 are generated under `.next/capture-verification/`. The script exercises pointer
-and keyboard movement, the loupe, viewport resizing, the resolution gate,
+and keyboard movement, the loupe, viewport resizing, the resolution advisory,
 capture counting, cancelled selection, encoding failure recovery, and PNG
 output. Chromium additionally exercises emulated touch events. It benchmarks
 the actual adapter with full-photo selections and compares all output bytes

@@ -1,12 +1,15 @@
 # Digitized EKG schema
 
-Taiga task #42, user story #26.
+Taiga task #42, user story #26. **Legacy proposal**, retained with its CLI/tests.
 
-`ekg_digitized.schema.json` describes the JSON file that holds one
-digitized EKG. Trace extraction (#39), signal conversion (#40), grid
-calibration, wave boundary detection, and feature extraction all read or
-write this shape. It is plain JSON Schema (draft 2020-12), so it works
-from TypeScript and from Python.
+The integrated capture pipeline uses Roberto's
+[`EcgDigitizationResult`](../src/lib/ecg-digitizer/types.ts), produced by the Python
+digitizer. Future #64 validation extends that response rather than requiring a
+conversion to this proposal. See [current contract and capture decisions](../project%20docs/capture-quality-implementation.md).
+
+`ekg_digitized.schema.json` describes an earlier digitized-record design in JSON
+Schema draft 2020-12. Its field definitions and examples below still describe
+that proposal accurately; they do not describe the live digitizer response.
 
 Current version: **0.1.0**
 

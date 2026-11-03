@@ -12,6 +12,13 @@ Detailed decisions, scope, and handoffs:
 
 ## What it does
 
+The optional **printed-text service** is a separate ASGI app,
+`app.deidentify:app`, started from the repository root with this directory as
+`--app-dir`. It reuses the bounded upload reader and metadata sanitizer but loads
+OCR dependencies only when explicitly started. See
+[setup and actual synthetic verification](../../project%20docs/http-deidentify-implementation.md).
+The existing metadata Docker image and `app.main:app` behavior remain unchanged.
+
 - `GET /health` returns `{"status": "ok"}`.
 - `POST /uploads` takes one image in a multipart form field named `file` and
   sanitizes it and returns a generated upload ID, the source format/size,
@@ -22,9 +29,10 @@ Detailed decisions, scope, and handoffs:
   printed patient information; this is the input to OCR/redaction, not its result.
 - The format is read from the file's bytes. The file name and the
   client-supplied Content-Type are ignored, because both are easy to fake.
-- The resolution check uses the same minimum as the capture screen
-  (`src/config/resolution.ts`, Taiga #44): the photo's long side must be at
-  least 2376 px (297 mm page x 8 px/mm).
+- The legacy resolution fields compare with the provisional 2376 px full-page
+  reference (`src/config/resolution.ts`, Taiga #44). `advisory_only: true` and
+  `quality_assessed: false` explicitly describe their meaning. A smaller valid
+  file is accepted; a large file is not thereby verified as a readable ECG.
 - Images are processed in memory and dropped after the response. Nothing is
   written to disk or a database. Logs contain only method, path, status, and
   never image bytes or file names.
@@ -73,7 +81,7 @@ Example success body:
   "sanitized_size_bytes": 9200,
   "embedded_metadata_removed": true,
   "printed_identifiers_redacted": false,
-  "resolution_check": {"long_side_px": 1200, "required_long_side_px": 2376, "meets_minimum": false},
+  "resolution_check": {"advisory_only": true, "quality_assessed": false, "long_side_px": 1200, "required_long_side_px": 2376, "meets_minimum": false},
   "stored": false,
   "ekg_verified": false,
   "note": "Embedded metadata removed. Printed identifiers remain. EKG content is not verified."
@@ -199,7 +207,7 @@ Nothing is pushed to a registry and nothing is deployed.
 - No EKG detection. Any valid static PNG or JPEG within the resource limits passes.
 - No authentication, rate limiting, or HTTPS. Local/demo use only.
 - Upload IDs are not saved anywhere; they cannot be looked up later.
-- The resolution minimum is copied from `src/config/resolution.ts`. If one
+- The advisory reference is copied from `src/config/resolution.ts`. If one
   changes, the other must be changed by hand.
 - Uploads must send a `Content-Length` header (curl, browsers, and httpx do).
 - The in-memory guarantee relies on raising Starlette's

@@ -24,6 +24,18 @@ class QualityTests(unittest.TestCase):
     def test_all_labels_pass(self):
         self.assertTrue(self.check(labels()).accepted)
 
+    def test_narrow_crop_is_assessed_using_real_label_evidence(self):
+        small = self.image[:400, :500]
+        ocr = Mock(return_value=labels())
+        result = check_scan_quality(small, ocr=ocr)
+        self.assertTrue(result.accepted)
+        self.assertEqual(result.advisories, ("limited_image_dimensions",))
+        ocr.assert_called_once()
+        result = check_scan_quality(small, ocr=lambda _: labels(LEADS[:-1]))
+        self.assertFalse(result.accepted)
+        self.assertEqual(result.reasons, ("lead_labels_unreadable_or_missing",))
+        self.assertEqual(result.missing_leads, ("V6",))
+
     def test_missing_label_rejects(self):
         result = self.check(labels(LEADS[:-1]))
         self.assertFalse(result.accepted)
@@ -59,7 +71,8 @@ class QualityTests(unittest.TestCase):
         self.assertTrue(self.check(labels(("II",), confidence=60),
                                    expected_leads=("II",), min_confidence=60).accepted)
         for kwargs in [{"expected_leads": ()}, {"expected_leads": ("X",)},
-                       {"min_confidence": 101}, {"min_label_height": 0}]:
+                       {"min_confidence": 101}, {"min_label_height": 0},
+                       {"short_side_reference": 0}]:
             with self.assertRaises(ValueError):
                 self.check(labels(), **kwargs)
 

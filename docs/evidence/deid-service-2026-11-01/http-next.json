@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case": "clean_1.jpg",
+      "outcome": "verified_output",
+      "identifiers_checked": 4,
+      "seconds": 9.38
+    },
+    {
+      "case": "very_blurry_1.jpg",
+      "outcome": "blocked",
+      "code": "uncertain_text",
+      "seconds": 4.55
+    }
+  ]
+}

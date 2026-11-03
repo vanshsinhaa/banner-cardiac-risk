@@ -88,14 +88,14 @@ async function runFolder(folderPath: string) {
       width,
       height,
       // Same estimate the fallback check uses: the photo shows one full page.
-      "est. px/mm": Number((longSide / ASSUMED_PAGE_LONG_SIDE_MM).toFixed(1)),
+      "A4 proxy px/mm": Number((longSide / ASSUMED_PAGE_LONG_SIDE_MM).toFixed(1)),
     };
     for (const scale of SCALES) {
       const result = checkResolution({
         width: Math.round((width * scale) / 100),
         height: Math.round((height * scale) / 100),
       });
-      row[`${scale}%`] = result.pass ? "PASS" : "FAIL";
+      row[`${scale}%`] = result.status.toUpperCase();
     }
     rows.push(row);
   }
@@ -133,31 +133,31 @@ async function main() {
 
   // Part 1: downscale and run the check at each size.
   const downscaleRows = [];
-  const downscaled: { scale: number; buffer: Buffer; pass: boolean }[] = [];
+  const downscaled: { scale: number; buffer: Buffer; status: string }[] = [];
   for (const scale of SCALES) {
     const width = Math.round((fullWidth * scale) / 100);
     const height = Math.round((fullHeight * scale) / 100);
     const buffer = await sharp(original).resize({ width, height, fit: "fill" }).png().toBuffer();
     const result = checkResolution({ width, height });
-    downscaled.push({ scale, buffer, pass: result.pass });
+    downscaled.push({ scale, buffer, status: result.status });
     downscaleRows.push({
       "scale %": scale,
       width,
       height,
-      result: result.pass ? "PASS" : "FAIL",
+      result: result.status.toUpperCase(),
       measured: result.measured,
-      required: result.required,
+      reference: result.reference,
       reason: result.reason,
     });
   }
   console.log("Part 1: downscale, then check");
   console.table(downscaleRows);
 
-  // Part 2: take each image that failed, upscale it back to the original
+  // Part 2: take each image with an advisory, upscale it back to the original
   // size, and compare the two methods.
   const upscaleRows = [];
   for (const item of downscaled) {
-    if (item.pass) continue;
+    if (item.status !== "advisory") continue;
     for (const { name, kernel } of UPSCALE_KERNELS) {
       const buffer = await sharp(item.buffer)
         .resize({ width: fullWidth, height: fullHeight, fit: "fill", kernel })
@@ -170,14 +170,14 @@ async function main() {
         method: name,
         width: fullWidth,
         height: fullHeight,
-        "check after upscale": result.pass ? "PASS" : "FAIL",
+        "check after upscale": result.status.toUpperCase(),
         "trace error": error === null ? "not available (stub, needs #39/#40)" : error,
       });
     }
   }
-  console.log("\nPart 2: upscale the failed images back to original size");
+  console.log("\nPart 2: upscale the advisory images back to original size");
   if (upscaleRows.length === 0) {
-    console.log("Nothing failed in part 1, so there is nothing to upscale.");
+    console.log("No dimension advisories in part 1, so there is nothing to upscale.");
   } else {
     console.table(upscaleRows);
   }
@@ -185,7 +185,7 @@ async function main() {
   console.log(
     "\nNote: the check only counts pixels. Upscaling adds pixels but no new detail,\n" +
       "so 'check after upscale' does not show that upscaling helps. The trace error\n" +
-      "column will answer that once trace extraction exists. In the app, always run\n" +
+      "column is a stub until extraction-error benchmarking is connected. Always run\n" +
       "the check before any upscaling.",
   );
 }

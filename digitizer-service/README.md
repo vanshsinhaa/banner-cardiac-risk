@@ -16,6 +16,14 @@ plots. Missing plotting dependencies cannot prevent normal service startup.
 
 ## Setup
 
+The Windows CPU environment, exact weight checks, startup script, actual inference
+results and remaining privacy/assignment limitations are recorded in
+[November 2 local setup](../project%20docs/local-services-2026-11-02.md).
+Use `requirements-cpu.txt` for that tested inference profile. `GET /health` reports
+the loaded device and resampling setting. `ECG_CPU_THREADS` bounds CPU threads
+(default 2). The wrapper also sets UTF-8 console output on Windows to prevent an
+upstream Unicode log message from interrupting rhythm assignment.
+
 Use the Open-ECG-Digitizer revision already specified by Rob's branch (`97a1508`).
 The adapters depend on its normalization, source cropping and canonicalization
 behavior. Do not upgrade the upstream checkout without rerunning the integration
@@ -107,8 +115,9 @@ Inverted leads (such as -aVR) and ambiguous source traces require review.
 The adapters target the pinned revision, not arbitrary digitizer versions.
 
 The check does not validate voltages, signal fidelity, timing, or electrode
-placement. Rob's existing 500 Hz sampling-rate placeholder is unchanged and must
-be verified separately. Trace-plot generation is retained behind the opt-in
+placement. Rob's strip-width/paper-speed sampling calculation is retained, along
+with its 10-second fallback; calibration and fallback evidence need further
+validation. Trace-plot generation is retained behind the opt-in
 `ECG_SAVE_TRACE_PLOTS=1` flag.
 
 ## Tests
@@ -133,9 +142,9 @@ separate validation step; these tests do not establish real-world accuracy.
 
 ## Installed local profile and real-image validation
 
-The following describes Arsen's prior Mac environment. It does not claim that
-weights or real inference were installed/tested in the Windows integration
-worktree; those checks remain pending in `docs/integration-review.md`.
+The following describes Arsen's prior Mac environment. Windows provisioning and
+real inference were subsequently tested on November 2; see the linked local
+setup record above. Keep the two platform profiles distinct.
 
 On the tested 8 GB Mac, start the installed environment and weights with:
 

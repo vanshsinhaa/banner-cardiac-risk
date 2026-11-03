@@ -9,9 +9,17 @@ Takes a photo of an EKG (paper or screen) and returns a cleaned-up image:
 2. Corrects skew and perspectives: applies a perspective transform so an angled photo becomes a flat, top-down rectangle.
 3. Normalizes lighting: flattens shadows and boosts local contrast so the trace stays visible.
 
-The `preprocess.py` CLI fixes images. The browser app calls `analyze.py`, which combines the preprocessing functions with the `quality.py` lead-label check after each confirmed crop.
+The `preprocess.py` CLI fixes original photos. The browser app calls `analyze.py`
+with an already rectified, privacy-confirmed crop: the bridge checks lead labels
+and corrects lighting without detecting/warping the page again.
 
 ## Setup
+
+For the installed Windows integration setup, use
+[local services and acceptance checks](../project%20docs/local-services-2026-11-02.md).
+`TESSERACT_CMD` selects an explicit Tesseract executable path for both readability
+and spatial lead verification; no machine-wide PATH edit is required. Set
+`ECG_PYTHON` to the environment containing the Python wrapper and OpenCV.
 Requires Python 3. From inside the preprocessing folder:
 
 ```bash
@@ -73,9 +81,12 @@ labels, a clockwise rotation in degrees, and whether any OCR attempt timed out.
 Only exact tokens with confidence at least 70 and original height at least 10
 pixels count toward a pass. Exact tokens with confidence of at least 35 that do
 not meet the pass criteria are reported separately as uncertain. All 12 labels
-are required by default. The original resolution and contrast checks remain.
+are required by default. Contrast remains a checked property. A short side below
+the provisional 600 px reference adds `limited_image_dimensions` to `advisories`
+and still runs OCR; it cannot reject the crop or certify its quality by itself.
+The Python keyword is now `short_side_reference`, replacing `min_short_side`.
 
-The browser starts with the full photo selected and runs readability and digitization
+The browser lets the user adjust four corners and runs readability and digitization
 concurrently. Its confirmed-label display combines confident Tesseract reads with
 successful built-in recognition. A label is unconfirmed only when neither system
 recognizes it. Image-quality failures and operational errors remain separate.
@@ -88,7 +99,8 @@ that the list may be incomplete. If every orientation attempt fails, processing
 returns an operational error rather than a scan-quality rejection.
 
 The processed preview is rotated to the selected reading orientation and then
-lighting-corrected. No boundary means the manual crop is used. The standalone
+lighting-corrected. The supplied crop geometry is preserved; the bridge no longer
+performs an additional boundary detection/warp. The standalone
 `preprocess.py` CLI retains its original no-boundary behavior (unchanged output).
 
 ### Validation

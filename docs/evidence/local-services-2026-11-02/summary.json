@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "services": [
+    {
+      "endpoint": "/api/deidentify",
+      "status": "redacted",
+      "regions": 4
+    },
+    {
+      "endpoint": "/api/analyze",
+      "status": "needs_review",
+      "detected_leads": [],
+      "reasons": [
+        "lead_labels_unreadable_or_missing"
+      ]
+    },
+    {
+      "endpoint": "/api/ecg/digitize",
+      "lead_count": 1,
+      "samplingRateHz": 500,
+      "requiresReview": true,
+      "assignment_status": "needs_review",
+      "missing_sample_counts": {
+        "aVL": 0
+      }
+    }
+  ]
+}

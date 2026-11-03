@@ -41,8 +41,10 @@ def test_upload_synthetic_image(fmt, media_type):
     assert body["embedded_metadata_removed"] is True
     assert body["printed_identifiers_redacted"] is False
     assert body["sanitized_format"] == "PNG"
-    # 600 px is far below the Taiga #44 minimum, so the check reports a fail.
+    # The reference remains observable but cannot reject or certify image quality.
     assert body["resolution_check"]["meets_minimum"] is False
+    assert body["resolution_check"]["advisory_only"] is True
+    assert body["resolution_check"]["quality_assessed"] is False
 
 
 def test_upload_ids_are_unique():

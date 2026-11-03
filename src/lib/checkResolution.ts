@@ -1,9 +1,9 @@
-// Resolution check for an EKG photo (Taiga #44).
+// Source-image detail advice. Dimensions never establish ECG readability.
 // Plain function with no browser code, so tests and scripts can use it.
 
 // The ".ts" ending is needed so Node can run this file directly
 // (npm test, npm run experiment).
-import { FALLBACK_MIN_PHOTO_LONG_SIDE_PX, MIN_PIXELS_PER_MM } from "../config/resolution.ts";
+import { PHOTO_LONG_SIDE_REFERENCE_PX, REFERENCE_PIXELS_PER_MM } from "../config/resolution.ts";
 
 export interface ResolutionInput {
   // Size of the whole photo in pixels, before cropping. Cropping does
@@ -16,44 +16,35 @@ export interface ResolutionInput {
 }
 
 export interface ResolutionResult {
-  pass: boolean;
+  status: "unassessed" | "advisory" | "invalid";
   // Which measure was used for this check.
   measure: "pixelsPerMm" | "photoLongSidePx";
-  measured: number;
-  required: number;
+  measured: number | null;
+  reference: number;
   // Short explanation, for logs and for the screen.
   reason: string;
 }
 
 export function checkResolution(image: ResolutionInput): ResolutionResult {
-  // Preferred measure: pixels per millimeter, once calibration provides it.
-  if (image.pixelsPerMm !== undefined) {
-    const measured = image.pixelsPerMm;
-    const required = MIN_PIXELS_PER_MM;
-    const pass = measured >= required;
+  if (![image.width, image.height].every(value => Number.isSafeInteger(value) && value > 0)) {
     return {
-      pass,
-      measure: "pixelsPerMm",
-      measured,
-      required,
-      reason: pass
-        ? "Resolution OK."
-        : `Resolution too low: ${measured.toFixed(1)} pixels per mm, need at least ${required}.`,
+      status: "invalid", measure: "photoLongSidePx", measured: null,
+      reference: PHOTO_LONG_SIDE_REFERENCE_PX,
+      reason: "This image has invalid dimensions. Choose another JPEG or PNG.",
     };
   }
-
-  // Stand-in measure: long side of the whole photo in pixels. Using the
-  // long side means portrait and landscape photos are treated the same.
-  const measured = Math.max(image.width, image.height);
-  const required = FALLBACK_MIN_PHOTO_LONG_SIDE_PX;
-  const pass = measured >= required;
+  // Invalid/unavailable calibration falls back to original dimensions. Neither
+  // provisional reference can authorize downstream numerical analysis.
+  const hasGridScale = image.pixelsPerMm !== undefined &&
+    Number.isFinite(image.pixelsPerMm) && image.pixelsPerMm > 0;
+  const measure = hasGridScale ? "pixelsPerMm" : "photoLongSidePx";
+  const measured = hasGridScale ? image.pixelsPerMm! : Math.max(image.width, image.height);
+  const reference = hasGridScale ? REFERENCE_PIXELS_PER_MM : PHOTO_LONG_SIDE_REFERENCE_PX;
+  const status = measured < reference ? "advisory" : "unassessed";
   return {
-    pass,
-    measure: "photoLongSidePx",
-    measured,
-    required,
-    reason: pass
-      ? "Resolution OK."
-      : `Photo too small: ${measured} pixels on its long side, need at least ${required}.`,
+    status, measure, measured, reference,
+    reason: status === "advisory"
+      ? "This file may have limited detail. You can crop it and we’ll check whether it can be processed."
+      : "Image detail will be assessed during processing.",
   };
 }

@@ -17,6 +17,14 @@ class LeadOcrTests(unittest.TestCase):
         self.image = np.full((800, 1200), 255, np.uint8)
         self.image[50:80, 50:100] = 0
 
+    def test_explicit_tesseract_executable_is_used(self):
+        import pytesseract
+        configured = 'C:/local tools/tesseract.exe'
+        with patch.dict('os.environ', {'TESSERACT_CMD': configured}), \
+                patch('pytesseract.image_to_data', return_value=data(())):
+            read_labels(self.image)
+            self.assertEqual(pytesseract.pytesseract.tesseract_cmd, configured)
+
     def test_rotations_are_not_combined_to_invent_complete_scan(self):
         responses = [data(('aVR',)), data(('V1','V2','V3')), data(('aVF',)), data(('V6',)), data(('V4',)), data(()), data(())]
         with patch('pytesseract.image_to_data', side_effect=responses):
@@ -89,7 +97,7 @@ class LeadOcrTests(unittest.TestCase):
 
     def test_missing_labels_are_review_not_bad_image(self):
         image = np.repeat(self.image[:,:,None],3,axis=2)
-        with patch('analyze.find_boundary', return_value=None), patch('analyze.normalize_lighting', side_effect=lambda value:value):
+        with patch('analyze.normalize_lighting', side_effect=lambda value:value):
             result = analyze_image(image, ocr=lambda _:data(('V1',)))
         self.assertEqual(result['status'], 'needs_review')
         self.assertFalse(result['accepted'])
