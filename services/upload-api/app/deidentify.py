@@ -14,7 +14,7 @@ from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
 from app.main import UPLOAD_OPENAPI, read_image
-from app.sanitize import MAX_UPLOAD_BYTES, SanitizationError, sanitize_image
+from app.sanitize import MAX_SANITIZED_BYTES, SanitizationError, sanitize_image
 from ocr.pipeline import POLICY_VERSION, PrivacyError, deidentify_image
 from ocr.runtime import load_paddle
 
@@ -37,24 +37,24 @@ def failure(status: int, code: str, message: str) -> JSONResponse:
 
 class _Output(io.BytesIO):
     def write(self, data):
-        if self.tell() + len(data) > MAX_UPLOAD_BYTES:
-            raise SanitizationError(413, "The processed PNG exceeds the 10 MB limit.")
+        if self.tell() + len(data) > MAX_SANITIZED_BYTES:
+            raise SanitizationError(413, "The processed PNG exceeds the 64 MB limit.")
         return super().write(data)
 
 
 def process_upload(data: bytes, run_ocr) -> dict:
-    clean = sanitize_image(data)
+    clean = sanitize_image(data, MAX_SANITIZED_BYTES)
     if clean.source_format != "PNG":
         raise SanitizationError(415, "Send a metadata-sanitized PNG crop.")
-    if len(clean.data) > MAX_UPLOAD_BYTES:
-        raise SanitizationError(413, "The processed PNG exceeds the 10 MB limit.")
+    if len(clean.data) > MAX_SANITIZED_BYTES:
+        raise SanitizationError(413, "The processed PNG exceeds the 64 MB limit.")
     with Image.open(io.BytesIO(clean.data)) as image:
         result = deidentify_image(image, run_ocr)
     with result.image, _Output() as output:
         result.image.save(output, format="PNG")
         # Reuse #48 on the final encoded artifact, not only the incoming upload.
-        final = sanitize_image(output.getvalue())
-    if final.width != clean.width or final.height != clean.height or len(final.data) > MAX_UPLOAD_BYTES:
+        final = sanitize_image(output.getvalue(), MAX_SANITIZED_BYTES)
+    if final.width != clean.width or final.height != clean.height or len(final.data) > MAX_SANITIZED_BYTES:
         raise PrivacyError("verification_failed")
     return {"status": "redacted", "image": "data:image/png;base64," + base64.b64encode(final.data).decode("ascii"),
             "regions_redacted": result.regions_redacted}
@@ -111,7 +111,7 @@ def create_app(engine_factory=load_paddle, *, processing_timeout: float = 45.0) 
                 slot.release()
 
         try:
-            data = await asyncio.wait_for(read_image(request), timeout=5.0)
+            data = await asyncio.wait_for(read_image(request, MAX_SANITIZED_BYTES), timeout=5.0)
             future = asyncio.get_running_loop().run_in_executor(executor, work, data)
             submitted = True
             # Observe late failures after timeout/cancellation without logging data.

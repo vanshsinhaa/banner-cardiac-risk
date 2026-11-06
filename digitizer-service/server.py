@@ -6,6 +6,7 @@ Run from inside Open-ECG-Digitizer/ (the config's weight paths are relative to i
         --app-dir ../digitizer-service --host 127.0.0.1 --port 8000
 """
 
+import base64
 import re
 import os
 import sys
@@ -138,12 +139,42 @@ def save_trace_plot(got: dict[str, Any], basepath: Path) -> Path:
     return basepath.with_suffix(".png")
 
 
+def verify_assignment(got, provenance, source_offset, names):
+    previews = {}
+    try:
+        if wrapper.apply_dewarping:
+            return review("dewarped_coordinates_unsupported", names), previews
+        if not provenance or not provenance["matched"]:
+            return review("layout_not_matched", names), previews
+        aligned = got["aligned"]["image"][0].permute(1, 2, 0).cpu().numpy()
+        aligned = cv2.cvtColor(np.clip(aligned * 255, 0, 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+        if provenance["flipped"]:
+            aligned = np.ascontiguousarray(aligned[::-1, ::-1])
+        regions = source_regions(
+            **{k: provenance[k] for k in ("raw", "normalized", "canonical", "columns", "crop", "flipped")},
+            shape=aligned.shape[:2], source_offset=source_offset)
+        for name, region in regions.items():
+            if "waveformBox" not in region:
+                continue
+            x1, y1, x2, y2 = map(int, region["waveformBox"])
+            crop = aligned[y1:y2, x1:x2]
+            if crop.size:
+                if crop.shape[1] > 900:
+                    crop = cv2.resize(crop, (900, max(1, round(crop.shape[0]*900/crop.shape[1]))))
+                ok, png = cv2.imencode(".png", crop)
+                if ok:
+                    previews[name] = "data:image/png;base64," + base64.b64encode(png).decode("ascii")
+        return compare_labels(regions, read_labels(aligned, regions=regions), names), previews
+    except Exception:
+        return review("verification_unavailable", names), previews
+
+
 # --- Endpoint ---------------------------------------------------------------
 @app.post("/digitize")
 def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM_S)) -> dict[str, Any]:
-    data = image.file.read(10 * 1024 * 1024 + 1)
-    if not data or len(data) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Send an image up to 10 MB.")
+    data = image.file.read(64 * 1024 * 1024 + 1)
+    if not data or len(data) > 64 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Send an image up to 64 MB.")
     if not math.isfinite(paper_speed) or paper_speed <= 0:
         raise HTTPException(status_code=422, detail="paper_speed must be positive (mm/s).")
 
@@ -154,6 +185,7 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
             wrapper.signal_extractor.source_offset = None
             got = wrapper(tensor, layout_should_include_substring=None)
             provenance = wrapper.identifier.provenance
+            match_inputs = wrapper.identifier.match_inputs
             source_offset = wrapper.signal_extractor.source_offset
             duration = strip_duration_s(got, paper_speed, wrapper.identifier)
         canonical = got["signal"]["canonical_lines"]
@@ -167,29 +199,41 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
         raise HTTPException(status_code=422, detail="No leads were found.")
 
     names = list(result["leads"])
-    verification = review("source_geometry_unavailable", names)
-    try:
-        if wrapper.apply_dewarping:
-            verification = review("dewarped_coordinates_unsupported", names)
-        elif provenance and provenance["matched"]:
-            # OCR and source traces must share the exact perspective-corrected
-            # image frame; do not compare with the separately processed preview.
-            aligned = got["aligned"]["image"][0].permute(1, 2, 0).numpy()
-            aligned = np.clip(aligned * 255, 0, 255).astype(np.uint8)
-            aligned = cv2.cvtColor(aligned, cv2.COLOR_RGB2BGR)
-            if provenance["flipped"]:
-                aligned = np.ascontiguousarray(aligned[::-1, ::-1])
-            regions = source_regions(
-                **{k: provenance[k] for k in ("raw", "normalized", "canonical", "columns", "crop", "flipped")},
-                shape=aligned.shape[:2], source_offset=source_offset,
-            )
-            verification = compare_labels(regions, read_labels(aligned, regions=regions), names)
-        else:
-            verification = review("layout_not_matched", names)
-    except Exception:
-        # Missing OCR, unsupported provenance or malformed coordinates must not
-        # turn an unchecked assignment into a verified result.
-        verification = review("verification_unavailable", names)
+    verification, previews = verify_assignment(got, provenance, source_offset, names)
+    recheck = {"attempted": False, "status": "not_needed"}
+    if verification["status"] == "conflict":
+        recheck = {"attempted": True, "status": "unavailable",
+                   "initialVerification": verification}
+        # Restore request-local state under the lock: another request may have
+        # used the shared identifier while OCR was running.
+        try:
+            with model_lock:
+                identifier = wrapper.identifier
+                identifier.provenance = provenance
+                identifier.match_inputs = match_inputs
+                identifier.raw_pixels = provenance["raw"]
+                identifier.crop = provenance["crop"]
+                candidate = identifier.recheck()
+                candidate_provenance = identifier.provenance
+            if candidate is not None:
+                candidate_result = to_result(candidate, sampling_rate)
+                candidate_names = list(candidate_result["leads"])
+                checks, candidate_previews = verify_assignment(
+                    got, candidate_provenance, source_offset, candidate_names)
+                # A recheck must not silently drop extracted leads or turn
+                # missing OCR into agreement. Retain the original for review
+                # unless the alternative is completely verified.
+                accepted = set(candidate_names) == set(names) and checks["status"] == "verified"
+                recheck.update(status="accepted" if accepted else "needs_review",
+                               verification=checks)
+                if accepted:
+                    result, names = candidate_result, candidate_names
+                    provenance, verification, previews = candidate_provenance, checks, candidate_previews
+                    got["signal"]["canonical_lines"] = candidate
+        except Exception:
+            recheck["status"] = "failed"
+    result["layoutRecheck"] = recheck
+    result["leadPreviews"] = previews
     # A successful extraction is not sufficient: the built-in recognizer must
     # have matched a layout rather than returned its default fallback.
     result["modelRecognition"] = {

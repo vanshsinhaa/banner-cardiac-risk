@@ -8,6 +8,7 @@ import { outputSize } from "@/lib/perspective";
 import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, pngBlob, type Assessment, type DeidentifiedCapture } from "@/lib/capturePipeline";
 import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
+import LeadReview from "./LeadReview";
 import CameraGuide from "./CameraGuide";
 import QuadCropper from "./capture/QuadCropper";
 import { warpPreview } from "./capture/warpPreview";
@@ -271,12 +272,13 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
           {(assessment || digitization) && <p>{labels.confirmed.length}/12 lead labels recognized. Label presence does not confirm waveform assignments.</p>}
           {analysisError && <p role="alert">Readability check could not finish: {analysisError}</p>}
           {digitizerError && <p role="alert">Waveform extraction could not finish: {digitizerError}</p>}
-          {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz. {digitization.requiresReview !== false ? "Lead assignments need review." : "Printed labels agree with the extracted lead assignments."}</p>}
+          {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz.</p>}
+          {digitization && <LeadReview result={digitization} />}
           {assessment && <details><summary>Lighting-corrected preview</summary>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={assessment.processed_image} alt="Lighting-corrected de-identified EKG" className={styles.resultImage} />
           </details>}
-          {(assessment?.status !== "passed" || analysisError || digitizerError || digitization?.requiresReview !== false) && !scanning && <p className={styles.resultHint}>You can retry the checks or use another image. {detailRecovery}</p>}
+          {(assessment?.status !== "passed" || analysisError || digitizerError) && !scanning && <p className={styles.resultHint}>You can retry the checks or use another image. {detailRecovery}</p>}
           {capture && <button className={styles.secondary} disabled={scanning} onClick={() => void scan(capture)}>Run scan checks again</button>}
         </div>}
         {size && <details className={styles.imageDetails}><summary>Image details</summary>

@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "no-store" };
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 64 * 1024 * 1024;
 
 // Accept the same original canvas crop used for readability assessment. The
 // service performs OCR in its own aligned coordinate frame, not on the preview.
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       size += value.byteLength;
       if (size > MAX_BYTES + (multipart ? 64 * 1024 : 0)) {
         await reader.cancel();
-        return Response.json({ error: "The digitizer accepts crops up to 10 MB." }, { status: 413, headers });
+        return Response.json({ error: "The digitizer accepts crops up to 64 MB." }, { status: 413, headers });
       }
       chunks.push(value);
     }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       const file = incoming.get("image");
       if (!(file instanceof File)) return Response.json({ error: "Send an image in the image field." }, { status: 400, headers });
       if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return Response.json({ error: "Unsupported image type." }, { status: 415, headers });
-      if (!file.size || file.size > MAX_BYTES) return Response.json({ error: "Send an image up to 10 MB." }, { status: 413, headers });
+      if (!file.size || file.size > MAX_BYTES) return Response.json({ error: "Send an image up to 64 MB." }, { status: 413, headers });
       image = file;
     }
     const form = new FormData();

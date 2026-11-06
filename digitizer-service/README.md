@@ -88,9 +88,16 @@ Global status is `verified`, `conflict`, or `needs_review`; per-lead status is
 `verified`, `conflict`, or `unverified`. `requiresReview` is false only when every
 returned lead is verified. This is not a claim that all 12 leads were extracted.
 Waveforms remain available as tentative data for review. Consumers must enforce
-`requiresReview` before treating assignments as confirmed. The capture screen
-shows the combined label-presence count; detailed per-waveform feedback is omitted.
-It does not export or forward numeric samples automatically.
+`requiresReview` before treating assignments as confirmed. The capture screen shows the combined label-presence count and a source crop and
+waveform preview for each extracted lead. A **Review conflicting leads** button
+opens editable labels (including unverified assignments). Corrections are applied
+simultaneously to preserve swaps, and duplicate or invalid labels are rejected.
+A correction requires a known source crop; unsupported geometry requires a rescan.
+Users then confirm every displayed lead before downloading waveform JSON. Human
+labels are authoritative in the downloaded `leads` mapping; `userReview.assignments`
+records original model name → confirmed name. Original machine verification,
+recognition, and previews remain keyed by the original names for audit.
+Review state is local to this scan and is discarded on retry or a new upload.
 
 The service also returns `modelRecognition`, which counts model labels only after
 a successful layout match. The Next.js route adds `recognition.leads`: a usable
@@ -194,3 +201,21 @@ pinned upstream perspective detector uses random subsampling and the signal
 extractor adds random tie-breaking noise, so independently rerunning neural
 inference can change geometry and returned assignments. Report those full-pipeline
 results separately from comparisons that hold the digitizer outputs fixed.
+
+## Double OCR layout recheck
+
+A confident spatial disagreement triggers one bounded recheck. The built-in model
+matcher evaluates the remaining layout templates, excluding the rejected template,
+using the original neural detections and normalized traces. This does not repeat
+randomized extraction or use the OCR answer as a forced model label. Tesseract
+then reads regions from the alternative assignment. Only complete agreement with
+no loss of returned leads replaces the initial result. Missing OCR, retry failure,
+partial agreement or persistent conflict preserves the initial waveforms for human
+review. `layoutRecheck` records the attempt and both checks; `leadPreviews` contains
+bounded PNG source crops from the already de-identified aligned image.
+
+This retry uses existing templates; it cannot invent a new layout. Agreement is
+not a clinical accuracy guarantee. Neural inference accuracy still needs testing
+against independently annotated scans. User confirmation records label assignment
+only, not voltage or timing accuracy.
+~

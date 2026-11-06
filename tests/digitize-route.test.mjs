@@ -72,7 +72,7 @@ test('malformed waveform data is rejected', async () => {
 test('empty and oversized uploads are rejected', async () => {
   await withService(result(), async () => {
     assert.equal((await POST(request(''))).status, 400);
-    assert.equal((await POST(request(new Uint8Array(10 * 1024 * 1024 + 1)))).status, 413);
+    assert.equal((await POST(request(new Uint8Array(64 * 1024 * 1024 + 1)))).status, 413);
   });
 });
 test('missing service is explicit', async () => {
@@ -104,11 +104,11 @@ test('two-minute timeout returns 504 before headers or while reading the body', 
   } finally { AbortSignal.timeout = previousTimeout; }
 });
 
-test('exactly 10 MB is accepted and oversized data never reaches the digitizer', async () => {
+test('exactly 64 MB is accepted and oversized data never reaches the digitizer', async () => {
   await withService(result(), async () => {
-    assert.equal((await POST(request(new Uint8Array(10 * 1024 * 1024)))).status, 200);
+    assert.equal((await POST(request(new Uint8Array(64 * 1024 * 1024)))).status, 200);
     globalThis.fetch = async () => { assert.fail('Oversized upload reached the service'); };
-    assert.equal((await POST(request(new Uint8Array(10 * 1024 * 1024 + 1)))).status, 413);
+    assert.equal((await POST(request(new Uint8Array(64 * 1024 * 1024 + 1)))).status, 413);
   });
 });
 

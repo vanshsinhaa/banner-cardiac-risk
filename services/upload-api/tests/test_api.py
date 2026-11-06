@@ -182,7 +182,7 @@ def test_missing_content_length_rejected():
 def test_sanitization_failure_does_not_report_success(monkeypatch):
     from app import main
     from app.sanitize import SanitizationError
-    def failure(_):
+    def failure(_, _max_bytes=10 * 1024 * 1024):
         raise SanitizationError(422, "Image could not be sanitized.")
     monkeypatch.setattr(main, "sanitize_image", failure)
     response = post_file(synthetic_ekg_like_image("PNG", 10, 10))

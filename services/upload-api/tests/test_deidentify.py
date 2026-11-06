@@ -125,7 +125,7 @@ def test_unavailable_engine_is_not_ready_and_has_no_image(caplog):
 
 
 @pytest.mark.parametrize("data,status", [(b"bad image", 415), (b"", 400),
-                                        (b"x" * (10 * 1024 * 1024 + 1), 413)],
+                                        (b"x" * (64 * 1024 * 1024 + 1), 413)],
                          ids=["corrupt", "empty", "oversized"])
 def test_bad_uploads_do_not_run_ocr(data, status):
     run, calls = engine_sequence()
@@ -192,3 +192,26 @@ def test_parallel_request_is_rejected_without_second_ocr_call():
         finally:
             release.set()
         assert future.result(timeout=3).status_code == 200
+
+
+def test_camera_png_expansion_crosses_both_privacy_services_without_pixel_loss():
+    from app.main import app as upload_app
+    # An incompressible 12 MB PNG reproduces a normal camera JPEG expanding
+    # after cropping. The ordinary original-file upload cap stays at 10 MiB.
+    pixels = np.random.default_rng(42).integers(0, 256, (2000, 2000, 3), dtype=np.uint8)
+    output = io.BytesIO()
+    Image.fromarray(pixels).save(output, format="PNG")
+    data = output.getvalue()
+    assert 10 * 1024 * 1024 < len(data) < 64 * 1024 * 1024
+    with TestClient(upload_app) as client:
+        original = client.post('/uploads', files={'file': ('crop.png', data, 'image/png')})
+        assert original.status_code == 413
+        sanitized = client.post('/uploads/sanitize', files={'file': ('crop.png', data, 'image/png')})
+        assert sanitized.status_code == 200
+    run, calls = engine_sequence([word()], [])
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client, sanitized.content)
+    assert response.status_code == 200
+    final = Image.open(io.BytesIO(base64.b64decode(response.json()['image'].split(',')[1])))
+    assert final.size == (2000, 2000)
+    np.testing.assert_array_equal(np.asarray(final)[45:], pixels[45:])

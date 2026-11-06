@@ -74,6 +74,7 @@ def source_regions(raw, normalized, canonical, columns, crop, shape, flipped=Fal
                                 max(0, x-width*.04), max(0, y-gap*.8),
                                 min(width, x+max(12, (end-x)*.3)),
                                 min(height, y+gap*.12))],
+                         'waveformBox': [float(v) for v in (max(0, x-width*.04), max(0, y-gap*.8), min(width, end+1), min(height, y+gap*.45))],
                          'sourceRow': int(row), 'sampleRange': [int(a), int(b)]}
     return regions
 

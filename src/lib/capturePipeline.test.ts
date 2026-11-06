@@ -62,3 +62,24 @@ test("malformed readability advice is rejected instead of reaching result render
     }
   } finally { globalThis.fetch = previous; }
 });
+
+// Camera JPEG size is not the size of its lossless PNG representation.
+test('expanded PNG crops above 10 MiB reach the privacy endpoint without resizing', async () => {
+  const { pngBlob, deidentifyCapture, MAX_CAPTURE_BYTES, MAX_PROCESSED_BYTES } = await import('./capturePipeline.ts');
+  assert.equal(MAX_CAPTURE_BYTES, 10 * 1024 * 1024);
+  assert.equal(MAX_PROCESSED_BYTES, 64 * 1024 * 1024);
+  const bytes = Buffer.alloc(11 * 1024 * 1024, 1);
+  const expanded = 'data:image/png;base64,' + bytes.toString('base64');
+  const blob = pngBlob(expanded);
+  assert.equal(blob.size, bytes.length);
+  const original = globalThis.fetch;
+  let uploaded = 0;
+  globalThis.fetch = async (_url, init) => {
+    uploaded = (init!.body as FormData).get('file') instanceof Blob ? ((init!.body as FormData).get('file') as Blob).size : 0;
+    return Response.json({ status: 'redacted', image: expanded, regions_redacted: 1 });
+  };
+  try {
+    await deidentifyCapture(blob, new AbortController().signal);
+    assert.equal(uploaded, bytes.length);
+  } finally { globalThis.fetch = original; }
+});

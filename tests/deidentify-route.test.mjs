@@ -107,6 +107,6 @@ test("timeout during service response body reading returns 504 without an image"
 
 test("oversized and unsupported files never reach services", async () => withEnv(async () => {
   globalThis.fetch = async () => assert.fail("Invalid upload reached a service");
-  assert.equal((await POST(request(new Uint8Array(10 * 1024 * 1024 + 1)))).status, 413);
+  assert.equal((await POST(request(new Uint8Array(64 * 1024 * 1024 + 1)))).status, 413);
   assert.equal((await POST(request("text", "text/plain"))).status, 415);
 }));

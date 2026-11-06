@@ -4,7 +4,7 @@ import path from "node:path";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 64 * 1024 * 1024;
 const headers = { "Cache-Control": "no-store" };
 
 function runAnalysis(input: Buffer): Promise<string> {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       size += value.byteLength;
       if (size > MAX_BYTES) {
         await reader.cancel();
-        return Response.json({ error: "The crop exceeds 10 MB. Choose a smaller image." }, { status: 413, headers });
+        return Response.json({ error: "The crop exceeds 64 MB. Choose a smaller image." }, { status: 413, headers });
       }
       chunks.push(value);
     }

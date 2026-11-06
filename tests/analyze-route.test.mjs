@@ -20,11 +20,11 @@ async function withAnalysis(error, run) {
   try { await run(); } finally { globalThis.analysisExec = previous; }
 }
 
-test('readability check accepts exactly 10 MB but rejects larger and empty uploads', async () => {
+test('readability check accepts exactly 64 MB but rejects larger and empty uploads', async () => {
   await withAnalysis(null, async () => {
-    assert.equal((await POST(request(10 * 1024 * 1024))).status, 200);
+    assert.equal((await POST(request(64 * 1024 * 1024))).status, 200);
     globalThis.analysisExec = () => assert.fail('Invalid upload started analysis');
-    assert.equal((await POST(request(10 * 1024 * 1024 + 1))).status, 413);
+    assert.equal((await POST(request(64 * 1024 * 1024 + 1))).status, 413);
     assert.equal((await POST(request(0))).status, 400);
   });
 });

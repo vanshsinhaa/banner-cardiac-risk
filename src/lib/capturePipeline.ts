@@ -1,7 +1,10 @@
 import { isEcgDigitizationResult, type EcgDigitizationResult } from "./ecg-digitizer/types.ts";
 import { DEID_ENDPOINT, DEID_SUCCESS_STATUS, DEID_TIMEOUT_MS } from "../config/deidentification.ts";
 
+// Original camera files remain limited to 10 MiB. Lossless PNG crops may
+// expand considerably without gaining pixels; allow bounded processing space.
 export const MAX_CAPTURE_BYTES = 10 * 1024 * 1024;
+export const MAX_PROCESSED_BYTES = 64 * 1024 * 1024;
 const PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
 
 export interface DeidentifiedCapture {
@@ -23,11 +26,13 @@ export interface Assessment {
 export function pngBlob(image: string): Blob {
   if (!PNG.test(image)) throw new Error("The service did not return a PNG image.");
   const encoded = image.slice(image.indexOf(",") + 1);
-  if (encoded.length > Math.ceil(MAX_CAPTURE_BYTES / 3) * 4) {
-    throw new Error("The processed image exceeds 10 MB. Try a smaller crop.");
+  if (encoded.length > Math.ceil(MAX_PROCESSED_BYTES / 3) * 4) {
+    throw new Error("The processed image exceeds 64 MB. Try a smaller crop.");
   }
-  const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
-  if (!bytes.length || bytes.length > MAX_CAPTURE_BYTES) throw new Error("The processed image exceeds 10 MB.");
+  const decoded = atob(encoded);
+  const bytes = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
+  if (!bytes.length || bytes.length > MAX_PROCESSED_BYTES) throw new Error("The processed image exceeds 64 MB.");
   return new Blob([bytes], { type: "image/png" });
 }
 
@@ -40,7 +45,7 @@ async function responseJson(response: Response): Promise<Record<string, unknown>
 }
 
 export async function deidentifyCapture(blob: Blob, signal: AbortSignal): Promise<DeidentifiedCapture> {
-  if (!blob.size || blob.size > MAX_CAPTURE_BYTES) throw new Error("The crop must be no larger than 10 MB.");
+  if (!blob.size || blob.size > MAX_PROCESSED_BYTES) throw new Error("The processed crop must be no larger than 64 MB.");
   const body = new FormData();
   body.append("file", blob, "ekg-capture.png");
   const data = await responseJson(await fetch(DEID_ENDPOINT, {

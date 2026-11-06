@@ -8,7 +8,7 @@ from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 from starlette.formparsers import MultiPartException, MultiPartParser
 
-from app.sanitize import ALLOWED_FORMATS, MAX_UPLOAD_BYTES, SanitizationError, SanitizedImage, sanitize_image
+from app.sanitize import ALLOWED_FORMATS, MAX_UPLOAD_BYTES, MAX_SANITIZED_BYTES, SanitizationError, SanitizedImage, sanitize_image
 
 # Extra room for the multipart wrapper (boundary lines, part headers).
 MULTIPART_OVERHEAD_BYTES = 64 * 1024
@@ -16,7 +16,7 @@ MAX_REQUEST_BYTES = MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES
 
 # Starlette writes file parts larger than 1 MB to a temp file on disk.
 # Raise that threshold above our request cap so accepted uploads stay in memory.
-MultiPartParser.spool_max_size = MAX_REQUEST_BYTES
+MultiPartParser.spool_max_size = MAX_SANITIZED_BYTES + MULTIPART_OVERHEAD_BYTES
 
 # Same number as PHOTO_LONG_SIDE_REFERENCE_PX in src/config/resolution.ts
 # (Taiga #44): a provisional full-page reference, not a quality admission rule.
@@ -63,7 +63,8 @@ class _RequestTooLarge(MultiPartException):
     pass
 
 
-async def read_image(request: Request) -> bytes:
+async def read_image(request: Request, max_bytes: int = MAX_UPLOAD_BYTES) -> bytes:
+    max_request_bytes = max_bytes + MULTIPART_OVERHEAD_BYTES
     content_length = request.headers.get("content-length")
     if content_length is None:
         raise HTTPException(411, "Content-Length header is required.")
@@ -71,8 +72,8 @@ async def read_image(request: Request) -> bytes:
         raise HTTPException(400, "Content-Length header is invalid.")
     normalized_length = content_length.lstrip("0") or "0"
     # Avoid converting an attacker-controlled, arbitrarily long integer.
-    if len(normalized_length) > len(str(MAX_REQUEST_BYTES)) or int(normalized_length) > MAX_REQUEST_BYTES:
-        raise HTTPException(413, too_large_message())
+    if len(normalized_length) > len(str(max_request_bytes)) or int(normalized_length) > max_request_bytes:
+        raise HTTPException(413, too_large_message(max_bytes))
     if not request.headers.get("content-type", "").lower().startswith("multipart/form-data"):
         raise HTTPException(422, "Send the image as a multipart form field named 'file'.")
 
@@ -81,7 +82,7 @@ async def read_image(request: Request) -> bytes:
         received = 0
         async for chunk in request.stream():
             received += len(chunk)
-            if received > MAX_REQUEST_BYTES:
+            if received > max_request_bytes:
                 raise _RequestTooLarge("Request exceeds upload limit.")
             yield chunk
 
@@ -90,7 +91,7 @@ async def read_image(request: Request) -> bytes:
             request.headers, limited_stream(), max_files=1, max_fields=1
         ).parse()
     except _RequestTooLarge:
-        raise HTTPException(413, too_large_message()) from None
+        raise HTTPException(413, too_large_message(max_bytes)) from None
     except MultiPartException:
         raise HTTPException(400, "Send one image in a multipart field named 'file'.") from None
     try:
@@ -98,22 +99,22 @@ async def read_image(request: Request) -> bytes:
         if upload is None or isinstance(upload, str):
             raise HTTPException(422, "Send the image as a multipart form field named 'file'.")
 
-        data = await upload.read(MAX_UPLOAD_BYTES + 1)
+        data = await upload.read(max_bytes + 1)
         if len(data) == 0:
             raise HTTPException(400, "The uploaded file is empty.")
-        if len(data) > MAX_UPLOAD_BYTES:
-            raise HTTPException(413, too_large_message())
+        if len(data) > max_bytes:
+            raise HTTPException(413, too_large_message(max_bytes))
 
         return data
     finally:
         await form.close()
 
 
-async def sanitized_upload(request: Request) -> tuple[SanitizedImage, int]:
-    data = await read_image(request)
+async def sanitized_upload(request: Request, max_bytes: int = MAX_UPLOAD_BYTES) -> tuple[SanitizedImage, int]:
+    data = await read_image(request, max_bytes)
     try:
         # Decode/encode is CPU work; do not block the ASGI event loop.
-        return await run_in_threadpool(sanitize_image, data), len(data)
+        return await run_in_threadpool(sanitize_image, data, max_bytes), len(data)
     except SanitizationError as error:
         raise HTTPException(error.status_code, str(error)) from None
 
@@ -157,7 +158,7 @@ async def sanitize_upload(request: Request) -> Response:
 
     No persistence or lookup ID. A fixed filename avoids forwarding patient IDs.
     """
-    image, _ = await sanitized_upload(request)
+    image, _ = await sanitized_upload(request, MAX_SANITIZED_BYTES)
     return Response(image.data, media_type=image.media_type, headers={
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
@@ -165,5 +166,5 @@ async def sanitize_upload(request: Request) -> Response:
     })
 
 
-def too_large_message() -> str:
-    return f"File is larger than the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+def too_large_message(max_bytes: int = MAX_UPLOAD_BYTES) -> str:
+    return f"File is larger than the {max_bytes // (1024 * 1024)} MB limit."

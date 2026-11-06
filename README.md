@@ -135,3 +135,28 @@ written under `.next/integration-verification/`.
 
 The digitizer setup targets Open-ECG-Digitizer revision `97a1508`; see its own
 README for its license and citation requirements before distribution.
+
+## Camera files and processed crop sizes
+
+The file picker accepts original photos up to 10 MiB. Perspective correction
+encodes lossless PNG, which can be several times larger than a camera JPEG
+without changing pixel dimensions. The browser, Next.js routes, preprocessing,
+digitizer, and privacy-service integration endpoints therefore accept processed
+images up to 64 MiB. The ordinary `/uploads` endpoint retains its original
+10 MiB limit. Existing decoded-pixel limits still apply. No automatic resizing
+or additional JPEG compression is introduced by this size fix.
+
+For a local dataset evaluation, run:
+
+```bash
+BENCHMARK_URL=http://localhost:3000 node --experimental-strip-types scripts/benchmarkDoubleOcr.mjs DATASET_DIRECTORY OUTPUT_JSONL digitizer
+BENCHMARK_URL=http://localhost:3000 node --experimental-strip-types scripts/benchmarkDoubleOcr.mjs DATASET_DIRECTORY OUTPUT_JSONL privacy
+```
+
+The directory must contain `manifest.json` with an `images` array naming the
+files. The benchmark uses full-image corners and the production PNG fallback
+encoder. `digitizer` mode measures the extraction component directly; it is
+not a privacy-approved end-to-end web result. `privacy` mode measures the real
+web sanitization/redaction gate. Results are resumable by filename and include
+byte sizes, status codes, timing and label verification, but no image pixels or
+waveform samples. OCR agreement rates are not ground-truth accuracy measurements.

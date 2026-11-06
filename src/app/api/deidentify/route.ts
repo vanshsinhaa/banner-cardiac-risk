@@ -1,7 +1,7 @@
 // Browser -> metadata sanitizer (#48) -> de-identification backend (#51).
 // Only an explicit redaction result may cross this boundary.
 export const runtime = "nodejs";
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 64 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_BYTES + 64 * 1024;
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 const png = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       size += value.byteLength;
       if (size > MAX_REQUEST_BYTES) {
         await reader.cancel();
-        return fail(413, "Image is larger than 10 MB.");
+        return fail(413, "Image is larger than 64 MB.");
       }
       chunks.push(value);
     }
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   } catch { return fail(400, "Could not read the upload."); }
   const file = form.get("file");
   if (!(file instanceof File)) return fail(400, "No image file was sent.");
-  if (!file.size || file.size > MAX_BYTES) return fail(413, "Image is empty or larger than 10 MB.");
+  if (!file.size || file.size > MAX_BYTES) return fail(413, "Image is empty or larger than 64 MB.");
   if (!["image/png", "image/jpeg"].includes(file.type)) return fail(415, "Send a PNG or JPEG image.");
 
   if (mock) {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       return fail(502, "Image sanitization failed. Nothing was sent for de-identification.");
     }
     const clean = await sanitized.blob();
-    if (!clean.size || clean.size > MAX_BYTES) return fail(413, "The sanitized image exceeds the 10 MB processing limit.");
+    if (!clean.size || clean.size > MAX_BYTES) return fail(413, "The sanitized image exceeds the 64 MB processing limit.");
     const upload = new FormData();
     upload.append("file", clean, "ekg-sanitized.png");
     const upstream = await fetch(`${backend!.replace(/\/$/, "")}/deidentify`, {

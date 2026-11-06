@@ -38,7 +38,7 @@ class _BoundedOutput(io.BytesIO):
         return super().write(data)
 
 
-def sanitize_image(data: bytes) -> SanitizedImage:
+def sanitize_image(data: bytes, max_input_bytes: int = MAX_UPLOAD_BYTES) -> SanitizedImage:
     """Accept one static PNG/JPEG, apply orientation, and rebuild from pixels.
 
     A fresh Image owns only pixels: EXIF/XMP/IPTC, PNG text, ICC, thumbnails,
@@ -48,8 +48,8 @@ def sanitize_image(data: bytes) -> SanitizedImage:
     """
     if not data:
         raise SanitizationError(400, "The uploaded file is empty.")
-    if len(data) > MAX_UPLOAD_BYTES:
-        raise SanitizationError(413, "File is larger than the 10 MB limit.")
+    if len(data) > max_input_bytes:
+        raise SanitizationError(413, f"File is larger than the {max_input_bytes // (1024 * 1024)} MB limit.")
     if data[128:132] == b"DICM":
         raise SanitizationError(415, "DICOM is not supported. Send a PNG or JPEG export.")
 

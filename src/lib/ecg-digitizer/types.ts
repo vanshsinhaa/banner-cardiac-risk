@@ -22,6 +22,9 @@ export interface EcgDigitizationResult {
   samplingRateHz: number;
   units: "mV";
   requiresReview?: boolean;
+  leadPreviews?: Record<string, string>;
+  layoutRecheck?: { attempted: boolean; status: string };
+  userReview?: { status: 'confirmed'; assignments: Record<string, EcgLead> };
   leadVerification?: { status: string; reason?: string; leads: Record<string, { status: string; reason?: string; observedLabels?: string[] }> };
   modelRecognition?: { status: string; leads: string[] };
   recognition?: { leads: Record<string, { status: string; label: string | null }> };

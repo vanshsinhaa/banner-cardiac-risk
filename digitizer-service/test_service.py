@@ -72,6 +72,57 @@ class ServiceTests(unittest.TestCase):
         self.assertIsNone(result['leads']['I'][-1])
         self.assertAlmostEqual(result['leads']['I'][1],fixture()[1][0,1]/1000)
 
+    def test_conflict_retries_once_and_second_ocr_can_accept(self):
+        calls = []
+        def first_conflict(image, **kwargs):
+            data = self.local_ocr(image)
+            calls.append(1)
+            if len(calls) == 1:
+                for d in data['detections']:
+                    d['lead'] = {'V1': 'V2', 'V2': 'V1'}.get(d['lead'], d['lead'])
+            return data
+        def retry():
+            return torch.from_numpy(self.server.wrapper.identifier.provenance['canonical'])
+        with patch.object(self.server.wrapper.identifier, 'recheck', side_effect=retry) as recheck:
+            result = self.post(first_conflict).json()
+        self.assertEqual(recheck.call_count, 1)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(result['layoutRecheck']['status'], 'accepted')
+        self.assertFalse(result['requiresReview'])
+        self.assertTrue(result['leadPreviews']['V1'].startswith('data:image/png;base64,'))
+
+    def test_unverified_retry_keeps_original_samples_and_conflicts(self):
+        baseline = self.post().json()['leads']
+        count = 0
+        def ocr(image, **kwargs):
+            nonlocal count
+            count += 1
+            data = self.local_ocr(image)
+            if count == 1:
+                for d in data['detections']:
+                    d['lead'] = {'V1': 'V2'}.get(d['lead'], d['lead'])
+            else:
+                data['ocr_timed_out'] = True
+            return data
+        with patch.object(self.server.wrapper.identifier, 'recheck', side_effect=lambda:
+                          torch.from_numpy(self.server.wrapper.identifier.provenance['canonical'])):
+            result = self.post(ocr).json()
+        self.assertEqual(result['layoutRecheck']['status'], 'needs_review')
+        self.assertTrue(result['requiresReview'])
+        self.assertEqual(result['leads'], baseline)
+
+    def test_recheck_excludes_rejected_layout_from_model_matcher(self):
+        identifier = self.server.wrapper.identifier
+        self.post()
+        layout = identifier.layouts['standard']
+        identifier.match_inputs = ([('II', 0, 1), ('V1', 1, 0), ('V2', 1, 1)], 3,
+                                   {'standard': layout, 'alternative': layout}, False)
+        with patch.object(LeadIdentifier, '_match_layout', return_value={'layout': 'alternative', 'cost': .2}) as match:
+            result = identifier.recheck()
+        self.assertIsNotNone(result)
+        self.assertEqual(set(match.call_args.args[2]), {'alternative'})
+        self.assertEqual(identifier.provenance['layout'], 'alternative')
+
     def test_health_describes_loaded_runtime(self):
         response = self.client.get('/health')
         self.assertEqual(response.status_code, 200)
