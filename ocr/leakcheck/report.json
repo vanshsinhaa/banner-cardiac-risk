@@ -1,0 +1,1248 @@
+{
+  "summary": {
+    "images": 16,
+    "released": 14,
+    "blocked": 2,
+    "errors": 0,
+    "identifiers_in_released_images": 56,
+    "identifiers_leaked": 0,
+    "identifiers_in_blocked_images": 8,
+    "control_images": 16,
+    "control_images_not_flagged": []
+  },
+  "images": [
+    {
+      "image": "blurry_1.jpg",
+      "variant": "blurry",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Mockwell",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 7686722",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 10/20/1946",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/22/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "blurry_2.jpg",
+      "variant": "blurry",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Alex Fakerton",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 4460444",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 11/25/1948",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/19/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "clean_1.jpg",
+      "variant": "clean",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Mockwell",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 7933063",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 02/11/2005",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/26/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "clean_2.jpg",
+      "variant": "clean",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Testcase",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 5629295",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 03/15/1945",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/21/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "lowcontrast_noisy_1.jpg",
+      "variant": "lowcontrast_noisy",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Fakerton",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 9938395",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 06/05/2002",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/08/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "lowcontrast_noisy_2.jpg",
+      "variant": "lowcontrast_noisy",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Mockwell",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 8334406",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 10/16/2003",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/25/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "rotated_1.jpg",
+      "variant": "rotated",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Sam Fakerton",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 4677048",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 10/10/1987",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/13/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "rotated_2.jpg",
+      "variant": "rotated",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Samplesmith",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 3315054",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 02/14/1988",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/11/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "shadow_1.jpg",
+      "variant": "shadow",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Alex Mockwell",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 1373384",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 09/05/1941",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/07/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "shadow_2.jpg",
+      "variant": "shadow",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Mockwell",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 2055656",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 01/23/1987",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/23/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "small_font_1.jpg",
+      "variant": "small_font",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Priya Testcase",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 8334300",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 06/27/1949",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/16/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "small_font_2.jpg",
+      "variant": "small_font",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: John Dummyfield",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 5996703",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 12/16/1960",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/09/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "tiny_font_1.jpg",
+      "variant": "tiny_font",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Fakerton",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 1157565",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 11/06/1987",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/12/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "tiny_font_2.jpg",
+      "variant": "tiny_font",
+      "known_identifiers": 4,
+      "outcome": "released",
+      "reason": null,
+      "regions_redacted": 4,
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Fakerton",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "MRN: 2951202",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "DOB: 03/19/1973",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        },
+        {
+          "identifier": "Date: 10/25/2026",
+          "black_fraction": 1.0,
+          "covered": true,
+          "readable_text_left": [],
+          "leaked": false
+        }
+      ],
+      "leaks": 0
+    },
+    {
+      "image": "very_blurry_1.jpg",
+      "variant": "very_blurry",
+      "known_identifiers": 4,
+      "outcome": "blocked",
+      "reason": "uncertain_text",
+      "identifiers": [],
+      "leaks": 0
+    },
+    {
+      "image": "very_blurry_2.jpg",
+      "variant": "very_blurry",
+      "known_identifiers": 4,
+      "outcome": "blocked",
+      "reason": "uncertain_text",
+      "identifiers": [],
+      "leaks": 0
+    }
+  ],
+  "controls": [
+    {
+      "image": "blurry_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Mockwell",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Maria Mockwell"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 7686722",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 7686722"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 10/20/1946",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 10/20/1946"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/22/2026",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/22/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "blurry_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Alex Fakerton",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Alex Fakerton"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 4460444",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 4460444"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 11/25/1948",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 11/25/1948"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/19/2026",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/19/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "clean_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Mockwell",
+          "black_fraction": 0.12,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Jane Mockwell"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 7933063",
+          "black_fraction": 0.14,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 7933063"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 02/11/2005",
+          "black_fraction": 0.12,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 02/11/2005"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/26/2026",
+          "black_fraction": 0.13,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/26/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "clean_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Testcase",
+          "black_fraction": 0.12,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Jane Testcase"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 5629295",
+          "black_fraction": 0.14,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 5629295"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 03/15/1945",
+          "black_fraction": 0.12,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 03/15/1945"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/21/2026",
+          "black_fraction": 0.12,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/21/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "lowcontrast_noisy_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Fakerton",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Maria Fakerton"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 9938395",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 9938395"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 06/05/2002",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "DOB:06/05/2002"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/08/2026",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/08/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "lowcontrast_noisy_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Mockwell",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Maria Mockwell"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 8334406",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 8334406"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 10/16/2003",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 10/16/2003"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/25/2026",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/25/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "rotated_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Sam Fakerton",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Sam Fakerton"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 4677048",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 4677048"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 10/10/1987",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 10/10/1987"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/13/2026",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/13/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "rotated_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Samplesmith",
+          "black_fraction": 0.03,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Jane Samplesmith"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 3315054",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 3315054"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 02/14/1988",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 02/14/1988"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/11/2026",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/11/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "shadow_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Alex Mockwell",
+          "black_fraction": 0.13,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Alex Mockwell"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 1373384",
+          "black_fraction": 0.14,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 1373384"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 09/05/1941",
+          "black_fraction": 0.14,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 09/05/1941"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/07/2026",
+          "black_fraction": 0.13,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/07/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "shadow_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Mockwell",
+          "black_fraction": 0.13,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Jane Mockwell"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 2055656",
+          "black_fraction": 0.15,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 2055656"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 01/23/1987",
+          "black_fraction": 0.13,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 01/23/1987"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/23/2026",
+          "black_fraction": 0.13,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/23/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "small_font_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Priya Testcase",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Priya Testcase"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 8334300",
+          "black_fraction": 0.08,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 8334300"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 06/27/1949",
+          "black_fraction": 0.07,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 06/27/1949"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/16/2026",
+          "black_fraction": 0.06,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/16/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "small_font_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: John Dummyfield",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: John Dummyfield"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 5996703",
+          "black_fraction": 0.08,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 5996703"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 12/16/1960",
+          "black_fraction": 0.06,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 12/16/1960"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/09/2026",
+          "black_fraction": 0.05,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/09/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "tiny_font_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Maria Fakerton",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Maria Fakerton"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 1157565",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 1157565"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 11/06/1987",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "DOB: 11/06/1987"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/12/2026",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/12/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "tiny_font_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Jane Fakerton",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "Patient: Jane Fakerton"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 2951202",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "MRN: 2951202"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 03/19/1973",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "DOB:03/19/1973"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/25/2026",
+          "black_fraction": 0.04,
+          "covered": false,
+          "readable_text_left": [
+            "Date: 10/25/2026"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "very_blurry_1.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Alex Mockwell",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "Alex Mocks"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 2746462",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "IFN 2746462"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 02/23/1992",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/16/2026",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    },
+    {
+      "image": "very_blurry_2.jpg",
+      "identifiers": [
+        {
+          "identifier": "Patient: Alex Testcase",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [],
+          "leaked": true
+        },
+        {
+          "identifier": "MRN: 2197518",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "MRN 2197518"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "DOB: 11/08/1971",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "11/08/1971"
+          ],
+          "leaked": true
+        },
+        {
+          "identifier": "Date: 10/14/2026",
+          "black_fraction": 0.0,
+          "covered": false,
+          "readable_text_left": [
+            "10/140006"
+          ],
+          "leaked": true
+        }
+      ],
+      "flagged_by_ocr": true
+    }
+  ],
+  "exit_code": 0
+}
