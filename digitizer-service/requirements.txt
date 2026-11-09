@@ -2,3 +2,5 @@
 fastapi>=0.115
 uvicorn>=0.30
 python-multipart>=0.0.18
+# T-wave measurements returned in every /digitize response (Taiga #64).
+neurokit2==0.2.12

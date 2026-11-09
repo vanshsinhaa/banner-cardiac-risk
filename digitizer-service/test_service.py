@@ -71,6 +71,11 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(result['leadVerification']['status'],'verified')
         self.assertIsNone(result['leads']['I'][-1])
         self.assertAlmostEqual(result['leads']['I'][1],fixture()[1][0,1]/1000)
+        # #64: T-wave report is always attached; without neurokit2 it is explicitly unavailable.
+        self.assertEqual(result['tWaves']['timeDomain'], 'median_beat_r_relative_ms')
+        self.assertIn(result['tWaves']['status'], ('complete', 'unavailable'))
+        if result['tWaves']['status'] == 'complete':
+            self.assertEqual(set(result['tWaves']['leads']), set(result['leads']))
 
     def test_health_describes_loaded_runtime(self):
         response = self.client.get('/health')
