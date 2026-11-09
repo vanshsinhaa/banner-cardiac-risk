@@ -9,6 +9,7 @@ import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, 
 import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
 import CameraGuide from "./CameraGuide";
+import WaveValidationSummary from "./WaveValidationSummary";
 import QuadCropper from "./capture/QuadCropper";
 import { warpPreview } from "./capture/warpPreview";
 import styles from "./EkgCaptureScreen.module.css";
@@ -272,11 +273,12 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
           {analysisError && <p role="alert">Readability check could not finish: {analysisError}</p>}
           {digitizerError && <p role="alert">Waveform extraction could not finish: {digitizerError}</p>}
           {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz. {digitization.requiresReview !== false ? "Lead assignments need review." : "Printed labels agree with the extracted lead assignments."}</p>}
+          {digitization?.validation && <WaveValidationSummary report={digitization.validation} />}
           {assessment && <details><summary>Lighting-corrected preview</summary>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={assessment.processed_image} alt="Lighting-corrected de-identified EKG" className={styles.resultImage} />
           </details>}
-          {(assessment?.status !== "passed" || analysisError || digitizerError || digitization?.requiresReview !== false) && !scanning && <p className={styles.resultHint}>You can retry the checks or use another image. {detailRecovery}</p>}
+          {(assessment?.status !== "passed" || analysisError || digitizerError || digitization?.requiresReview !== false || (digitization?.validation && !digitization.validation.analysisEligible)) && !scanning && <p className={styles.resultHint}>You can retry the checks or use another image. {detailRecovery}</p>}
           {capture && <button className={styles.secondary} disabled={scanning} onClick={() => void scan(capture)}>Run scan checks again</button>}
         </div>}
         {size && <details className={styles.imageDetails}><summary>Image details</summary>

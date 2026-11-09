@@ -1,3 +1,5 @@
+import type { WaveValidationReport } from "../waveValidation.ts";
+
 export const ECG_LEADS = [
   "I",
   "II",
@@ -25,6 +27,32 @@ export interface EcgDigitizationResult {
   leadVerification?: { status: string; reason?: string; leads: Record<string, { status: string; reason?: string; observedLabels?: string[] }> };
   modelRecognition?: { status: string; leads: string[] };
   recognition?: { leads: Record<string, { status: string; label: string | null }> };
+  // Median-beat T-wave measurements; times are ms relative to that beat's R peak.
+  tWaves?: TWaveReport;
+  // Added server-side by /api/ecg/digitize (Taiga #64). Display only: consumers must
+  // re-validate with admitForAnalysis instead of trusting this field.
+  validation?: WaveValidationReport;
+}
+
+export interface TWaveLeadMeasurement {
+  status: "measured";
+  beatsUsed: number;
+  windowStartMs: number;
+  windowEndMs: number;
+  qrsOnsetMs: number;
+  qrsEndMs: number;
+  tOnsetMs: number;
+  tPeakMs: number;
+  tOffsetMs: number;
+  tPeakMv: number;
+}
+
+export interface TWaveReport {
+  status: "complete" | "unavailable";
+  reason?: string;
+  method: string;
+  timeDomain: "median_beat_r_relative_ms";
+  leads: Partial<Record<EcgLead, TWaveLeadMeasurement | { status: "not_found" }>>;
 }
 
 export function isEcgDigitizationResult(value: unknown): value is EcgDigitizationResult {
