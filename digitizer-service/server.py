@@ -40,6 +40,7 @@ from tracked_identifier import TrackedLeadIdentifier
 from tracked_extractor import TrackedSignalExtractor
 
 from signal_result import NUM_SAMPLES, strip_duration_s, to_result
+from t_wave_report import measure_t_waves
 from src.config.default import get_cfg
 from src.digitize import save_png_plot
 from src.utils import import_class_from_path
@@ -198,6 +199,9 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
     }
     result["leadVerification"] = verification
     result["requiresReview"] = verification["status"] != "verified"
+    # Median-beat T-wave measurements for the #64 validator. Always attached (not only
+    # for debug plots); an "unavailable" report keeps the record out of analysis.
+    t_waves, result["tWaves"] = measure_t_waves(result["leads"], result["samplingRateHz"])
 
     # The plots are only a visual check, so a failure to draw them must not fail the request.
     if SAVE_TRACE_PLOTS:
@@ -209,8 +213,7 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
             print(f"Could not save trace plot: {e}")
 
         try:
-            from t_wave import find_t_waves, save_t_wave_plot
-            t_waves = find_t_waves(result["leads"], result["samplingRateHz"])
+            from t_wave import save_t_wave_plot
             t_wave_path = basepath.with_name(basepath.name + "_t-waves.png")
             with plot_lock:
                 save_t_wave_plot(t_waves, result["samplingRateHz"], t_wave_path)

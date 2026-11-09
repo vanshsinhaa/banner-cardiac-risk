@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\" \"tests/*.test.mjs\"",
     "experiment": "node --experimental-strip-types scripts/resolutionExperiment.ts",
-    "validate:ekg": "node --experimental-strip-types scripts/validateEkg.ts"
+    "validate:ekg": "node --experimental-strip-types scripts/validateEkg.ts",
+    "validate:waves": "node --experimental-strip-types scripts/validateWaves.ts"
   },
   "dependencies": {
     "next": "16.3.6",

@@ -11,8 +11,10 @@ default, `paper_speed` form field at the Python endpoint). An unavailable/implau
 duration retains the existing 10-second fallback. Null gaps stay on the shared axis.
 
 Debug trace and T-wave plots are disabled by default. Set `ECG_SAVE_TRACE_PLOTS=1`
-only for synthetic verification; `pip install neurokit2` enables optional T-wave
-plots. Missing plotting dependencies cannot prevent normal service startup.
+only for synthetic verification. T-wave *measurements* now run on every request
+(see `tWaves` below) and need `neurokit2` (pinned in `requirements.txt`). If it is
+missing, the service still starts and answers; `tWaves.status` is `unavailable`
+and the Next.js validator keeps the record out of analysis.
 
 ## Setup
 
@@ -103,6 +105,35 @@ Older services without verification metadata are explicitly treated as needing
 review by the Next.js route. Operational OCR failures also require review.
 The service never promotes a default/fallback layout without a finite match.
 
+### T-wave measurements (`tWaves`) and validation (Taiga #64)
+
+`t_wave_report.py` runs Rob's `t_wave.py` once per request and adds:
+
+```json
+{
+  "tWaves": {
+    "status": "complete",
+    "method": "median-beat-v1",
+    "timeDomain": "median_beat_r_relative_ms",
+    "leads": {
+      "II": {"status": "measured", "beatsUsed": 3, "windowStartMs": -200.0, "windowEndMs": 650.0,
+             "qrsOnsetMs": -40.0, "qrsEndMs": 48.0, "tOnsetMs": 180.0, "tPeakMs": 262.0,
+             "tOffsetMs": 330.0, "tPeakMv": 0.31},
+      "V2": {"status": "not_found"}
+    }
+  }
+}
+```
+
+Times are milliseconds relative to the R peak of that lead's **median beat**, not
+positions on the strip; they must never be mapped onto the 5000-sample axis. Every
+returned lead has a status. `status: "unavailable"` (with `reason`
+`dependency_missing` or `analysis_failed`) means the finder did not run.
+
+The Next.js route then adds `validation`, the wave-attribute report described in
+[task-64-wave-validation.md](../project%20docs/task-64-wave-validation.md). It is
+computed server-side; any `validation` field sent by this service is discarded.
+
 ## Limits
 
 This is a conservative, heuristic spatial cross-check, not a validated clinical
@@ -130,7 +161,8 @@ python -B -m unittest discover -s digitizer-service -p 'test_lead_verification.p
 PYTHONPATH=Open-ECG-Digitizer:digitizer-service:preprocessing \
   Open-ECG-Digitizer/.venv/bin/python -B -m unittest discover \
   -s digitizer-service -p 'test_*.py' -v
-node --test tests/digitize-route.test.mjs
+python -B -m unittest digitizer-service/test_t_wave_report.py -v   # real-finder case needs neurokit2
+npm test   # includes the #64 validator, route and fixture tests
 npx tsc --noEmit
 npm run lint
 ```

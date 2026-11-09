@@ -38,6 +38,30 @@ For setup on another computer, use [the device handoff](DEVICE-HANDOFF.md).
 
 ## Work log — newest first
 
+### 2026-11-09 — Implement #64 wave-attribute validation
+
+Branch `vansh/task-64-wave-validation` from `origin/main` (`84c0e9b`). Decisions
+confirmed with Vansh first: validate Roberto's live response, add an additive
+`tWaves` field from `t_wave.py`, strict `twelve-lead-t-wave/1` profile, server-side
+TypeScript enforcement. Details, rule catalog and demo steps:
+[task-64-wave-validation.md](task-64-wave-validation.md).
+
+Evidence: `npm test` 84 pass; `tsc` and `eslint` clean; `next build` passes with
+`/wave-validation` returning 404 in production; digitizer service tests 28 pass
+(1 skipped: neurokit2 absent from the provisioned venv) against the pinned upstream
+checkout; the real `t_wave.py` measured 12/12 leads on the synthetic fixture in a
+separate neurokit2 0.2.12 environment. Demo page checked in headless Chromium at
+760 px and 375 px. Not done: real-image digitizer run with neurokit2 installed,
+Roberto/Talgat review of rules, Taiga status update.
+
+Live run: `clean_1.jpg` passed privacy, digitizer and validation end to end
+(1 lead, T wave measured, correctly "needs review"). Six full 12-lead images sent
+straight to the digitizer showed waves/T-waves extracted but labels often
+unconfirmed; full 12-lead pages are blocked by the privacy step (traces read as
+text) and phone PNGs by the 10 MiB limit. Those blockers belong to #66, the upload
+size proposal and #59/#62. Panel now shows waveform, T-wave and label counts
+separately; three real digitizer outputs saved as demo fixtures. 86 tests pass.
+
 ### 2026-11-03 - Document and publish the development baseline
 
 **Scope:** Explicit user authorization to merge into main, with known limits

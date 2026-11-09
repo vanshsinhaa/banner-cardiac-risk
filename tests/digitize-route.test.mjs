@@ -1,11 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import ts from 'typescript';
-
-const source = readFileSync(new URL('../src/app/api/ecg/digitize/route.ts', import.meta.url), 'utf8');
-const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { POST } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
+import { POST } from '../src/app/api/ecg/digitize/route.ts';
 const request = (body = 'png') => new Request('http://localhost/api/ecg/digitize', {
   method: 'POST', headers: { 'Content-Type': 'image/png' }, body,
 });
@@ -151,4 +147,22 @@ test('missing, failed or ambiguous recognizers cannot invent a success', async (
       assert.equal((await (await POST(request())).json()).recognition.status, 'needs_review');
     });
   }
+});
+
+test('wave-attribute validation is attached server-side to every result', async () => {
+  const complete = JSON.parse(readFileSync(new URL('./fixtures/wave-validation/valid-12-lead.json', import.meta.url), 'utf8'));
+  await withService(complete, async () => {
+    const body = await (await POST(request())).json();
+    assert.equal(body.requiresReview, false);
+    assert.equal(body.validation.status, 'valid');
+    assert.equal(body.validation.analysisEligible, true);
+  });
+  // A short single lead from an older service: still returned for review, never eligible.
+  await withService({ ...result(), validation: { status: 'valid', analysisEligible: true, issues: [] } }, async () => {
+    const body = await (await POST(request())).json();
+    assert.equal(body.validation.analysisEligible, false);
+    assert.equal(body.validation.status, 'needs_review');
+    const found = body.validation.issues.map(issue => issue.code);
+    for (const code of ['LEAD_MISSING', 'LEAD_TOO_SHORT', 'LEAD_UNVERIFIED', 'T_WAVE_REPORT_MISSING']) assert.ok(found.includes(code), code);
+  });
 });

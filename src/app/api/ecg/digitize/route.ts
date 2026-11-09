@@ -1,3 +1,5 @@
+import { validateWaveAttributes } from "../../../../lib/waveValidation.ts";
+
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "no-store" };
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -94,6 +96,10 @@ export async function POST(request: Request) {
       leads: recognitionLeads,
       scope: "At least one recognizer supplied a label. This is not confirmation of every waveform assignment.",
     };
+    // Wave-attribute validation (#64) runs here, server-side, after the review gate is
+    // derived. Never forward a validation report supplied by the service itself.
+    delete result.validation;
+    result.validation = validateWaveAttributes(result);
     return Response.json(result, { headers });
   } catch (error) {
     if (error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)) {
