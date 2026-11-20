@@ -241,5 +241,14 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
             except Exception as e:
                 print(f"Could not save T-wave plot: {e}")
 
-    # TODO: pass t_waves to the analysis step once it exists.
+    # Measurements for the analysis step (J-point to T end, QTc, T-wave area). Kept
+    # inside the service like t_waves; a failure here must not fail the request.
+    if t_waves is not None:
+        try:
+            from t_wave_metrics import compute_t_wave_metrics
+            t_wave_metrics = compute_t_wave_metrics(t_waves, result["samplingRateHz"])
+            # TODO: pass t_wave_metrics to the analysis step once it exists.
+        except Exception as e:
+            print(f"T-wave metrics failed: {e}")
+
     return result
