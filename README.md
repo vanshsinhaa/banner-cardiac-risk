@@ -70,8 +70,9 @@ If omitted, the app checks `preprocessing/venv`, then the platform Python comman
 - **Digitizer:** [pinned upstream, model weights, setup and verification](digitizer-service/README.md).
   Set `ECG_RESAMPLE_SIZE` only if needed (512–3000, default 2000). Paper speed
   defaults to 25 mm/s; the Python service accepts a `paper_speed` form field.
-  Trace/T-wave plots are opt-in with `ECG_SAVE_TRACE_PLOTS=1` for synthetic tests;
-  install `neurokit2` in that service environment for T-wave plots.
+  Trace/T-wave plots are saved to `digitizer-service/trace-plots/` by default; set
+  `ECG_SAVE_TRACE_PLOTS=0` to turn them off (e.g. for real patient scans). Install
+  `neurokit2` in that service environment for T-wave detection and plots.
 
 On the configured Windows checkout, `scripts/start-local.ps1` starts missing
 services in hidden windows and reuses healthy ones. Local logs are in ignored

@@ -10,9 +10,11 @@ Rob's strip-width/paper-speed calculation supplies the sampling rate (25 mm/s by
 default, `paper_speed` form field at the Python endpoint). An unavailable/implausible
 duration retains the existing 10-second fallback. Null gaps stay on the shared axis.
 
-Debug trace and T-wave plots are disabled by default. Set `ECG_SAVE_TRACE_PLOTS=1`
-only for synthetic verification; `pip install neurokit2` enables optional T-wave
-plots. Missing plotting dependencies cannot prevent normal service startup.
+Trace and T-wave plots are saved to `digitizer-service/trace-plots/` on every request
+so results can be examined afterwards. The trace plot contains the uploaded image, so
+set `ECG_SAVE_TRACE_PLOTS=0` when handling real patient scans. `pip install neurokit2`
+is needed for T-wave detection and plots. Missing plotting dependencies cannot
+prevent normal service startup.
 
 ## Setup
 
@@ -117,8 +119,8 @@ The adapters target the pinned revision, not arbitrary digitizer versions.
 The check does not validate voltages, signal fidelity, timing, or electrode
 placement. Rob's strip-width/paper-speed sampling calculation is retained, along
 with its 10-second fallback; calibration and fallback evidence need further
-validation. Trace-plot generation is retained behind the opt-in
-`ECG_SAVE_TRACE_PLOTS=1` flag.
+validation. Trace plots are saved by default and can be turned off with
+`ECG_SAVE_TRACE_PLOTS=0`.
 
 ## Tests
 

@@ -60,8 +60,9 @@ DEFAULT_PAPER_SPEED_MM_S = 25.0
 
 # Trace plots: one PNG per digitized image, to compare the digitized traces with the original,
 # plus a second PNG showing the T wave found in each lead's median beat.
-# Debug plots contain image pixels. Enable explicitly for synthetic fixtures only.
-SAVE_TRACE_PLOTS = os.environ.get("ECG_SAVE_TRACE_PLOTS") == "1"
+# Saved on every request so results can be examined afterwards. The trace plot contains
+# the uploaded image's pixels, so set ECG_SAVE_TRACE_PLOTS=0 when handling real patient scans.
+SAVE_TRACE_PLOTS = os.environ.get("ECG_SAVE_TRACE_PLOTS", "1") != "0"
 TRACE_PLOTS_DIR = Path(__file__).resolve().parent / "trace-plots"
 
 
@@ -114,6 +115,24 @@ def decode_upload(data: bytes) -> torch.Tensor:
     tensor = torch.frombuffer(bytearray(data), dtype=torch.uint8) # create a tensor from the uploaded image bytes 
     tensor = decode_image(tensor, mode="RGB") 
     return tensor.unsqueeze(0)
+
+
+def run_t_wave_finder(
+    leads: dict[str, list[float | None]], sampling_rate: float
+) -> dict[str, dict[str, Any]] | None:
+    """Finds the T wave in each lead for the analysis step.
+
+    Returns None if the finder could not run (for example neurokit2 is not installed),
+    so a T-wave failure never fails the digitization request.
+    """
+    try:
+        from t_wave import find_t_waves  # imported here so the service starts without neurokit2
+        t_waves = find_t_waves(leads, sampling_rate)
+    except Exception as e:
+        print(f"T-wave finder failed: {e}")
+        return None
+    print(f"T waves found in {len(t_waves)} of {len(leads)} leads")
+    return t_waves
 
 
 def plot_basepath(upload_name: str | None) -> Path:
@@ -199,6 +218,10 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
     result["leadVerification"] = verification
     result["requiresReview"] = verification["status"] != "verified"
 
+    # T waves are found on every request for the analysis step. They stay inside the
+    # service and are not added to the response.
+    t_waves = run_t_wave_finder(result["leads"], result["samplingRateHz"])
+
     # The plots are only a visual check, so a failure to draw them must not fail the request.
     if SAVE_TRACE_PLOTS:
         basepath = plot_basepath(image.filename)
@@ -208,14 +231,15 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
         except Exception as e:
             print(f"Could not save trace plot: {e}")
 
-        try:
-            from t_wave import find_t_waves, save_t_wave_plot
-            t_waves = find_t_waves(result["leads"], result["samplingRateHz"])
-            t_wave_path = basepath.with_name(basepath.name + "_t-waves.png")
-            with plot_lock:
-                save_t_wave_plot(t_waves, result["samplingRateHz"], t_wave_path)
-            print(f"Saved T-wave plot: {t_wave_path} ({len(t_waves)} of {len(result['leads'])} leads)")
-        except Exception as e:
-            print(f"Could not save T-wave plot: {e}")
+        if t_waves is not None:
+            try:
+                from t_wave import save_t_wave_plot
+                t_wave_path = basepath.with_name(basepath.name + "_t-waves.png")
+                with plot_lock:
+                    save_t_wave_plot(t_waves, result["samplingRateHz"], t_wave_path)
+                print(f"Saved T-wave plot: {t_wave_path}")
+            except Exception as e:
+                print(f"Could not save T-wave plot: {e}")
 
+    # TODO: pass t_waves to the analysis step once it exists.
     return result

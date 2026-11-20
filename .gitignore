@@ -57,3 +57,7 @@ preprocessing/output/
 
 # Local nested worktrees
 /.integration/
+
+# demo ECG images (third-party, see digitizer-service/demo-ecgs/README.md)
+/digitizer-service/demo-ecgs/*.png
+/digitizer-service/demo-ecgs/*.jpg
