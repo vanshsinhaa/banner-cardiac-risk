@@ -1,6 +1,9 @@
 import unittest
 import numpy as np
-from t_wave_metrics import t_wave_area
+from t_wave_metrics import (
+    CALCULATION_ERROR, COULD_NOT_CALCULATE, NO_T_WAVE_FOUND, T_WAVE_FINDER_FAILED,
+    compute_t_wave_metrics, t_wave_area,
+)
 
 SAMPLING_RATE = 500  # Hz, so one sample = 2 ms
 
@@ -47,6 +50,34 @@ class TWaveAreaTests(unittest.TestCase):
     def test_boundaries_outside_the_beat_give_none(self):
         past_the_end = dict(make_t_wave(0.4), t_offset_ms=900)  # beat only runs to 598 ms
         self.assertIsNone(t_wave_area(past_the_end, SAMPLING_RATE))
+
+
+class MissingMeasurementTests(unittest.TestCase):
+    def test_every_digitized_lead_appears_with_a_reason_when_missing(self):
+        metrics = compute_t_wave_metrics({"II": make_t_wave(0.4)}, ["I", "II"], SAMPLING_RATE)
+        self.assertEqual(set(metrics["leads"]), {"I", "II"})
+        self.assertIsNotNone(metrics["leads"]["II"]["t_wave_area_mv_ms"])
+        self.assertNotIn("t_wave_area_mv_ms", metrics["leads"]["II"]["missing"])
+        self.assertIsNone(metrics["leads"]["I"]["t_wave_area_mv_ms"])
+        self.assertEqual(metrics["leads"]["I"]["missing"]["t_wave_area_mv_ms"], NO_T_WAVE_FOUND)
+
+    def test_finder_failure_still_lists_every_lead(self):
+        metrics = compute_t_wave_metrics(None, ["I", "II"], SAMPLING_RATE)
+        for lead in metrics["leads"].values():
+            self.assertIsNone(lead["t_wave_area_mv_ms"])
+            self.assertEqual(lead["missing"]["t_wave_area_mv_ms"], T_WAVE_FINDER_FAILED)
+
+    def test_area_out_of_range_is_marked_could_not_calculate(self):
+        past_the_end = dict(make_t_wave(0.4), t_offset_ms=900)
+        lead = compute_t_wave_metrics({"I": past_the_end}, ["I"], SAMPLING_RATE)["leads"]["I"]
+        self.assertIsNone(lead["t_wave_area_mv_ms"])
+        self.assertEqual(lead["missing"]["t_wave_area_mv_ms"], COULD_NOT_CALCULATE)
+
+    def test_one_broken_lead_does_not_stop_the_others(self):
+        broken = {"median_beat": [], "r_index": 0}  # missing fields make the area raise
+        metrics = compute_t_wave_metrics({"I": broken, "II": make_t_wave(0.4)}, ["I", "II"], SAMPLING_RATE)
+        self.assertEqual(metrics["leads"]["I"]["missing"]["t_wave_area_mv_ms"], CALCULATION_ERROR)
+        self.assertIsNotNone(metrics["leads"]["II"]["t_wave_area_mv_ms"])
 
 
 if __name__ == "__main__": unittest.main()

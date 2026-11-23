@@ -66,19 +66,51 @@ def qtc_ms(qt: float, rr_ms: float) -> float | None:
     return None
 
 
+# Reasons a measurement is None, listed per lead under "missing".
+T_WAVE_FINDER_FAILED = "t_wave_finder_failed"  # the finder did not run for this ECG
+NO_T_WAVE_FOUND = "no_t_wave_found"            # the lead was digitized but had no T wave
+COULD_NOT_CALCULATE = "could_not_calculate"    # the measurement returned None
+CALCULATION_ERROR = "calculation_error"        # the measurement raised an error
+
+
+def measure_lead(t_wave: dict[str, Any], sampling_rate: float) -> dict[str, Any]:
+    """Runs every per-lead measurement. A failing measurement is None, never an error."""
+    measurements = {
+        "j_point_to_t_end_ms": lambda: j_point_to_t_end_ms(t_wave),
+        "qt_ms": lambda: qt_ms(t_wave),
+        "t_wave_area_mv_ms": lambda: t_wave_area(t_wave, sampling_rate),
+    }
+    values: dict[str, Any] = {}
+    missing: dict[str, str] = {}
+    for name, measure in measurements.items():
+        try:
+            values[name] = measure()
+            if values[name] is None:
+                missing[name] = COULD_NOT_CALCULATE
+        except Exception as e:
+            print(f"{name} failed: {e}")
+            values[name] = None
+            missing[name] = CALCULATION_ERROR
+    return {**values, "missing": missing}
+
+
 def compute_t_wave_metrics(
-    t_waves: dict[str, dict[str, Any]], sampling_rate: float
+    t_waves: dict[str, dict[str, Any]] | None, lead_names: list[str], sampling_rate: float
 ) -> dict[str, Any]:
-    """Runs every measurement on every lead with a T wave.
+    """Runs every measurement on every digitized lead.
+
+    Every lead in lead_names appears in the result. A measurement that could not be
+    calculated is None (shown as N/A), and "missing" says why.
+    t_waves is None when the T-wave finder could not run at all.
 
     TODO: decide which lead's QT feeds QTc (longest across leads, or lead II / V5).
     """
-    per_lead = {
-        name: {
-            "j_point_to_t_end_ms": j_point_to_t_end_ms(t_wave),
-            "qt_ms": qt_ms(t_wave),
-            "t_wave_area_mv_ms": t_wave_area(t_wave, sampling_rate),
-        }
-        for name, t_wave in t_waves.items()
-    }
+    per_lead: dict[str, dict[str, Any]] = {}
+    for name in lead_names:
+        if t_waves is not None and name in t_waves:
+            per_lead[name] = measure_lead(t_waves[name], sampling_rate)
+            continue
+        reason = T_WAVE_FINDER_FAILED if t_waves is None else NO_T_WAVE_FOUND
+        empty = {"j_point_to_t_end_ms": None, "qt_ms": None, "t_wave_area_mv_ms": None}
+        per_lead[name] = {**empty, "missing": {measurement: reason for measurement in empty}}
     return {"leads": per_lead, "qtc_ms": None}
