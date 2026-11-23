@@ -250,7 +250,7 @@ def find_qrs(median_beat: np.ndarray, r_index: int, sampling_rate: float) -> tup
 
 def delineate_t_wave(
     median_beat: np.ndarray, r_index: int, sampling_rate: float
-) -> dict[str, int] | None:
+) -> dict[str, float] | None:
     """Finds the QRS and the T wave's onset, peak and offset in the median beat.
 
     neurokit2's ecg_delineate is not used: its "dwt", "cwt" and "peak" methods refuse
@@ -264,7 +264,7 @@ def delineate_t_wave(
       within T_EDGE_FRACTION of the peak's distance from the baseline.
 
     Returns {"qrs_onset", "qrs_end", "onset", "peak", "offset"} as indices into
-    median_beat, or None if there is no turning point after the QRS (the T wave runs
+    median_beat plus "baseline" (the baseline level in mV), or None if there is no turning point after the QRS (the T wave runs
     past the end of the beat window, or the trace is flat).
     """
     def samples(ms: float) -> int:
@@ -296,7 +296,10 @@ def delineate_t_wave(
     while offset < len(median_beat) - 1 and distance[offset + 1] > edge:
         offset += 1
 
-    return {"qrs_onset": qrs_onset, "qrs_end": qrs_end, "onset": onset, "peak": peak, "offset": offset}
+    return {
+        "qrs_onset": qrs_onset, "qrs_end": qrs_end, "onset": onset, "peak": peak, "offset": offset,
+        "baseline": float(baseline),
+    }
 
 
 # --- Putting it together ----------------------------------------------------
@@ -345,6 +348,7 @@ def analyze_lead(
         "t_peak_ms": ms_from_r(t_wave["peak"]),
         "t_offset_ms": ms_from_r(t_wave["offset"]),
         "t_peak_mv": float(median_beat[t_wave["peak"]]),
+        "baseline_mv": t_wave["baseline"],
         "beats_used": beats_used,
     }
 

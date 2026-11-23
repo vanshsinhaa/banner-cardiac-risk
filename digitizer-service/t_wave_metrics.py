@@ -1,15 +1,17 @@
 """Measurements built on the T waves found by t_wave.find_t_waves.
 
-Skeleton only: every function returns None until the definitions are settled.
+Done: t_wave_area. The others return None until their definitions are settled.
 Each lead's T-wave result (see t_wave.analyze_lead) has:
     median_beat   one averaged beat in mV
     r_index       index of the R peak in median_beat
     qrs_onset_ms, qrs_end_ms, t_onset_ms, t_peak_ms, t_offset_ms
                   times in ms relative to the R peak (qrs_end_ms is the J-point)
-    t_peak_mv, beats_used
+    t_peak_mv, baseline_mv, beats_used
 """
 
 from typing import Any
+
+import numpy as np
 
 
 # --- Per-lead measurements --------------------------------------------------
@@ -29,15 +31,28 @@ def qt_ms(t_wave: dict[str, Any]) -> float | None:
     return None
 
 
-def t_wave_area(t_wave: dict[str, Any], sampling_rate: float) -> float | None:
-    """Area under the T wave in mV*ms.
+def ms_to_index(t_wave: dict[str, Any], ms: float, sampling_rate: float) -> int:
+    """Converts a time relative to the R peak back to an index in the median beat."""
+    return t_wave["r_index"] + round(ms * sampling_rate / 1000)
 
-    TODO, decide:
-      - start point: T onset or J-point (includes the ST segment)
-      - baseline: raw zero or the isoelectric level before the QRS
-      - inverted T waves: signed (negative) or absolute area
+
+def t_wave_area(t_wave: dict[str, Any], sampling_rate: float) -> float | None:
+    """Signed area of the T wave above the baseline, in mV*ms.
+
+    - Runs from T onset to T offset as found by t_wave.delineate_t_wave.
+    - Measured from the baseline (the flat stretch just before the QRS), not raw zero.
+    - Signed: an upright T wave gives a positive area, an inverted one a negative area.
+
+    Returns None if the T-wave boundaries fall outside the median beat.
     """
-    return None
+    beat = np.asarray(t_wave["median_beat"], dtype=float)
+    start = ms_to_index(t_wave, t_wave["t_onset_ms"], sampling_rate)
+    end = ms_to_index(t_wave, t_wave["t_offset_ms"], sampling_rate)
+    if not 0 <= start < end < len(beat):
+        return None
+
+    above_baseline = beat[start : end + 1] - t_wave["baseline_mv"]
+    return float(np.trapezoid(above_baseline, dx=1000 / sampling_rate))
 
 
 # --- Whole-ECG measurements -------------------------------------------------
