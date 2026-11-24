@@ -1,3 +1,7 @@
+/* Hallmark · macrostructure: clinical-workbench · theme: clinical-blue · genre: modern-minimal
+ * pre-emit critique: P5 H5 E4 S4 R5 V4
+ * slop test: pass (layout unchanged in this pass; tokens only)
+ */
 .card {
   --band-bg: var(--band-low-bg);
   --band-text: var(--band-low-text);

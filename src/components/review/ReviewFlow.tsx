@@ -119,7 +119,6 @@ export default function ReviewFlow({ imageSrc, digitization, captureId, onExit, 
       <header className={styles.flowHeader}>
         <div className={styles.flowTitleRow}>
           <div>
-            <p className={styles.kicker}>Step {step === "review" ? 1 : step === "confirm" ? 2 : 3} of 3</p>
             <h1 className={styles.flowTitle}>{step === "review" ? "Check the detected waveform" : step === "confirm" ? "Confirm before scoring" : "Risk score"}</h1>
           </div>
           <Stepper current={step} onSelect={setStep} canSelect={canSelect} />

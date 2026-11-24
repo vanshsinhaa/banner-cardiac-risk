@@ -1,3 +1,8 @@
+/* Hallmark · macrostructure: clinical-workbench · theme: clinical-blue · genre: modern-minimal
+ * pre-emit critique: P4 H5 E4 S4 R5 V4
+ * slop test: pass
+ */
+
 /* Review flow: page frame, stepper, trace editor, confirm step. Tokens live in
    globals.css. Layout follows clinical review tools: a calm neutral canvas, one
    accent colour, mono numerals for measurements, and panels separated by hairlines
@@ -29,6 +34,8 @@
   margin-bottom: var(--space-5);
 }
 
+.flowTitleRow > * { min-width: 0; }
+
 .flowTitleRow {
   display: flex;
   justify-content: space-between;
@@ -37,17 +44,18 @@
   gap: var(--space-3) var(--space-5);
 }
 
+/* The single eyebrow on the review page ("Lead 1 of 12"), above its heading. */
 .kicker {
   font-family: var(--font-numeric);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--ui-muted);
   margin-bottom: var(--space-1);
 }
 
 .flowTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: clamp(22px, 2.4vw, 26px);
   font-weight: 600;
   letter-spacing: -0.022em;
@@ -139,6 +147,19 @@ button.stepButton:focus-visible { outline: 2px solid var(--ui-focus); outline-of
   .stepLabel { font-size: 12px; }
 }
 
+/* Narrow phones: only the current step keeps a visible label; the others stay
+   readable to screen readers. */
+@media (max-width: 400px) {
+  .step:not([data-state="current"]) .stepLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 /* Disclaimer */
 .disclaimer {
   display: flex;
@@ -190,7 +211,7 @@ button.stepButton:focus-visible { outline: 2px solid var(--ui-focus); outline-of
   border: 1px solid var(--ui-primary);
   color: var(--ui-primary-text);
   font-weight: 600;
-  box-shadow: inset 0 1px 0 #ffffff26, 0 1px 2px #0a5bd333;
+  box-shadow: inset 0 1px 0 var(--ui-highlight), 0 1px 2px var(--ui-primary-glow);
 }
 
 .secondaryButton {
@@ -344,7 +365,7 @@ button.stepButton:focus-visible { outline: 2px solid var(--ui-focus); outline-of
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: #fff;
+  background: var(--ui-canvas);
 }
 
 .canvasSvg {
@@ -378,13 +399,13 @@ button.stepButton:focus-visible { outline: 2px solid var(--ui-focus); outline-of
 
 .handle,
 .handleActive {
-  fill: #fff;
+  fill: var(--ui-on-canvas);
   stroke: var(--ui-trace);
   stroke-width: 2;
   pointer-events: none;
 }
 
-.handleActive { fill: var(--ui-trace); stroke: #fff; stroke-width: 2.5; }
+.handleActive { fill: var(--ui-trace); stroke: var(--ui-on-canvas); stroke-width: 2.5; }
 
 .handleHalo {
   fill: var(--ui-trace);
@@ -462,14 +483,13 @@ button.stepButton:focus-visible { outline: 2px solid var(--ui-focus); outline-of
 }
 
 .panelTitle {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ui-muted);
+  letter-spacing: -0.005em;
+  color: var(--ui-text);
 }
 
-.panelTitle .muted { text-transform: none; letter-spacing: 0; font-weight: 500; font-family: var(--font-numeric); }
+.panelTitle .muted { font-weight: 400; font-size: 13px; }
 
 summary.panelTitle {
   display: flex;
@@ -496,7 +516,7 @@ summary.panelTitle:focus-visible { outline: 2px solid var(--ui-focus); outline-o
   height: auto;
   border-radius: var(--radius-sm);
   border: 1px solid var(--ui-border);
-  background: #fff;
+  background: var(--ui-canvas);
 }
 
 .minimapBox {
