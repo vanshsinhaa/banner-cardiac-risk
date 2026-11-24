@@ -1,5 +1,10 @@
 # Trace review and correction (Taiga #75)
 
+> Updated 2026-11-23: the editor was redesigned into the Review → Confirm → Risk
+> score flow (`src/components/review/`). See
+> [risk-score-and-review-ux.md](risk-score-and-review-ux.md) for the current
+> interaction design; the storage and limits below still apply.
+
 Story: Dr. Chen reviews and manually corrects the auto-detected waveform trace
 before it is processed, so the signal feeding the risk score can be trusted.
 
@@ -36,7 +41,7 @@ Entry points:
 | Control points, interpolation, applying corrections | `src/lib/traceOverlay/controlPoints.ts` |
 | Review state and edit log (pure reducer) | `src/lib/traceOverlay/traceEdits.ts` |
 | Save payload validation | `src/lib/traceOverlay/correctionPayload.ts` |
-| Editor UI | `src/components/trace/TraceOverlayEditor.tsx` |
+| Editor UI | `src/components/review/TraceEditor.tsx` (in `ReviewFlow.tsx`) |
 | Save route | `src/app/api/trace-corrections/route.ts` |
 
 - **Placement.** The digitizer returns mV samples (5000 per lead), not pixels.

@@ -38,6 +38,47 @@ For setup on another computer, use [the device handoff](DEVICE-HANDOFF.md).
 
 ## Work log — newest first
 
+### 2026-11-23 — Risk score display (#76) and review flow redesign (#75)
+
+**Scope:** Sprint 5 task #76: show the risk percentage as the largest text in a
+clean, MDCalc-style card, explain the contributing factors in plain language, read
+the value from an API contract with a placeholder, and add a research-use
+disclaimer. This also responds to feedback that the #75 editor's points were too
+small to grab and the screen was confusing. Design research covered WCAG 2.5.8,
+CDS Hooks cards, the GOV.UK warning text pattern, Fagerlin et al. on risk
+communication, and MDCalc's redesign post.
+
+**Result:** Added:
+- shared design tokens
+- the `RiskScoreResult` contract and a placeholder `POST /api/risk-score`
+- `RiskScoreCard`, with a band chip (icon and word), a 1-in-100 sentence, an
+  icon array, the band scale, factors, a collapsed method section and a
+  persistent disclaimer
+- a three-step `ReviewFlow` (Review trace → Confirm → Risk score)
+- editor changes: one lead zoomed at a time, a 44px grab radius with hover
+  feedback, undo/redo, per-lead "looks correct" checks, a minimap, and advanced
+  sliders hidden
+
+Design rationale and sources are in
+[risk-score-and-review-ux.md](../docs/risk-score-and-review-ux.md).
+
+**Validation:** 95 frontend/API tests passed (12 new: risk contract, undo/redo,
+viewport). TypeScript, lint and the production build passed. Chrome walkthrough on
+`/trace-review`:
+- dragged the V2 spike down, deleted a point
+- checked all 12 leads
+- the Confirm step showed V2 as corrected
+- Save produced a record with V2 changed (33 samples), 12 confirmed leads and 3
+  edits
+- the score step rendered the placeholder card
+
+All text color pairs measured at ≥ 4.5:1.
+
+**Limits:** The score and factor values are placeholders and labeled as such. No
+model is connected. The walkthrough was in dark mode only, and there was no
+real-capture run (digitizer not started). No Taiga status change, merge or deploy
+was performed.
+
 ### 2026-11-23 — Trace overlay and correction for review (#75)
 
 **Scope:** Sprint 5 task #75. Draw the auto-detected trace over the EKG image
