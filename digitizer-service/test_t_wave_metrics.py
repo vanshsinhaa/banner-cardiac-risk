@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from t_wave_metrics import (
     CALCULATION_ERROR, COULD_NOT_CALCULATE, NO_T_WAVE_FOUND, T_WAVE_FINDER_FAILED,
-    compute_t_wave_metrics, t_wave_area,
+    compute_t_wave_metrics, j_point_to_t_end_ms, t_wave_area,
 )
 
 SAMPLING_RATE = 500  # Hz, so one sample = 2 ms
@@ -20,7 +20,7 @@ def make_t_wave(amplitude_mv, baseline_mv=0.0, onset_ms=150, offset_ms=350):
     beat[start : end + 1] += amplitude_mv * np.sin(np.linspace(0, np.pi, end - start + 1))
     return {
         "median_beat": beat.tolist(), "r_index": r_index, "baseline_mv": baseline_mv,
-        "t_onset_ms": onset_ms, "t_offset_ms": offset_ms,
+        "qrs_end_ms": 50, "t_onset_ms": onset_ms, "t_offset_ms": offset_ms, "t_end_ms": offset_ms,
     }
 
 
@@ -50,6 +50,25 @@ class TWaveAreaTests(unittest.TestCase):
     def test_boundaries_outside_the_beat_give_none(self):
         past_the_end = dict(make_t_wave(0.4), t_offset_ms=900)  # beat only runs to 598 ms
         self.assertIsNone(t_wave_area(past_the_end, SAMPLING_RATE))
+
+
+class JPointToTEndTests(unittest.TestCase):
+    def test_measures_from_the_j_point_to_the_tangent_t_end(self):
+        wave = dict(make_t_wave(0.4), qrs_end_ms=48, t_end_ms=372.5)
+        self.assertAlmostEqual(j_point_to_t_end_ms(wave), 324.5)
+
+    def test_no_t_end_gives_none(self):
+        self.assertIsNone(j_point_to_t_end_ms(dict(make_t_wave(0.4), t_end_ms=None)))
+
+    def test_t_end_before_the_j_point_gives_none(self):
+        self.assertIsNone(j_point_to_t_end_ms(dict(make_t_wave(0.4), qrs_end_ms=60, t_end_ms=40)))
+
+    def test_missing_t_end_is_marked_could_not_calculate(self):
+        wave = dict(make_t_wave(0.4), t_end_ms=None)
+        lead = compute_t_wave_metrics({"I": wave}, ["I"], SAMPLING_RATE)["leads"]["I"]
+        self.assertIsNone(lead["j_point_to_t_end_ms"])
+        self.assertEqual(lead["missing"]["j_point_to_t_end_ms"], COULD_NOT_CALCULATE)
+        self.assertIsNotNone(lead["t_wave_area_mv_ms"])  # the area does not need the T end
 
 
 class MissingMeasurementTests(unittest.TestCase):

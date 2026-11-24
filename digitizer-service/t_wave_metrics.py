@@ -1,11 +1,13 @@
 """Measurements built on the T waves found by t_wave.find_t_waves.
 
-Done: t_wave_area. The others return None until their definitions are settled.
+Done: t_wave_area, j_point_to_t_end_ms. The others return None until their
+definitions are settled.
 Each lead's T-wave result (see t_wave.analyze_lead) has:
     median_beat   one averaged beat in mV
     r_index       index of the R peak in median_beat
-    qrs_onset_ms, qrs_end_ms, t_onset_ms, t_peak_ms, t_offset_ms
-                  times in ms relative to the R peak (qrs_end_ms is the J-point)
+    qrs_onset_ms, qrs_end_ms, t_onset_ms, t_peak_ms, t_offset_ms, t_end_ms
+                  times in ms relative to the R peak (qrs_end_ms is the J-point,
+                  t_end_ms the tangent-method T end, None if not found)
     t_peak_mv, baseline_mv, beats_used
 """
 
@@ -16,11 +18,16 @@ import numpy as np
 
 # --- Per-lead measurements --------------------------------------------------
 def j_point_to_t_end_ms(t_wave: dict[str, Any]) -> float | None:
-    """Time from the J-point (end of QRS) to the end of the T wave, in ms.
+    """Time from the J-point (end of the QRS) to the end of the T wave, in ms.
 
-    TODO: likely t_wave["t_offset_ms"] - t_wave["qrs_end_ms"].
+    The T end is the tangent-method end (t_end_ms, see t_wave.find_t_end).
+    Returns None if no T end was found, or if it does not come after the J-point.
     """
-    return None
+    t_end = t_wave["t_end_ms"]
+    if t_end is None:
+        return None
+    duration = t_end - t_wave["qrs_end_ms"]
+    return float(duration) if duration > 0 else None
 
 
 def qt_ms(t_wave: dict[str, Any]) -> float | None:
