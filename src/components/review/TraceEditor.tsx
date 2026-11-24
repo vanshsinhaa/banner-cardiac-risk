@@ -209,7 +209,7 @@ export default function TraceEditor(props: Props) {
     ? "Release to place the point."
     : active !== null
       ? "Point selected. Drag it, nudge it with ↑ ↓, or press Delete to remove it."
-      : "Compare the orange line with the printed waveform underneath. Drag any point that is off, or click the line to add one.";
+      : "Compare the blue line with the printed waveform underneath. Drag any point that is off, or click the line to add one.";
   const cursor = drag ? "grabbing" : hover !== null ? "grab" : nearLine ? "copy" : "default";
 
   return (

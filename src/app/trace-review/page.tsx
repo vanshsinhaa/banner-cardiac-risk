@@ -14,12 +14,8 @@ export const metadata: Metadata = {
 // detection errors in leads I, aVF and V2. No patient data.
 export default function TraceReviewDemoPage() {
   return (
-    <>
-      <p style={{ padding: "8px 16px", textAlign: "center", fontSize: 13, background: "var(--ui-primary-soft)", color: "var(--ui-text)" }}>
-        Demo with synthetic data. Leads I, aVF and V2 contain deliberate detection errors to correct.
-      </p>
-      <ReviewFlow imageSrc="/synthetic-ecgs/standard-12-lead.png"
-        digitization={demo as unknown as EcgDigitizationResult} captureId="demo-synthetic-0001" />
-    </>
+    <ReviewFlow imageSrc="/synthetic-ecgs/standard-12-lead.png"
+      digitization={demo as unknown as EcgDigitizationResult} captureId="demo-synthetic-0001"
+      demoNote="Synthetic data. Leads I, aVF and V2 contain deliberate detection errors to correct." />
   );
 }

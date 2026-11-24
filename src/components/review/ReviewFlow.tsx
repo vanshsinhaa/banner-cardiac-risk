@@ -8,6 +8,7 @@ import { editedLeads, initReview, reviewReducer } from "@/lib/traceOverlay/trace
 import { leadWindows } from "@/lib/traceOverlay/viewport";
 import { isRiskScoreResult, type RiskScoreResult } from "@/lib/riskScore/contract";
 import RiskScoreCard from "../risk/RiskScoreCard";
+import AppBar, { AppBarButton, AppBarChip } from "../shell/AppBar";
 import ConfirmStep from "./ConfirmStep";
 import ResearchDisclaimer from "./ResearchDisclaimer";
 import Stepper, { type ReviewStep } from "./Stepper";
@@ -20,11 +21,13 @@ interface Props {
   captureId?: string;
   onExit?: () => void;
   exitLabel?: string;
+  /** Marks the page as running on synthetic demo data. */
+  demoNote?: string;
 }
 
 // Review trace (#75) -> Confirm -> Risk score (#76). The reviewer checks every lead
 // before the corrected trace is saved and the score is requested.
-export default function ReviewFlow({ imageSrc, digitization, captureId, onExit, exitLabel = "Back to capture" }: Props) {
+export default function ReviewFlow({ imageSrc, digitization, captureId, onExit, exitLabel = "Back to capture", demoNote }: Props) {
   const leads = useMemo(() => Object.keys(digitization.leads), [digitization]);
   const sampleCount = useMemo(() => Math.max(...Object.values(digitization.leads).map((samples) => samples?.length ?? 0)), [digitization]);
   const sampleRanges = useMemo(() => Object.fromEntries(leads.map((lead) =>
@@ -108,16 +111,20 @@ export default function ReviewFlow({ imageSrc, digitization, captureId, onExit, 
   const canSelect = (target: ReviewStep) => target === "review" || (target === "confirm" && allConfirmed) || (target === "score" && score !== null);
 
   return (
+    <div className={styles.page}>
+      <AppBar section="Trace review"
+        meta={<>{demoNote && <AppBarChip>Synthetic demo</AppBarChip>}{captureId && <AppBarChip>{captureId}</AppBarChip>}</>}
+        action={onExit && <AppBarButton onClick={onExit}>{exitLabel}</AppBarButton>} />
     <div className={styles.flow}>
       <header className={styles.flowHeader}>
         <div className={styles.flowTitleRow}>
           <div>
-            <p className={styles.kicker}>EKG review</p>
+            <p className={styles.kicker}>Step {step === "review" ? 1 : step === "confirm" ? 2 : 3} of 3</p>
             <h1 className={styles.flowTitle}>{step === "review" ? "Check the detected waveform" : step === "confirm" ? "Confirm before scoring" : "Risk score"}</h1>
           </div>
-          {onExit && <button type="button" className={styles.secondaryButton} onClick={onExit}>{exitLabel}</button>}
+          <Stepper current={step} onSelect={setStep} canSelect={canSelect} />
         </div>
-        <Stepper current={step} onSelect={setStep} canSelect={canSelect} />
+        {demoNote && <p className={styles.demoNote}>{demoNote}</p>}
         {step !== "score" && <ResearchDisclaimer compact />}
       </header>
 
@@ -144,6 +151,7 @@ export default function ReviewFlow({ imageSrc, digitization, captureId, onExit, 
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
