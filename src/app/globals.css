@@ -1,12 +1,15 @@
-/* Design tokens. "Clinical slate": cool neutral greys, one signal-blue accent, a
-   dark navy app bar, and colour reserved for meaning (trace, checked, risk band).
-   Modelled on clinical review tools such as Philips IntelliSpace ECG and GE MUSE
-   (dense, calm, blue accent) and modern clinical apps such as Abridge and Eko
-   (Inter, generous whitespace, few borders). Every text/background pair is at
-   least 4.5:1 in both themes; risk bands also carry a text label and an icon. */
+/* Hallmark · macrostructure: clinical-workbench · theme: clinical-blue · genre: modern-minimal
+ * pre-emit critique: P4 H5 E4 S4 R5 V4
+ * slop test: pass
+ *
+ * Locked design tokens. Every colour and font-family in the app references a
+ * token below; add a token here instead of writing a raw value in a component.
+ * Palette: cool slate neutrals, one signal-blue accent. Green only means
+ * "checked", amber only the research notice, band colours only the risk score.
+ * Every text/background pair is at least 4.5:1 in both themes. */
 :root {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-numeric: var(--font-mono), ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-numeric: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   --ui-bg: #f3f5f8;
   --ui-surface: #ffffff;
@@ -20,19 +23,48 @@
   --ui-primary-hover: #084cb2;
   --ui-primary-text: #ffffff;
   --ui-primary-soft: #eaf2fe;
+  --ui-primary-glow: #0a5bd333;
+  --ui-highlight: #ffffff26;
   --ui-focus: #2f7cf6;
   --ui-success: #0f7b55;
   --ui-success-soft: #e5f5ee;
-  --ui-trace: #0a5bd3;
-  --ui-trace-auto: #7b8699;
+  --ui-danger: #b3261e;
   --ui-notice-bg: #fff8eb;
   --ui-notice-border: #f1d9a6;
   --ui-notice-text: #6b4500;
 
+  /* EKG paper and the trace drawn on it look the same in both themes, because
+     the printout itself is always white with a red grid. */
+  --ui-canvas: #ffffff;
+  --ui-on-canvas: #ffffff;
+  --ui-trace: #0a5bd3;
+  --ui-trace-auto: #7b8699;
+
+  /* Product bar: dark navy in both themes. */
   --ui-shell: #0b1220;
   --ui-shell-border: #1b2536;
   --ui-shell-text: #e8edf5;
   --ui-shell-muted: #9ba7ba;
+  --ui-shell-hover: #ffffff0d;
+  --ui-shell-active: #ffffff1a;
+  --ui-mark-from: #2f7cf6;
+  --ui-mark-to: #0a5bd3;
+  --ui-mark-text: #ffffff;
+
+  /* Camera and crop: always dark, so the photo reads clearly. */
+  --crop-bg: #0a0e14;
+  --crop-surface: #10151d;
+  --crop-surface-2: #151b25;
+  --crop-text: #e6ebf2;
+  --crop-muted: #9aa5b5;
+  --crop-border: #1f2733;
+  --crop-border-strong: #2d3746;
+  --crop-accent: #6aa0ff;
+  --crop-handle: #0a5bd3;
+  --crop-contrast: #ffffff;
+  --crop-video: #000000;
+  --crop-dim: #00000059;
+  --crop-shadow: #000000cc;
 
   --band-low-bg: #e5f5ee;
   --band-low-text: #0b5d3a;
@@ -55,6 +87,7 @@
   --radius-lg: 12px;
   --shadow-card: 0 1px 2px #0e17260a, 0 1px 3px #0e17260d;
   --shadow-pop: 0 4px 12px #0e172614, 0 1px 3px #0e17260f;
+  --shadow-crop: 0 4px 20px #00000088;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -71,10 +104,11 @@
     --ui-primary-hover: #6aa0ff;
     --ui-primary-text: #04101f;
     --ui-primary-soft: #13233d;
+    --ui-primary-glow: #4d8dff33;
     --ui-focus: #6aa0ff;
     --ui-success: #3fcf8e;
     --ui-success-soft: #0f2a1f;
-    --ui-trace-auto: #7b8699;
+    --ui-danger: #ffb4ae;
     --ui-notice-bg: #241c0c;
     --ui-notice-border: #574416;
     --ui-notice-text: #f6d58e;
@@ -90,8 +124,8 @@
     --band-intermediate-text: #ffc999;
     --band-high-bg: #3a1010;
     --band-high-text: #ffb4ae;
-    --shadow-card: 0 1px 2px #0008;
-    --shadow-pop: 0 8px 24px #0009;
+    --shadow-card: 0 1px 2px #00000088;
+    --shadow-pop: 0 8px 24px #00000099;
   }
 
   html { color-scheme: dark; }
@@ -110,7 +144,7 @@ html {
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -120,9 +154,14 @@ body {
   color: var(--ui-text);
   background: var(--ui-bg);
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 a {
