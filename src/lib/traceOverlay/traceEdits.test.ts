@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { toControlPoints, toRuns, toSamples } from "./controlPoints.ts";
+import { applyCorrections, toControlPoints, toRuns, toSamples } from "./controlPoints.ts";
 import { editedLeads, initReview, reviewReducer } from "./traceEdits.ts";
 
 const at = "2026-11-23T10:00:00.000Z";
@@ -21,10 +21,26 @@ describe("control points", () => {
     assert.equal(samples[49], null);
   });
 
+  it("keeps a narrow peak that falls between stride points", () => {
+    const samples = Array.from({ length: 41 }, (_, i) => (i === 27 ? 1.5 : 0));
+    assert.ok(toControlPoints(samples, 20).some((p) => p.i === 27 && p.mv === 1.5));
+  });
+
+  it("keeps original samples outside the edited stretch", () => {
+    const auto = Array.from({ length: 100 }, (_, i) => Math.round(Math.sin(i / 3) * 1000) / 1000);
+    const points = toControlPoints(auto, 20);
+    assert.deepEqual(applyCorrections(auto, points, points, 20), auto);
+    const moved = points.map((p) => (p.i === 60 ? { i: 60, mv: 2 } : p));
+    const result = applyCorrections(auto, points, moved, 20);
+    assert.equal(result[60], 2);
+    assert.deepEqual(result.slice(0, 40), auto.slice(0, 40));
+    assert.deepEqual(result.slice(85), auto.slice(85));
+  });
+
   it("round-trips an untouched lead exactly at the control points", () => {
     const samples = Array.from({ length: 100 }, (_, i) => Math.round(Math.sin(i / 7) * 1000) / 1000);
     const rebuilt = toSamples(toControlPoints(samples), samples.length);
-    for (let i = 0; i < samples.length; i += 10) assert.equal(rebuilt[i], samples[i]);
+    for (let i = 0; i < samples.length; i += 40) assert.equal(rebuilt[i], samples[i]);
   });
 });
 

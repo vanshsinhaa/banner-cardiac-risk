@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent, PointerEvent } from "react";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
-import { DEFAULT_STRIDE, toControlPoints, toRuns, toSamples } from "@/lib/traceOverlay/controlPoints";
+import { DEFAULT_STRIDE, applyCorrections, toControlPoints, toRuns } from "@/lib/traceOverlay/controlPoints";
 import {
   DEFAULT_LAYOUT, NO_ALIGNMENT, leadFrame, pxToSample, rowForLead, sampleToPx, signalRange,
   type GridLayout, type ImageSize, type LeadAlignment, type LeadFrame, type PixelPoint, type TracePoint,
@@ -66,6 +66,12 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
   const [alignments, setAlignments] = useState<Record<string, LeadAlignment>>({});
   const [save, setSave] = useState<SaveState>({ status: "idle" });
   const svgRef = useRef<SVGSVGElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const readImageSize = (element: HTMLImageElement | null) => {
+    if (element?.complete && element.naturalWidth) setImage({ width: element.naturalWidth, height: element.naturalHeight });
+  };
+  // A cached image can finish loading before hydration, so onLoad never fires; read it once mounted.
+  useEffect(() => readImageSize(imgRef.current), []);
 
   const rate = digitization.samplingRateHz;
   const edited = new Set(editedLeads(review));
@@ -74,7 +80,7 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
   const frame = frameFor(selected);
   const points = review.corrected[selected] ?? [];
   const shown = drag ? points.map((point, index) => (index === drag.index ? drag.preview : point)) : points;
-  const radius = image ? Math.max(3, image.width / 450) : 4;
+  const radius = image ? Math.max(3, image.width / 400) : 5;
 
   function toImage(event: { clientX: number; clientY: number }): PixelPoint | null {
     const svg = svgRef.current;
@@ -104,12 +110,15 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
     if (!cancelled) dispatch({ type: "move", lead: selected, index: drag.index, to: drag.preview, at: now() });
     setDrag(null);
   }
-  function addPoint(event: MouseEvent<SVGPolylineElement>) {
-    if (!frame || event.detail > 1) return;
+  // Clicking the selected trace, or empty space near it, adds a point at that time and voltage.
+  function addPoint(event: MouseEvent<SVGElement>) {
+    const target = event.target as Element;
+    if (!frame || event.detail > 1 || drag || (target !== svgRef.current && !target.classList.contains(styles.hitLine))) return;
     const pixel = toImage(event);
-    if (!pixel) return;
+    if (!pixel || !points.length) return;
     const point = pxToSample(frame, pixel);
-    if (point.i < 0 || point.i > sampleCount - 1) return;
+    const nearTrace = point.i >= points[0].i && point.i <= points[points.length - 1].i && Math.abs(point.mv) <= 3;
+    if (!nearTrace) return;
     dispatch({ type: "add", lead: selected, point, at: now() });
   }
   function deletePoint(index: number) {
@@ -139,7 +148,8 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
 
   async function saveCorrection() {
     setSave({ status: "saving" });
-    const corrected = Object.fromEntries(Object.entries(review.corrected).map(([lead, leadPoints]) => [lead, toSamples(leadPoints, sampleCount, DEFAULT_STRIDE)]));
+    const corrected = Object.fromEntries(Object.entries(review.corrected).map(([lead, leadPoints]) => [lead,
+      applyCorrections(digitization.leads[lead as keyof typeof digitization.leads] ?? [], review.auto[lead] ?? [], leadPoints, DEFAULT_STRIDE)]));
     try {
       const response = await fetch("/api/trace-corrections", {
         method: "POST",
@@ -168,7 +178,7 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
       <header className={styles.header}>
         <div>
           <h2>Review detected trace</h2>
-          <p>Drag a point to correct it. Click the selected trace to add a point. Double-click a point, or select it and press Delete, to remove it.</p>
+          <p>Drag a point to correct it. Click on or near the selected trace to add a point. Double-click a point, or select it and press Delete, to remove it.</p>
         </div>
         {onClose && <button type="button" className={styles.secondary} onClick={onClose}>Back to result</button>}
       </header>
@@ -185,12 +195,12 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
       <div className={styles.workspace}>
         <div className={styles.canvas}>
           {/* eslint-disable-next-line @next/next/no-img-element -- data URL from the capture, not a static asset */}
-          <img src={imageSrc} alt="De-identified EKG" className={styles.image}
-            onLoad={(event) => setImage({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />
+          <img ref={imgRef} src={imageSrc} alt="De-identified EKG" className={styles.image}
+            onLoad={(event) => readImageSize(event.currentTarget)} />
           {image && (
             <svg ref={svgRef} className={styles.overlay} viewBox={`0 0 ${image.width} ${image.height}`} tabIndex={0}
               aria-label={`Trace overlay, lead ${selected}`} onPointerMove={moveDrag} onPointerUp={(e) => endDrag(e)}
-              onPointerCancel={(e) => endDrag(e, true)} onKeyDown={onKeyDown}>
+              onPointerCancel={(e) => endDrag(e, true)} onKeyDown={onKeyDown} onClick={addPoint}>
               {leads.filter((lead) => lead !== selected).map((lead) => {
                 const other = frameFor(lead)!;
                 return toRuns(review.corrected[lead] ?? []).map((run, k) => (
@@ -204,7 +214,7 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
               {frame && toRuns(shown).map((run, k) => (
                 <g key={`corrected-${k}`}>
                   <polyline points={polyline(frame, run)} className={styles.correctedTrace} />
-                  <polyline points={polyline(frame, run)} className={styles.hitLine} onClick={addPoint} />
+                  <polyline points={polyline(frame, run)} className={styles.hitLine} />
                 </g>
               ))}
               {frame && shown.map((point, index) => {
@@ -262,7 +272,7 @@ export default function TraceOverlayEditor({ imageSrc, digitization, captureId, 
               {[...review.edits].reverse().slice(0, 100).map((edit) => (
                 <li key={edit.seq}>
                   <span className={styles.logLead}>{edit.lead}</span> {describeEdit(edit, rate)}
-                  <time className={styles.muted} dateTime={edit.at}> {edit.at.slice(11, 19)}</time>
+                  <time className={styles.muted} dateTime={edit.at}> {new Date(edit.at).toLocaleTimeString()}</time>
                 </li>
               ))}
             </ol>

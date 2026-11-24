@@ -3,16 +3,35 @@ import type { TracePoint } from "./geometry.ts";
 // The digitizer returns thousands of samples per lead. A reviewer edits a sparse set of
 // control points instead, and the corrected samples are rebuilt from them.
 
-export const DEFAULT_STRIDE = 10;
+export const DEFAULT_STRIDE = 40;
+const PEAK_WINDOW = 3;
+const PEAK_MV = 0.05;
 
-// One point every `stride` samples, plus the last sample of every run of signal so
-// peaks at the end of a segment are not dropped. Null samples are skipped.
+// A sample that is the highest or lowest within +/-PEAK_WINDOW samples and stands out by
+// PEAK_MV. Keeping these means narrow QRS peaks survive the downsampling.
+function isPeak(samples: readonly (number | null)[], i: number): boolean {
+  const mv = samples[i] as number;
+  let higher = true;
+  let lower = true;
+  let prominence = 0;
+  for (let k = i - PEAK_WINDOW; k <= i + PEAK_WINDOW; k++) {
+    const other = samples[k];
+    if (k === i || other === null || other === undefined) continue;
+    if (other > mv) higher = false;
+    if (other < mv) lower = false;
+    prominence = Math.max(prominence, Math.abs(mv - other));
+  }
+  return (higher || lower) && prominence >= PEAK_MV;
+}
+
+// One point every `stride` samples, plus local peaks and the last sample of every run
+// of signal. Null samples are skipped.
 export function toControlPoints(samples: readonly (number | null)[], stride = DEFAULT_STRIDE): TracePoint[] {
   const points: TracePoint[] = [];
   samples.forEach((mv, i) => {
     if (mv === null || !Number.isFinite(mv)) return;
     const runEnds = i === samples.length - 1 || samples[i + 1] === null;
-    if (i % stride === 0 || runEnds) points.push({ i, mv });
+    if (i % stride === 0 || runEnds || isPeak(samples, i)) points.push({ i, mv });
   });
   return points;
 }
@@ -64,4 +83,19 @@ export function toSamples(points: readonly TracePoint[], sampleCount: number, st
 
 function round(value: number): number {
   return Math.round(value * 10000) / 10000;
+}
+
+// Corrected samples for one lead. Wherever the edits did not change the interpolated
+// line, the original digitizer samples are kept exactly, so untouched stretches (and
+// untouched leads) are not smoothed by the control-point downsampling.
+export function applyCorrections(
+  autoSamples: readonly (number | null)[],
+  autoPoints: readonly TracePoint[],
+  correctedPoints: readonly TracePoint[],
+  stride = DEFAULT_STRIDE,
+): (number | null)[] {
+  if (autoPoints === correctedPoints) return autoSamples.slice();
+  const before = toSamples(autoPoints, autoSamples.length, stride);
+  const after = toSamples(correctedPoints, autoSamples.length, stride);
+  return after.map((value, i) => (value === before[i] ? autoSamples[i] : value));
 }
