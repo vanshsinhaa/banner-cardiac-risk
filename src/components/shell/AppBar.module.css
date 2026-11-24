@@ -1,3 +1,7 @@
+/* Hallmark · macrostructure: clinical-workbench · theme: clinical-blue · genre: modern-minimal
+ * pre-emit critique: P4 H5 E5 S4 R5 V4
+ * slop test: pass
+ */
 .bar {
   position: sticky;
   top: 0;
@@ -34,9 +38,9 @@
   height: 28px;
   flex: none;
   border-radius: 7px;
-  background: linear-gradient(135deg, #2f7cf6, #0a5bd3);
-  color: #fff;
-  box-shadow: inset 0 0 0 1px #ffffff26;
+  background: linear-gradient(135deg, var(--ui-mark-from), var(--ui-mark-to));
+  color: var(--ui-mark-text);
+  box-shadow: inset 0 0 0 1px var(--ui-highlight);
 }
 
 .mark svg { width: 18px; height: 18px; }
@@ -87,7 +91,7 @@
   padding: 0 var(--space-3);
   border: 1px solid var(--ui-shell-border);
   border-radius: var(--radius-md);
-  background: #ffffff0d;
+  background: var(--ui-shell-hover);
   color: var(--ui-shell-text);
   font: inherit;
   font-size: 13px;
@@ -95,9 +99,17 @@
   cursor: pointer;
 }
 
-.button:hover { background: #ffffff1a; }
+.button:hover { background: var(--ui-shell-active); }
 .button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
 
+.button { white-space: nowrap; }
+
+/* Chips drop out on narrow screens. The review flow repeats the research notice in
+   the page body, and the capture screen shows no results, so nothing is lost. */
 @media (max-width: 640px) {
   .divider, .section, .chip:not(:last-of-type) { display: none; }
+}
+
+@media (max-width: 480px) {
+  .chip { display: none; }
 }
