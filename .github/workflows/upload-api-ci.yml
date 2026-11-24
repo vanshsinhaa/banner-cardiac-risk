@@ -48,7 +48,7 @@ jobs:
       - run: python -m unittest discover -s preprocessing -p 'test_*.py'
       - run: python -m unittest discover -s digitizer-service -p 'test_lead_verification.py'
       - run: python -m unittest discover -s digitizer-service -p 'test_signal_result.py'
-      - run: python ocr/test_redact.py
+      - run: python -m ocr.test_redact
 
   test:
     name: Run tests
