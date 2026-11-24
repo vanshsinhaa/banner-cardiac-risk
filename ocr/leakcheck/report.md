@@ -2,12 +2,12 @@
 
 Result: **PASS** (exit code 0)
 
-- Images checked: 16 (released 6, blocked 10, errors 0)
-- Known fake identifiers in released images: 24
-- Of those, fully inside the removed rows: 24
+- Images checked: 16 (released 2, blocked 14, errors 0)
+- Known fake identifiers in released images: 8
+- Of those, fully inside the removed rows: 8
 - Identifiers leaked (still readable in the released image): 0
-- Identifiers in blocked images (no image released): 40
-- Controls of released images not flagged as leaks: 0 of 6
+- Identifiers in blocked images (no image released): 56
+- Controls of released images not flagged as leaks: 0 of 2
 - Controls OCR cannot read even before processing (all blocked, none released): 2
 
 0 of 16
@@ -26,10 +26,14 @@ Result: **PASS** (exit code 0)
 - `rotated_2.jpg` (rotated): redaction_failed
 - `shadow_1.jpg` (shadow): redaction_failed
 - `shadow_2.jpg` (shadow): redaction_failed
+- `small_font_1.jpg` (small_font): uncertain_text
+- `small_font_2.jpg` (small_font): uncertain_text
+- `tiny_font_1.jpg` (tiny_font): uncertain_text
+- `tiny_font_2.jpg` (tiny_font): uncertain_text
 - `very_blurry_1.jpg` (very_blurry): redaction_failed
 - `very_blurry_2.jpg` (very_blurry): redaction_failed
 
-Blocked by reason: redaction_failed x8, nothing_detected x2
+Blocked by reason: redaction_failed x8, nothing_detected x2, uncertain_text x4
 
 ## What was tested
 
