@@ -1,17 +1,18 @@
 {
   "summary": {
     "images": 16,
-    "released": 6,
-    "blocked": 10,
+    "released": 2,
+    "blocked": 14,
     "blocked_by_reason": {
       "redaction_failed": 8,
-      "nothing_detected": 2
+      "nothing_detected": 2,
+      "uncertain_text": 4
     },
     "errors": 0,
-    "identifiers_in_released_images": 24,
-    "identifiers_fully_removed": 24,
+    "identifiers_in_released_images": 8,
+    "identifiers_fully_removed": 8,
     "identifiers_leaked": 0,
-    "identifiers_in_blocked_images": 40,
+    "identifiers_in_blocked_images": 56,
     "control_images": 16,
     "control_images_not_flagged": [],
     "controls_unreadable_not_released": [
@@ -176,160 +177,36 @@
       "image": "small_font_1.jpg",
       "variant": "small_font",
       "known_identifiers": 4,
-      "outcome": "released",
-      "reason": null,
-      "top_cut": 225,
-      "bottom_cut": 0,
-      "identifiers": [
-        {
-          "identifier": "Patient: Jane Testcase",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "MRN: 9318350",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "DOB: 11/02/1985",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "Date: 10/25/2026",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        }
-      ],
+      "outcome": "blocked",
+      "reason": "uncertain_text",
+      "identifiers": [],
       "leaks": 0
     },
     {
       "image": "small_font_2.jpg",
       "variant": "small_font",
       "known_identifiers": 4,
-      "outcome": "released",
-      "reason": null,
-      "top_cut": 225,
-      "bottom_cut": 0,
-      "identifiers": [
-        {
-          "identifier": "Patient: Alex Testcase",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "MRN: 5295628",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "DOB: 09/19/2002",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "Date: 10/02/2026",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        }
-      ],
+      "outcome": "blocked",
+      "reason": "uncertain_text",
+      "identifiers": [],
       "leaks": 0
     },
     {
       "image": "tiny_font_1.jpg",
       "variant": "tiny_font",
       "known_identifiers": 4,
-      "outcome": "released",
-      "reason": null,
-      "top_cut": 201,
-      "bottom_cut": 0,
-      "identifiers": [
-        {
-          "identifier": "Patient: Alex Samplesmith",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "MRN: 1448407",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "DOB: 12/01/1970",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "Date: 10/03/2026",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        }
-      ],
+      "outcome": "blocked",
+      "reason": "uncertain_text",
+      "identifiers": [],
       "leaks": 0
     },
     {
       "image": "tiny_font_2.jpg",
       "variant": "tiny_font",
       "known_identifiers": 4,
-      "outcome": "released",
-      "reason": null,
-      "top_cut": 201,
-      "bottom_cut": 0,
-      "identifiers": [
-        {
-          "identifier": "Patient: Priya Dummyfield",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "MRN: 2903469",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "DOB: 07/16/1953",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        },
-        {
-          "identifier": "Date: 10/28/2026",
-          "fully_removed": true,
-          "partly_removed": false,
-          "readable_text_left": [],
-          "leaked": false
-        }
-      ],
+      "outcome": "blocked",
+      "reason": "uncertain_text",
+      "identifiers": [],
       "leaks": 0
     },
     {
