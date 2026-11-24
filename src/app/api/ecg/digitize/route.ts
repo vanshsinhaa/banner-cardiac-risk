@@ -1,3 +1,4 @@
+import { testingBypassEnabled, TESTING_BYPASS_HEADER } from "../../../../lib/testingBypass.ts";
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "no-store" };
 const MAX_BYTES = 64 * 1024 * 1024;
@@ -5,6 +6,8 @@ const MAX_BYTES = 64 * 1024 * 1024;
 // Accept the same original canvas crop used for readability assessment. The
 // service performs OCR in its own aligned coordinate frame, not on the preview.
 export async function POST(request: Request) {
+  const testingBypass = request.headers.get(TESTING_BYPASS_HEADER) === "1";
+  if (testingBypass && !testingBypassEnabled()) return Response.json({ error: "The testing bypass is disabled outside development." }, { status: 403, headers });
   const url = process.env.ECG_DIGITIZER_URL;
   if (!url) return Response.json({ error: "The digitizer service is not configured." }, { status: 503, headers });
   const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
@@ -48,11 +51,13 @@ export async function POST(request: Request) {
     }
     const form = new FormData();
     form.append("image", image, "ekg-capture");
+    if (testingBypass) form.append("testing_bypass", "true");
     const response = await fetch(`${url.replace(/\/$/, "")}/digitize`, {
       method: "POST", body: form, signal: AbortSignal.timeout(120_000),
     });
     if (!response.ok) return Response.json({ error: "The digitizer could not extract this scan. Check the service and crop." }, { status: 502, headers });
     const result = await response.json();
+    if (testingBypass) result.privacyStatus = "testing_bypass";
     const names = ["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6"];
     const leads = result?.leads;
     if (!leads || typeof leads !== "object" || Array.isArray(leads) || !Object.keys(leads).length ||
@@ -99,6 +104,9 @@ export async function POST(request: Request) {
     if (error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name)) {
       return Response.json({ error: "No scan result was received within 2 minutes. Please try again." }, { status: 504, headers });
     }
-    return Response.json({ error: "Digitization or label verification is unavailable. Please try again." }, { status: 503, headers });
+    const unreachable = error instanceof TypeError && error.message.includes("fetch");
+    return Response.json({ error: unreachable
+      ? (process.env.NODE_ENV === "development" ? "The waveform service is not running or cannot be reached. Start the project with npm run dev, then run scan checks again." : "The waveform service could not be reached. Please try again shortly.")
+      : "Digitization or label verification is unavailable. Please try again." }, { status: 503, headers });
   }
 }

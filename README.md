@@ -13,12 +13,14 @@ fixture still blocks at privacy. Nothing has been deployed.
 
 ## Run the app
 
-Use Node 22.13+ and Python 3.12. Install Node dependencies, then start Next.js:
+Use Node 22.13+ and Python 3.12. Complete the [local digitizer setup](digitizer-service/README.md), install Node dependencies, then start the website and digitizer together:
 
 ```bash
 npm ci
 npm run dev
 ```
+
+The development launcher waits for the local waveform model to load before starting Next.js. It reuses an already-running digitizer. Use `npm run dev:web` for website-only development with a separately managed digitizer; de-identification services still have their own setup.
 
 Open http://localhost:3000. Capture a photo, adjust all four corners, and confirm.
 Original dimensions provide a non-blocking detail advisory. Smaller images can

@@ -5,10 +5,12 @@ import { CAMERA_DETAIL_RECOVERY, FILE_DETAIL_RECOVERY, LIMITED_DETAIL_TITLE } fr
 import { checkResolution, type ResolutionResult } from "@/lib/checkResolution";
 import { insetCorners, isWithinPhoto, orderCorners, type CaptureDetails, type Corners, type PhotoSize } from "@/lib/cropCorners";
 import { outputSize } from "@/lib/perspective";
-import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, pngBlob, type Assessment, type DeidentifiedCapture } from "@/lib/capturePipeline";
+import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, pngBlob, testingCapture, type ProcessableCapture, type Assessment, type DeidentifiedCapture } from "@/lib/capturePipeline";
+import { testingBypassEnabled, TESTING_BYPASS_NOTICE } from "@/lib/testingBypass";
 import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
 import LeadReview from "./LeadReview";
+import LeadGraphsButton from "./LeadGraphsButton";
 import CameraGuide from "./CameraGuide";
 import QuadCropper from "./capture/QuadCropper";
 import { warpPreview } from "./capture/warpPreview";
@@ -38,13 +40,13 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
   const [photoSource, setPhotoSource] = useState<"file" | "camera">("file");
   const [error, setError] = useState<string | null>(null);
   const [proposalWarning, setProposalWarning] = useState(false);
-  const [capture, setCapture] = useState<DeidentifiedCapture | null>(null);
+  const [capture, setCapture] = useState<ProcessableCapture | null>(null);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [digitization, setDigitization] = useState<EcgDigitizationResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [digitizerError, setDigitizerError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
-  const pendingCrop = useRef<{ blob: Blob; details: CaptureDetails } | null>(null);
+  const pendingCrop = useRef<{ blob: Blob; image: string; details: CaptureDetails } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const loadedImage = useRef<HTMLImageElement | null>(null);
@@ -110,7 +112,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     if (!size || !corners || !isWithinPhoto(corners, size) || resolution?.status === "invalid") return false;
     try { outputSize(corners); return true; } catch { return false; }
   }
-  async function scan(confirmed: DeidentifiedCapture, controller = new AbortController()) {
+  async function scan(confirmed: ProcessableCapture, controller = new AbortController()) {
     if (confirmed.mock) return;
     processing.current?.abort();
     processing.current = controller;
@@ -176,7 +178,24 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     if (photoSource === "file") openPicker();
     else { reset(); setStage("camera"); }
   }
-  async function confirmCrop() {
+  function continueForTesting(pending = pendingCrop.current) {
+    if (!testingBypassEnabled() || !pending) return;
+    const testCapture = testingCapture(pending.image);
+    processing.current?.abort();
+    processing.current = null;
+    pendingCrop.current = null;
+    setError(null);
+    setImageSrc(null);
+    setImage(null);
+    loadedImage.current = null;
+    setCapture(testCapture);
+    setResultSrc(testCapture.image);
+    setCount(c => c + 1);
+    setStage("result");
+    // Keep the legacy onCapture callback restricted to confirmed redaction.
+    void scan(testCapture);
+  }
+  async function confirmCrop(forTesting = false) {
     if (!image || !size || !corners || processing.current || !canConfirm()) return;
     const controller = new AbortController();
     processing.current = controller;
@@ -186,9 +205,10 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     try {
       const dataUrl = await warpPreview(image, details.corners, controller.signal);
       controller.signal.throwIfAborted();
-      const pending = { blob: pngBlob(dataUrl), details };
+      const pending = { blob: pngBlob(dataUrl), image: dataUrl, details };
       pendingCrop.current = pending;
-      await sendForDeidentification(pending, controller);
+      if (forTesting) continueForTesting(pending);
+      else await sendForDeidentification(pending, controller);
     } catch (error) {
       if (!controller.signal.aborted) {
         setError(errorMessage(error));
@@ -260,12 +280,15 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
         onError={() => { reset(); setError("This photo could not be displayed. Try a JPEG or PNG."); }} />}
 
       {stage === "result" && resultSrc && <section className={styles.resultContent}>
+        {!capture?.mock && <LeadGraphsButton result={digitization} image={capture?.image} assessment={assessment} loading={scanning && !digitizerError}
+          onResult={updated => setDigitization(current => current?.manualReview?.token === updated.manualReview?.token ? updated : current)} />}
+        {capture?.status === "testing_bypass" && <p role="alert" className={styles.warning}>{TESTING_BYPASS_NOTICE}</p>}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={resultSrc} alt="De-identified EKG capture" className={styles.resultImage} />
+        <img src={resultSrc} alt={capture?.status === "testing_bypass" ? "Testing EKG capture — not de-identified" : "De-identified EKG capture"} className={styles.resultImage} />
         {capture?.mock && <p role="alert" className={styles.warning}>TEST MODE: this preview was not de-identified. Saving, analysis, and digitization are disabled.</p>}
         {!capture?.mock && <div className={styles.scanResults} aria-label="Scan checks">
-          <p className={styles.privacyStatus}>Identifying information removed.</p>
-          {scanning && <p role="status">Checking the ECG: reading lead labels and extracting waveforms. Allow up to 2 minutes.</p>}
+          {capture?.status !== "testing_bypass" && <p className={styles.privacyStatus}>Identifying information removed.</p>}
+          {scanning && (digitization || digitizerError) && <p role="status">The readability check is still running. Its result will appear automatically.</p>}
           {assessment && <p>Readability: {readabilityMessage}</p>}
           {!!assessment?.missing_leads?.length && <p className={styles.resultHint}>Not read by the readability check: {assessment.missing_leads.join(", ")}.</p>}
           {assessment?.advisories?.includes("limited_image_dimensions") && <p className={styles.resultHint}>This crop has limited image dimensions. The readability result uses the labels found in it.</p>}
@@ -273,10 +296,11 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
           {analysisError && <p role="alert">Readability check could not finish: {analysisError}</p>}
           {digitizerError && <p role="alert">Waveform extraction could not finish: {digitizerError}</p>}
           {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz.</p>}
-          {digitization && <LeadReview result={digitization} />}
+          {digitization && <LeadReview showGraphButton={false} key={`${digitization.manualReview?.token ?? ''}:${digitization.manualReview?.revision ?? 0}`} result={digitization} image={capture?.image} assessment={assessment}
+            onResult={updated => setDigitization(current => current?.manualReview?.token === updated.manualReview?.token ? updated : current)} />}
           {assessment && <details><summary>Lighting-corrected preview</summary>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={assessment.processed_image} alt="Lighting-corrected de-identified EKG" className={styles.resultImage} />
+            <img src={assessment.processed_image} alt={capture?.status === "testing_bypass" ? "Lighting-corrected test EKG — not de-identified" : "Lighting-corrected de-identified EKG"} className={styles.resultImage} />
           </details>}
           {(assessment?.status !== "passed" || analysisError || digitizerError) && !scanning && <p className={styles.resultHint}>You can retry the checks or use another image. {detailRecovery}</p>}
           {capture && <button className={styles.secondary} disabled={scanning} onClick={() => void scan(capture)}>Run scan checks again</button>}
@@ -311,13 +335,18 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
             </>}
             {cropping && <>
               <button className={styles.secondary} onClick={replacePhoto} disabled={stage === "processing"}>{replacementLabel}</button>
-              <button className={styles.primary} onClick={confirmCrop} disabled={stage === "processing" || !canConfirm()}>{stage === "processing" ? "Processing…" : "Use this crop"}</button>
+              <button className={styles.primary} onClick={() => void confirmCrop()} disabled={stage === "processing" || !canConfirm()}>{stage === "processing" ? "Processing…" : "Use this crop"}</button>
             </>}
             {stage === "result" && <>
               <button className={styles.secondary} onClick={replacePhoto}>{replacementLabel}</button>
-              {!capture?.mock && <a className={styles.primary} href={resultSrc ?? undefined} download={`ekg-capture-${count}.png`}>Save image</a>}
+              {!capture?.mock && <a className={styles.primary} href={resultSrc ?? undefined} download={`${capture?.status === "testing_bypass" ? "testing-only-" : ""}ekg-capture-${count}.png`}>{capture?.status === "testing_bypass" ? "Save test image (not de-identified)" : "Save image"}</a>}
             </>}
           </div>
+          {testingBypassEnabled() && ["crop", "blocked", "deidentifying"].includes(stage) && <>
+            <p className={styles.warning}>Development testing: this option sends the crop to analysis and digitization without removing identifying text.</p>
+            <button type="button" className={styles.secondary} disabled={stage === "crop" && !canConfirm()}
+              onClick={() => stage === "crop" ? void confirmCrop(true) : continueForTesting()}>Testing only: continue without de-identification</button>
+          </>}
           {stage === "blocked" && <button className={styles.textAction} onClick={adjustCrop}>Adjust crop</button>}
           {cropping && stage !== "processing" && <button className={styles.textAction} onClick={reset}>Cancel</button>}
           <p className={styles.count}>{count} {count === 1 ? "image" : "images"} captured this session</p>

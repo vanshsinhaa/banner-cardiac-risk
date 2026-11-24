@@ -1,0 +1,54 @@
+.page {
+  max-width: 1040px;
+  margin: auto;
+  padding: 32px 24px 64px;
+  color: #183b36;
+  line-height: 1.55;
+}
+.page h1 { font-size: 1.8rem; margin-bottom: 16px; }
+.page h2 { font-size: 1.2rem; margin-bottom: 8px; }
+.page p { margin: 12px 0; }
+.page a { color: #17695b; text-decoration: underline; text-underline-offset: 3px; }
+.page button {
+  border: 1px solid #286e61;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 4px 8px 4px 0;
+  color: white;
+  background: #286e61;
+  cursor: pointer;
+  font: inherit;
+}
+.page button:disabled { opacity: .55; cursor: default; }
+.page input:not([type='checkbox']) {
+  border: 1px solid #8fa8a0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  max-width: 100%;
+  background: white;
+  color: #183b36;
+}
+.page fieldset { min-width: 0; border: 1px solid #cfddd8; border-radius: 8px; padding: 12px; }
+.page legend { font-weight: 600; padding: 0 6px; }
+.page [role='alert'] { padding: 12px; background: #fff0ed; border-radius: 8px; color: #922b21; }
+.card { border: 1px solid #b8cec5; border-radius: 12px; padding: 20px; margin: 24px 0; background: #fff; }
+@media (max-width: 600px) {
+  .page { padding: 20px 12px 40px; }
+  .card { padding: 12px; }
+  .page fieldset { padding: 8px; }
+}
+.graphToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 12px;
+  background: #eef7f2;
+  border: 1px solid #b8cec5;
+  border-radius: 8px;
+}
+.page summary { cursor: pointer; padding: 8px 0; font-weight: 600; }

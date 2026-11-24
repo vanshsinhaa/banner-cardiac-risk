@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 
 const source = readFileSync(new URL('../src/app/api/ecg/digitize/route.ts', import.meta.url), 'utf8');
-const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
+const resolved = source.replace(/from "[^"]*testingBypass\.ts"/, `from "${new URL('../src/lib/testingBypass.ts', import.meta.url).href}"`);
+const js = ts.transpileModule(resolved, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
 const { POST } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
 const request = (body = 'png') => new Request('http://localhost/api/ecg/digitize', {
   method: 'POST', headers: { 'Content-Type': 'image/png' }, body,
@@ -82,6 +83,26 @@ test('missing service is explicit', async () => {
   finally { if (previous !== undefined) process.env.ECG_DIGITIZER_URL = previous; }
 });
 
+test('unreachable service gives development recovery instructions without exposing them in production', async () => {
+  const previous = process.env.NODE_ENV;
+  try {
+    for (const environment of ['development', 'production']) {
+      process.env.NODE_ENV = environment;
+      await withService(result(), async () => {
+        globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
+        const response = await POST(request());
+        assert.equal(response.status, 503);
+        const { error } = await response.json();
+        assert.match(error, /waveform service/i);
+        assert.equal(error.includes('npm run dev'), environment === 'development');
+      });
+    }
+  } finally {
+    if (previous === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previous;
+  }
+});
+
 test('two-minute timeout returns 504 before headers or while reading the body', async () => {
   const previousTimeout = AbortSignal.timeout;
   try {
@@ -150,5 +171,41 @@ test('missing, failed or ambiguous recognizers cannot invent a success', async (
       leadVerification: { status: 'needs_review', leads: { V1: { status: 'unverified', observedLabels } } } }, async () => {
       assert.equal((await (await POST(request())).json()).recognition.status, 'needs_review');
     });
+  }
+});
+
+
+test('production rejects the explicit testing-bypass header', async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'production';
+  try {
+    const response = await POST(new Request('http://localhost/api/test', {
+      method: 'POST', headers: { 'Content-Type': 'image/png', 'X-ECG-Testing-Bypass': '1' }, body: 'pixels',
+    }));
+    assert.equal(response.status, 403);
+  } finally {
+    if (previous === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previous;
+  }
+});
+
+test('development forwards the bypass marker to the digitizer and marks its output', async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'development';
+  try {
+    await withService(result(), async () => {
+      globalThis.fetch = async (_, options) => {
+        assert.equal(options.body.get('testing_bypass'), 'true');
+        return Response.json(result());
+      };
+      const response = await POST(new Request('http://localhost/api/ecg/digitize', {
+        method: 'POST', headers: { 'Content-Type': 'image/png', 'X-ECG-Testing-Bypass': '1' }, body: 'pixels',
+      }));
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).privacyStatus, 'testing_bypass');
+    });
+  } finally {
+    if (previous === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previous;
   }
 });

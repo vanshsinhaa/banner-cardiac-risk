@@ -207,4 +207,90 @@ class ServiceTests(unittest.TestCase):
             self.assertEqual(regions[name]['sampleRange'], [0, 400])
         finally: layout.pop('rhythm_leads')
 
+    def test_manual_review_http_reextracts_real_signal_map_and_rejects_stale_revision(self):
+        from manual_review import ReviewStore
+        image = np.full((200, 400, 3), 255, np.uint8)
+        signal = np.zeros((200, 400), np.float32)
+        for x in range(50, 350):
+            y = round(90 + 12 * np.sin(x / 13))
+            signal[y-1:y+2, x] = 1
+        result = {'leads': {'V1': [0.0] * 5000, 'I': [1.0] * 5000}, 'units': 'mV', 'samplingRateHz': 500,
+                  'leadVerification': {'status': 'needs_review', 'leads': {'V1': {'status': 'unverified'}, 'I': {'status': 'verified'}}}}
+        self.server.review_store = ReviewStore()
+        session = self.server.review_store.create(result, image, signal, 10, (0, 400))
+        body = {'token': session['token'], 'revision': 0, 'corrections': [{'source': 'V1', 'label': 'V2',
+                'labelBox': [10, 10, 30, 30], 'waveformBox': [45, 60, 355, 120]}]}
+        response = self.client.post('/review-leads', json=body)
+        self.assertEqual(response.status_code, 200, response.text)
+        output = response.json()
+        self.assertNotIn('V1', output['leads'])
+        self.assertEqual(output['leads']['I'], result['leads']['I'])
+        self.assertEqual(len(output['leads']['V2']), 5000)
+        self.assertTrue(any(v and abs(v) > .05 for v in output['leads']['V2']))
+        self.assertEqual(output['manualReview']['revision'], 1)
+        self.assertEqual(output['leadVerification']['leads']['V2']['status'], 'human_corrected')
+        self.assertEqual(self.client.post('/review-leads', json=body).status_code, 409)
+        self.assertEqual(self.client.post('/review-leads', json={**body, 'token': 'expired'}).status_code, 410)
+        self.assertEqual(self.client.post('/review-leads', content='x' * 33000).status_code, 413)
+        self.assertEqual(self.client.post('/review-leads', content='{').status_code, 422)
+
+    def test_manual_review_resegments_small_crop_when_cached_map_is_empty(self):
+        from manual_review import ReviewStore
+        image = np.full((200, 400, 3), 255, np.uint8)
+        for x in range(50, 350):
+            y = round(90 + 12 * np.sin(x / 13))
+            image[y-1:y+2, x] = 0
+        empty_signal = np.zeros((200, 400), np.float32)
+        result = {'leads': {'V1': [0.0] * 5000}, 'units': 'mV', 'samplingRateHz': 500,
+                  'leadVerification': {'status': 'needs_review', 'leads': {'V1': {'status': 'unverified'}}}}
+        self.server.review_store = ReviewStore()
+        session = self.server.review_store.create(result, image, empty_signal, 10, (0, 400))
+        body = {'token': session['token'], 'revision': 0, 'corrections': [{'source': 'V1', 'label': 'V1',
+                'labelBox': [10, 10, 30, 30], 'waveformBox': [45, 60, 355, 120]}]}
+        shapes = []
+        def segmentation(tensor):
+            shapes.append(tuple(tensor.shape[-2:]))
+            signal = 1 - tensor.mean(dim=1, keepdim=True)
+            return signal, signal, signal
+        with patch.object(self.server.wrapper, 'min_max_normalize', side_effect=lambda t: t/255, create=True), \
+             patch.object(self.server.wrapper, '_get_feature_maps', side_effect=segmentation, create=True):
+            response = self.client.post('/review-leads', json=body)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(len(shapes), 1)
+        self.assertGreaterEqual(min(shapes[0]), 512)
+        samples = response.json()['leads']['V1']
+        self.assertTrue(all(v is None for v in samples[:500]))
+        self.assertAlmostEqual(max(v for v in samples if v is not None), .12, delta=.03)
+
+    def test_graph_mode_http_edits_verified_lead_and_reads_latest_revision(self):
+        from manual_review import ReviewStore
+        image = np.full((200, 400, 3), 255, np.uint8)
+        signal = np.zeros((200, 400), np.float32)
+        for x in range(50, 350):
+            y = round(90 + 12 * np.sin(x / 13))
+            signal[y-1:y+2, x] = 1
+        result = {'leads': {'I': [1.0] * 5000}, 'units': 'mV', 'samplingRateHz': 500,
+                  'leadVerification': {'status': 'verified', 'leads': {'I': {'status': 'verified'}}}}
+        self.server.review_store = ReviewStore()
+        session = self.server.review_store.create(result, image, signal, 10, (0, 400))
+        body = {'token': session['token'], 'revision': 0, 'mode': 'waveform_regions',
+                'corrections': [{'source': 'I', 'label': 'I', 'waveformBox': [45, 60, 355, 120]}]}
+        response = self.client.post('/review-leads', json=body)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()['leadVerification']['leads']['I']['status'], 'human_corrected')
+        self.assertEqual(self.client.post('/review-leads', json=body).status_code, 409)
+        latest = self.client.post('/review-leads', json={'token': session['token'], 'action': 'read'})
+        self.assertEqual(latest.status_code, 200)
+        self.assertEqual(latest.json()['leads'], response.json()['leads'])
+        self.assertEqual(latest.json()['manualReview']['revision'], 1)
+        self.assertEqual(self.client.post('/review-leads', json={'token': 'expired', 'action': 'read'}).status_code, 410)
+
+    def test_testing_bypass_is_explicitly_marked_on_digitization(self):
+        with patch.object(self.server, 'read_labels', side_effect=self.local_ocr):
+            response = self.client.post('/digitize', files={'image': ('scan.png', self.png, 'image/png')},
+                                        data={'testing_bypass': 'true'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['privacyStatus'], 'testing_bypass')
+        self.assertNotIn('privacyStatus', self.post().json())
+
 if __name__=='__main__': unittest.main()

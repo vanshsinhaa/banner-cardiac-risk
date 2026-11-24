@@ -15,7 +15,21 @@ export const ECG_LEADS = [
 
 export type EcgLead = (typeof ECG_LEADS)[number];
 
+export type RegionBox = [number, number, number, number];
+export interface LeadCorrection {
+  source: string | null;
+  label: string;
+  labelBox?: RegionBox;
+  mode?: "labels" | "waveform_regions";
+  waveformBox: RegionBox;
+}
 export interface EcgDigitizationResult {
+  privacyStatus?: "testing_bypass";
+  manualReview?: { token: string; revision: number; image: string; width: number; height: number; expiresInSeconds: number;
+    regions: Record<string, { box?: RegionBox; waveformBox?: RegionBox }> };
+  manualReviewUnavailable?: string;
+  manualCorrections?: LeadCorrection[];
+
   // Every lead shares one time axis. A sample is null where the lead has no signal,
   // e.g. outside the part of the strip where that lead is printed.
   leads: Partial<Record<EcgLead, (number | null)[]>>;

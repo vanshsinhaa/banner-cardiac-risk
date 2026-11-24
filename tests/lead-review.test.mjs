@@ -19,3 +19,11 @@ test('duplicates, unknown labels, omissions and unlocatable source corrections a
   }
   assert.throws(() => confirmLeadAssignments({ ...fixture(), leadPreviews: {} }, { V1: 'V2', V2: 'V1' }), /unavailable/);
 });
+
+test('confirmed export excludes temporary session tokens and full scan pixels', () => {
+  const source = { ...fixture(), manualReview: { token: 'secret', image: 'pixels' }, manualCorrections: [{ label: 'V1' }] };
+  const result = confirmLeadAssignments(source, { V1: 'V1', V2: 'V2' });
+  assert.equal(result.manualReview, undefined);
+  assert.deepEqual(result.manualCorrections, source.manualCorrections);
+  assert.equal(source.manualReview.token, 'secret');
+});

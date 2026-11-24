@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ReviewSession } from "@/components/ReviewSession";
 
 export const metadata: Metadata = {
   title: "EKG Capture",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><ReviewSession>{children}</ReviewSession></body>
     </html>
   );
 }

@@ -1,23 +1,19 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import TestingBypassNotice from '@/components/TestingBypassNotice';
+import Link from 'next/link';
+import { useReviewSession } from './ReviewSession';
+import type { Assessment } from '@/lib/capturePipeline';
 import { ECG_LEADS, type EcgDigitizationResult } from '@/lib/ecg-digitizer/types';
 import { confirmLeadAssignments } from '@/lib/ecg-digitizer/review';
 import styles from './EkgCaptureScreen.module.css';
+import Trace from './LeadTrace';
+import LeadGraphsButton from './LeadGraphsButton';
 
-function Trace({ samples }: { samples: (number | null)[] }) {
-  const finite = samples.filter((v): v is number => v !== null);
-  const min = Math.min(...finite), max = Math.max(...finite);
-  let path = '', gap = true;
-  samples.forEach((value, i) => {
-    if (value === null) { gap = true; return; }
-    path += `${gap ? 'M' : 'L'}${(i * 600 / Math.max(1, samples.length - 1)).toFixed(2)},${(75 - (value - min) * 65 / (max - min || 1)).toFixed(2)} `;
-    gap = false;
-  });
-  return <svg viewBox="0 0 600 85" role="img" aria-label="Extracted waveform, amplitude scaled for preview" style={{ width: '100%', background: '#fff' }}><path d={path} fill="none" stroke="#164e63" strokeWidth="1" /></svg>;
-}
 
-export default function LeadReview({ result }: { result: EcgDigitizationResult }) {
+export default function LeadReview({ result, image, assessment, onResult, showGraphButton = true }: { result: EcgDigitizationResult; image?: string; assessment?: Assessment | null; onResult?: (result: EcgDigitizationResult) => void; showGraphButton?: boolean }) {
+  const { setSnapshot } = useReviewSession();
   const [editing, setEditing] = useState(false);
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
@@ -26,7 +22,7 @@ export default function LeadReview({ result }: { result: EcgDigitizationResult }
   const [download, setDownload] = useState<string | null>(null);
   useEffect(() => () => { if (download) URL.revokeObjectURL(download); }, [download]);
   const names = Object.keys(result.leads);
-  const needsReview = names.filter(name => result.leadVerification?.leads[name]?.status !== 'verified');
+  const needsReview = names.filter(name => !['verified', 'human_corrected'].includes(result.leadVerification?.leads[name]?.status ?? ''));
   function apply() {
     try {
       const next = confirmLeadAssignments(result, Object.fromEntries(names.map(name => [name, labels[name] ?? name])));
@@ -39,8 +35,12 @@ export default function LeadReview({ result }: { result: EcgDigitizationResult }
   }
   return <section aria-label="Review lead assignments">
     <h3>Confirm recognized leads</h3>
+    <TestingBypassNotice status={result.privacyStatus} />
+    {showGraphButton && <LeadGraphsButton result={result} image={image} assessment={assessment} onResult={onResult} />}
     {!output && result.layoutRecheck?.attempted && <p>A layout recheck was requested. {result.layoutRecheck.status === 'accepted' ? 'The alternative passed.' : 'No alternative was fully verified. Please review the remaining assignments.'}</p>}
     {!output && needsReview.length > 0 && <p>{needsReview.length} assignments need manual review.</p>}
+    {result.manualReview ? <p><Link className={styles.secondary} href="/review-leads" onClick={() => setSnapshot({ result, image, assessment })}>Edit unrecognized leads</Link></p>
+      : <p>{result.manualReviewUnavailable || 'Upload a new scan to enable label and waveform-region editing.'}</p>}
     <button type="button" className={styles.secondary} onClick={() => { setEditing(true); setOutput(null); setConfirmed({}); }}>{needsReview.length ? 'Review conflicting leads' : 'Edit lead labels'}</button>
     {editing && <p>Read each printed label in its source image and enter it below. Correct both labels when leads are swapped.</p>}
     <datalist id="ecg-lead-options">{ECG_LEADS.map(name => <option key={name} value={name} />)}</datalist>
@@ -50,7 +50,8 @@ export default function LeadReview({ result }: { result: EcgDigitizationResult }
       const preview = result.leadPreviews?.[name];
       return <article key={name} style={{ border: '1px solid #b6c5ce', borderRadius: 8, padding: 12, marginBlock: 12 }}>
         <h4>Lead {label}</h4>
-        <p>Model: {name}. Tesseract: {check?.observedLabels?.join(', ') || 'unconfirmed'}. {check?.status === 'verified' ? 'Labels agree.' : 'Machine checks did not agree.'}</p>
+        {check?.status === 'human_corrected' ? <p>Waveform assignment adjusted by you and processed by the server.</p> :
+          <p>Model: {name}. Tesseract: {check?.observedLabels?.join(', ') || 'unconfirmed'}. {check?.status === 'verified' ? 'Labels agree.' : 'Machine checks did not agree.'}</p>}
         {preview?.startsWith('data:image/png;base64,') ?
           // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt={`Printed label and source waveform assigned to ${name}`} style={{ maxWidth: '100%' }} /> :

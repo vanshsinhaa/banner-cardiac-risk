@@ -1,3 +1,4 @@
+import { testingBypassEnabled, TESTING_BYPASS_HEADER } from "./testingBypass.ts";
 import { isEcgDigitizationResult, type EcgDigitizationResult } from "./ecg-digitizer/types.ts";
 import { DEID_ENDPOINT, DEID_SUCCESS_STATUS, DEID_TIMEOUT_MS } from "../config/deidentification.ts";
 
@@ -12,6 +13,28 @@ export interface DeidentifiedCapture {
   image: string;
   regions_redacted: number;
   mock: boolean;
+}
+
+export interface TestingCapture {
+  status: "testing_bypass";
+  image: string;
+  regions_redacted: 0;
+  mock: false;
+}
+export type ProcessableCapture = DeidentifiedCapture | TestingCapture;
+
+export function testingCapture(image: string): TestingCapture {
+  if (!testingBypassEnabled()) throw new Error("The testing bypass is available only in development.");
+  pngBlob(image);
+  return { status: "testing_bypass", image, regions_redacted: 0, mock: false };
+}
+
+function processingHeaders(capture: ProcessableCapture): Record<string, string> {
+  if (capture.status === "testing_bypass") {
+    if (!testingBypassEnabled()) throw new Error("The testing bypass is available only in development.");
+    return { "Content-Type": "image/png", [TESTING_BYPASS_HEADER]: "1" };
+  }
+  return { "Content-Type": "image/png" };
 }
 
 export interface Assessment {
@@ -59,10 +82,10 @@ export async function deidentifyCapture(blob: Blob, signal: AbortSignal): Promis
   return { status: "redacted", image: data.image, regions_redacted: data.regions_redacted, mock: data.mock === true };
 }
 
-export async function analyzeCapture(capture: DeidentifiedCapture, signal: AbortSignal): Promise<Assessment> {
+export async function analyzeCapture(capture: ProcessableCapture, signal: AbortSignal): Promise<Assessment> {
   if (capture.mock) throw new Error("Test previews cannot be sent for analysis.");
   const data = await responseJson(await fetch("/api/analyze", {
-    method: "POST", headers: { "Content-Type": "image/png" }, body: pngBlob(capture.image),
+    method: "POST", headers: processingHeaders(capture), body: pngBlob(capture.image),
     signal: AbortSignal.any([signal, AbortSignal.timeout(120_000)]),
   }));
   if (!["passed", "needs_review", "failed"].includes(String(data.status)) ||
@@ -76,12 +99,12 @@ export async function analyzeCapture(capture: DeidentifiedCapture, signal: Abort
   return data as unknown as Assessment;
 }
 
-export async function digitizeCapture(capture: DeidentifiedCapture, signal: AbortSignal): Promise<EcgDigitizationResult> {
+export async function digitizeCapture(capture: ProcessableCapture, signal: AbortSignal): Promise<EcgDigitizationResult> {
   if (capture.mock) throw new Error("Test previews cannot be sent to the digitizer.");
   const data = await responseJson(await fetch("/api/ecg/digitize", {
-    method: "POST", headers: { "Content-Type": "image/png" }, body: pngBlob(capture.image),
+    method: "POST", headers: processingHeaders(capture), body: pngBlob(capture.image),
     signal: AbortSignal.any([signal, AbortSignal.timeout(120_000)]),
   }));
   if (!isEcgDigitizationResult(data)) throw new Error("The digitizer returned invalid waveform data.");
-  return data;
+  return capture.status === "testing_bypass" ? { ...data, privacyStatus: "testing_bypass" } : data;
 }

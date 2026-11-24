@@ -14,9 +14,12 @@ export function confirmLeadAssignments(result: EcgDigitizationResult, labels: Re
     leads[label] = samples;
     assignments[source] = label;
   }
-  return { ...result, leads, requiresReview: false,
-    userReview: { status: 'confirmed', assignments },
+  const confirmed = { ...result, leads, requiresReview: false,
+    userReview: { status: 'confirmed' as const, assignments },
     // Keep machine evidence keyed to its original source, never imply that
     // a human correction was independently verified by OCR.
   };
+  // The temporary bearer token and full scan are not part of the exported signal.
+  delete confirmed.manualReview;
+  return confirmed;
 }

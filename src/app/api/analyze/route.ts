@@ -1,3 +1,4 @@
+import { testingBypassEnabled, TESTING_BYPASS_HEADER } from "../../../lib/testingBypass.ts";
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -24,6 +25,8 @@ function runAnalysis(input: Buffer): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  const testingBypass = request.headers.get(TESTING_BYPASS_HEADER) === "1";
+  if (testingBypass && !testingBypassEnabled()) return Response.json({ error: "The testing bypass is disabled outside development." }, { status: 403, headers });
   if (request.headers.get("content-type")?.split(";")[0] !== "image/png") {
     return Response.json({ error: "Send a PNG crop." }, { status: 415, headers });
   }

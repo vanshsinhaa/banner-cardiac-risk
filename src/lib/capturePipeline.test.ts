@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { analyzeCapture, deidentifyCapture, digitizeCapture, pngBlob, type DeidentifiedCapture } from "./capturePipeline.ts";
+import { analyzeCapture, deidentifyCapture, digitizeCapture, testingCapture, pngBlob, type DeidentifiedCapture } from "./capturePipeline.ts";
 import { isEcgDigitizationResult } from "./ecg-digitizer/types.ts";
 import { toCsv } from "./ecg-digitizer/export.ts";
 
@@ -82,4 +82,47 @@ test('expanded PNG crops above 10 MiB reach the privacy endpoint without resizin
     await deidentifyCapture(blob, new AbortController().signal);
     assert.equal(uploaded, bytes.length);
   } finally { globalThis.fetch = original; }
+});
+
+
+test('explicit development bypass preserves raw crop and sends testing markers to both services', async () => {
+  const environment = process.env.NODE_ENV, previous = globalThis.fetch;
+  Object.assign(process.env, { NODE_ENV: 'development' });
+  const urls: string[] = [];
+  globalThis.fetch = async (url, options) => {
+    urls.push(String(url));
+    assert.equal(new Headers(options?.headers).get('X-ECG-Testing-Bypass'), '1');
+    assert.equal(await (options?.body as Blob).text(), 'sanitized-redacted-pixels');
+    if (url === '/api/analyze') return Response.json({ status: 'passed', detected_leads: [], reasons: [], processed_image: image });
+    return Response.json({ leads: { I: [1, 2] }, units: 'mV', samplingRateHz: 500 });
+  };
+  try {
+    const capture = testingCapture(image);
+    assert.equal(capture.status, 'testing_bypass');
+    assert.equal(capture.regions_redacted, 0);
+    await analyzeCapture(capture, signal());
+    const result = await digitizeCapture(capture, signal());
+    assert.equal(result.privacyStatus, 'testing_bypass');
+    assert.deepEqual(urls, ['/api/analyze', '/api/ecg/digitize']);
+  } finally {
+    globalThis.fetch = previous;
+    if (environment === undefined) Reflect.deleteProperty(process.env, 'NODE_ENV');
+    else Object.assign(process.env, { NODE_ENV: environment });
+  }
+});
+
+test('production refuses constructing or processing a testing bypass before any request', async () => {
+  const environment = process.env.NODE_ENV, previous = globalThis.fetch;
+  Object.assign(process.env, { NODE_ENV: 'production' });
+  globalThis.fetch = async () => assert.fail('Production bypass sent a request');
+  try {
+    assert.throws(() => testingCapture(image), /only in development/);
+    const capture = { status: 'testing_bypass' as const, image, regions_redacted: 0 as const, mock: false as const };
+    await assert.rejects(analyzeCapture(capture, signal()), /only in development/);
+    await assert.rejects(digitizeCapture(capture, signal()), /only in development/);
+  } finally {
+    globalThis.fetch = previous;
+    if (environment === undefined) Reflect.deleteProperty(process.env, 'NODE_ENV');
+    else Object.assign(process.env, { NODE_ENV: environment });
+  }
 });

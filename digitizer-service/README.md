@@ -14,6 +14,20 @@ Debug trace and T-wave plots are disabled by default. Set `ECG_SAVE_TRACE_PLOTS=
 only for synthetic verification; `pip install neurokit2` enables optional T-wave
 plots. Missing plotting dependencies cannot prevent normal service startup.
 
+## Starting the existing local installation
+
+From the project root, run:
+
+```sh
+npm run dev
+```
+
+`npm run dev` loads `.env.local`, starts the local digitizer if needed, waits for its health check, and starts the website. It reuses an already-running digitizer and only stops processes it started when you press Ctrl+C. A configured remote digitizer is left under your control. The local default is `http://127.0.0.1:8000`; the website waits up to two minutes for model loading and reports startup errors in the terminal.
+
+For separate terminals, use `npm run digitizer` and `npm run dev:web`. The website-only command requires a running digitizer to extract graphs. On an existing failed result, click **Run scan checks again** after the service is ready. The graph button stays visible while extraction runs or fails, but enables only when waveform data exists; finding readable labels alone does not produce graphs. If the browser blocks the graph tab, use **Open lead graphs in this tab**.
+
+The launcher uses the existing `Open-ECG-Digitizer/.venv`, selects a 1200-pixel resampling limit unless `ECG_RESAMPLE_SIZE` is already set, and enables Apple MPS CPU fallback. It does not install dependencies. Normal de-identification still requires its separate services; development testing can use the explicit testing-only bypass.
+
 ## Setup
 
 The Windows CPU environment, exact weight checks, startup script, actual inference

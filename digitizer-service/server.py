@@ -11,6 +11,7 @@ import re
 import os
 import sys
 import math
+import json
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -31,7 +32,7 @@ matplotlib.use("Agg")  # draw plots to files only; must be set before pyplot is 
 import cv2
 import numpy as np
 import torch
-from fastapi import FastAPI, Form, HTTPException, UploadFile
+from fastapi import FastAPI, Form, HTTPException, UploadFile, Request
 from torchvision.io import decode_image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "preprocessing"))
@@ -39,6 +40,9 @@ from lead_ocr import read_labels
 from lead_verification import source_regions, compare_labels, review
 from tracked_identifier import TrackedLeadIdentifier
 from tracked_extractor import TrackedSignalExtractor
+
+from starlette.concurrency import run_in_threadpool
+from manual_review import ReviewStore, ReviewError, apply_corrections
 
 from signal_result import NUM_SAMPLES, strip_duration_s, to_result
 from src.config.default import get_cfg
@@ -100,6 +104,7 @@ model_lock = threading.Lock()
 # matplotlib's pyplot is not safe to use from several threads at once
 plot_lock = threading.Lock()
 app = FastAPI()
+review_store = ReviewStore()
 print(f"Digitizer loaded on {device}")
 
 
@@ -171,7 +176,7 @@ def verify_assignment(got, provenance, source_offset, names):
 
 # --- Endpoint ---------------------------------------------------------------
 @app.post("/digitize")
-def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM_S)) -> dict[str, Any]:
+def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM_S), testing_bypass: bool = Form(False)) -> dict[str, Any]:
     data = image.file.read(64 * 1024 * 1024 + 1)
     if not data or len(data) > 64 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="Send an image up to 64 MB.")
@@ -198,6 +203,9 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
     if not result["leads"]:
         raise HTTPException(status_code=422, detail="No leads were found.")
 
+    #Double OCR recheckx§
+    if testing_bypass:
+        result["privacyStatus"] = "testing_bypass"
     names = list(result["leads"])
     verification, previews = verify_assignment(got, provenance, source_offset, names)
     recheck = {"attempted": False, "status": "not_needed"}
@@ -262,4 +270,88 @@ def digitize(image: UploadFile, paper_speed: float = Form(DEFAULT_PAPER_SPEED_MM
         except Exception as e:
             print(f"Could not save T-wave plot: {e}")
 
+    try:
+        if wrapper.apply_dewarping or not provenance or source_offset is None:
+            raise ReviewError("Manual region geometry is unavailable for this scan.")
+        aligned = got["aligned"]["image"][0].permute(1, 2, 0).numpy()
+        aligned = cv2.cvtColor(np.clip(aligned * 255, 0, 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+        signal = got["aligned"]["signal_prob"].squeeze().numpy().copy()
+        start, stop = (v + source_offset for v in provenance["crop"])
+        if provenance["flipped"]:
+            aligned = np.ascontiguousarray(aligned[::-1, ::-1])
+            signal = np.ascontiguousarray(signal[::-1, ::-1])
+            start, stop = aligned.shape[1] - stop, aligned.shape[1] - start
+        result["manualReview"] = review_store.create(
+            result, aligned, signal, float(got["pixel_spacing_mm"]["average_pixel_per_mm"]), (start, stop))
+    except Exception:
+        result["manualReviewUnavailable"] = "Region review is unavailable for this scan. Try another crop."
     return result
+
+
+@app.post("/review-leads")
+async def review_leads(request: Request):
+    data = bytearray()
+    async for chunk in request.stream():
+        data.extend(chunk)
+        if len(data) > 32 * 1024:
+            raise HTTPException(413, "Correction request is too large.")
+    try:
+        payload = json.loads(data)
+        if not isinstance(payload, dict):
+            raise ReviewError("Invalid correction request.")
+        session = review_store.get(payload.get("token"))
+
+        def extract(masked, region):
+            def trace(signal):
+                wrapper.signal_extractor.source_offset = None
+                rows = wrapper.signal_extractor(signal)
+                rows = wrapper.identifier._merge_nonoverlapping_lines(rows)
+                return rows.cpu().numpy(), wrapper.signal_extractor.source_offset
+
+            with model_lock, torch.no_grad():
+                rows, offset = trace(torch.from_numpy(masked))
+                if rows.shape[0] == 1 and np.isfinite(rows).sum() >= 30:
+                    return rows, offset
+                # A human may locate a trace missed by whole-page segmentation.
+                # Segment that crop again, then restore its map to the original
+                # aligned pixels so the existing grid scale/time axis still apply.
+                x1, y1, x2, y2 = region
+                rgb = cv2.cvtColor(session.image[y1:y2, x1:x2], cv2.COLOR_BGR2RGB)
+                tensor = torch.from_numpy(rgb.copy()).permute(2, 0, 1)[None].float().to(device)
+                if float(tensor.max() - tensor.min()) == 0:
+                    return rows, offset
+                tensor = wrapper.min_max_normalize(tensor)
+                # Bound crop inference to the same maximum side as the full scan.
+                h, w = tensor.shape[-2:]
+                factor = min(2.0, RESAMPLE_SIZE / max(h, w))
+                tensor = torch.nn.functional.interpolate(tensor, size=(max(1, round(h*factor)), max(1, round(w*factor))),
+                                                         mode="bilinear", align_corners=False)
+                # The eight-level UNet needs a sufficiently large short side.
+                # White padding preserves aspect ratio and does not change calibration.
+                scaled_h, scaled_w = tensor.shape[-2:]
+                top, left = max(0, 512-scaled_h)//2, max(0, 512-scaled_w)//2
+                tensor = torch.nn.functional.pad(tensor, (left, max(0, 512-scaled_w)-left,
+                                                         top, max(0, 512-scaled_h)-top), value=1)
+                signal, _, _ = wrapper._get_feature_maps(tensor)
+                signal = signal[..., top:top+scaled_h, left:left+scaled_w]
+                signal = torch.nn.functional.interpolate(signal, size=(y2-y1, x2-x1), mode="bilinear", align_corners=False)
+                restored = torch.zeros_like(torch.from_numpy(masked))
+                restored[y1:y2, x1:x2] = signal.squeeze().cpu()
+                return trace(restored)
+
+        def process():
+            with session.lock:
+                if payload.get("action") == "read":
+                    return {**session.result, "manualReview": review_store.payload(payload["token"], session)}
+                if type(payload.get("revision")) is not int or payload["revision"] != session.revision:
+                    raise ReviewError("This result has already changed. Reopen the review page.", 409)
+                updated = apply_corrections(session, payload.get("corrections"), extract, mode=payload.get("mode", "labels"))
+                session.result = updated
+                session.revision += 1
+                return {**updated, "manualReview": review_store.payload(payload["token"], session)}
+
+        return await run_in_threadpool(process)
+    except ReviewError as error:
+        raise HTTPException(error.status, str(error)) from None
+    except (ValueError, TypeError):
+        raise HTTPException(422, "Invalid correction request.") from None
