@@ -1,171 +1,126 @@
 """
-takes the text regions that the OCR prototype found and flagged as identifying, covers each one with a solid black box, 
-and saves a new image of the same size. Then it checks its own work:
-1. same size, and every pixel OUTSIDE the black boxes is unchanged 
-    (so the waveform and grid are untouched)
-2. the image is run through OCR again, and no readable text may remain inside
-    the covered areas, and nothing identifying may be found anywhere else
+De-identifies an EKG image by CROPPING instead of covering text with black boxes.
+
+The EKG grid is found with a colour-independent test (long vertical lines). Everything above
+where the grid starts (the header) is removed, and so is everything below where it ends
+(the footer) when that can be found. The pixels that are kept are an exact copy of the
+matching rows of the original, so the waveform and grid are unchanged.
 
 Fail-safe rules:
-- nothing detected -> image returned unchanged, with a "nothing_detected" flag
-- redaction fails -> NO output image is written, status "failed" 
-
-Run:    python redact.py
-        python redact.py --detections results/tesseract_detections.json
-Out:    redacted/*.png and redacted/redaction_report.json
+- grid not found, strips disagree, or a cut looks suspicious -> status "failed", NO image
+- no header found above the grid                            -> status "nothing_detected"
 """
 
-import argparse
-import json
 import math
-from numbers import Real
-from pathlib import Path 
 
 import numpy as np
-from PIL import Image 
 
-#reuse helpers from task 49 prototype so both tasks use identical logic
-if __package__:
-    from .ocr_compare import FACTORIES, area, looks_identifying, merge_rows, overlap
-else:
-    from ocr_compare import FACTORIES, area, looks_identifying, merge_rows, overlap
+PAD = 6                     # extra pixels kept between a cut and identifying text
+INK_DELTA = 12              # gray levels away from the paper colour that count as "ink"
+WINDOW_FRACTION = 0.04      # test windows are 4% of the image height tall
+LINE_COVER = 0.9            # a column is a "vertical line" if 90% of the window's rows are ink there
+MIN_LINES_PER_STRIP = 3     # a strip needs at least this many vertical lines to count as grid
+STRIPS = 6                  # check the grid edge in 6 vertical strips (catches tilted images)
+MIN_AGREEING_STRIPS = 4     # at least this many strips must agree on where the grid starts
+MAX_SLANT_FRACTION = 0.015  # strips may differ by at most 1.5% of the height
+MIN_CROP_FRACTION = 0.03    # a header smaller than 3% of the height means "no header found"
+MAX_CROP_FRACTION = 0.4     # never remove more than 40% of the image from the top
+MARGIN_PX = 0               # original pixels kept above the grid (0 = cut right at the grid)
 
-SAMPLES_DIR = Path("samples")
-OUT_DIR = Path("redacted")
-PAD = 6     #extra pixels around each box so whole word is covered
-FILL = (0,0,0)      #solid black 
 
-def padded_boxes(regions, width, height):
-    #turn 'identifying' regions into integer pixel boxes, padded and kept inside image
-    boxes = []
-    for r in regions:
-        if not r["identifying"]:
-            continue
-        x0, y0, x1, y1 = r["box"]
-        if any(isinstance(v, bool) or not isinstance(v, Real) or not math.isfinite(v)
-               for v in (x0, y0, x1, y1)):
-            raise ValueError("Invalid redaction geometry.")
-        if x0 >= x1 or y0 >= y1 or x1 <= 0 or y1 <= 0 or x0 >= width or y0 >= height:
-            raise ValueError("Invalid redaction geometry.")
-        boxes.append([max(0, math.floor(x0 - PAD)), max(0, math.floor(y0 - PAD)),
-                      min(width, math.ceil(x1 + PAD)), min(height, math.ceil(y1 + PAD))])
-    return boxes 
+def ink_mask(rgb):
+    """True wherever a pixel differs from the paper colour, whatever colour the grid is."""
+    gray = np.asarray(rgb.convert("L")).astype(np.int16)
+    # paper colour = the most common gray value in the image (the histogram's peak)
+    paper = int(np.bincount(gray.ravel(), minlength=256).argmax())
+    ink = np.abs(gray - paper) >= INK_DELTA
+    # widen every mark by 1 px left and right so slightly tilted lines still look straight
+    wide = ink.copy()
+    wide[:, 1:] |= ink[:, :-1]
+    wide[:, :-1] |= ink[:, 1:]
+    return wide
 
-"""
-Returns (new_image_or_none, info).
-    status "redacted"           ->  new image with the regions covered
-    status "nothing_detected"   ->  copy of the orignial, unchanged (flagged)
-    status "failed"             ->  none: the caller must NOT pass anything on
-"""
-def redact_image(img, regions):
-    try: 
-        boxes = padded_boxes(regions, img.width, img.height)
-        if not boxes:
-            return img.copy(), {"status": "nothing_detected", "boxes": []}
-        #image as a grid of pixel values 
-        arr = np.array(img.convert("RGB"))  
-        for x0, y0, x1, y1 in boxes:
-            # paint rectangle solid black 
-            arr[y0:y1, x0:x1] = FILL
-        return Image.fromarray(arr), {"status": "redacted", "boxes": boxes}
-    #anything unexpected -> fail safe 
+
+def grid_top_in_strip(ink, window):
+    """First row y where the next `window` rows contain at least MIN_LINES_PER_STRIP vertical lines."""
+    height = ink.shape[0]
+    if height < window:
+        return None
+    # running totals down each column let us count ink pixels in any window instantly
+    csum = np.vstack([np.zeros((1, ink.shape[1]), dtype=np.int32),
+                      np.cumsum(ink, axis=0, dtype=np.int32)])
+    for y in range(height - window + 1):
+        # per column: is (almost) every row of this window inked? True = a vertical line
+        covered = (csum[y + window] - csum[y]) >= LINE_COVER * window
+        # count separate lines (runs of neighbouring True columns), not individual columns
+        n_lines = int((covered[1:] & ~covered[:-1]).sum()) + int(covered[0])
+        if n_lines >= MIN_LINES_PER_STRIP:
+            return y
+    return None
+
+
+def edge_cut(ink, window):
+    """
+    How many rows from the TOP edge of `ink` the grid starts, or None if the strips don't agree.
+    Pass ink[::-1] (the image upside down) to measure from the BOTTOM edge instead.
+    """
+    height, width = ink.shape
+    tops = []
+    for i in range(STRIPS):
+        x0, x1 = i * width // STRIPS, (i + 1) * width // STRIPS
+        tops.append(grid_top_in_strip(ink[:, x0:x1], window))
+    found = sorted(t for t in tops if t is not None)
+    if len(found) < MIN_AGREEING_STRIPS:
+        return None                           # not enough strips found a grid
+    median = found[len(found) // 2]           # the typical grid start across strips
+    tolerance = height * MAX_SLANT_FRACTION
+    if any(t > median + tolerance for t in found):
+        return None                           # a strip far below the rest: refuse rather than guess
+    # strips far above the typical start are false alarms (a logo, a box border): ignore them
+    agreeing = [t for t in found if abs(t - median) <= tolerance]
+    if len(agreeing) < MIN_AGREEING_STRIPS:
+        return None
+    # the lowest agreeing strip is the safest cut; add back the slack LINE_COVER allows
+    return max(agreeing) + math.ceil((1 - LINE_COVER) * window)
+
+def crop_header(img, identifier_bottom=0):
+    """
+    Cut off everything above where the EKG grid starts (this hospital puts identifiers at the top).
+    Returns (new_image_or_none, info):
+        status "cropped"          -> info["cut_y"] = rows removed from the top
+        status "nothing_detected" -> no header above the grid, copy of the original (flagged)
+        status "failed"           -> None: the caller must NOT pass anything on
+    identifier_bottom: lowest y of identifying text OCR found in the header; we never cut above it.
+    """
+    failed = (None, {"status": "failed", "error": "Crop could not be applied.", "cut_y": None})
+    try:
+        rgb = img.convert("RGB")
+        width, height = rgb.size
+        window = max(10, int(height * WINDOW_FRACTION))
+        grid_top = edge_cut(ink_mask(rgb), window)
+        if grid_top is None:
+            return failed                     # grid not found reliably -> fail safe
+        if grid_top < height * MIN_CROP_FRACTION:
+            return img.copy(), {"status": "nothing_detected", "cut_y": 0}
+        cut_y = max(grid_top - MARGIN_PX, math.ceil(identifier_bottom) + PAD)
+        if cut_y > grid_top or cut_y > height * MAX_CROP_FRACTION:
+            return failed                     # identifier touches the grid, or cut is suspiciously large
+        return rgb.crop((0, cut_y, width, height)), {"status": "cropped", "cut_y": cut_y}
     except Exception:
-        return None, {"status": "failed", "error": "Redaction could not be applied.", "boxes": []}
+        return failed
 
-
-def outside_unchanged(original, redacted, boxes):
-    #True if sizes match and every pixel outside black boxes is identical.
-    a = np.array(original.convert("RGB"))
-    b = np.array(redacted.convert("RGB"))
-    if a.shape != b.shape:
+def cropped_matches_original(original, cropped, cut_y, cut_bottom=None):
+    """True only if `cropped` is exactly the original's rows from cut_y down to cut_bottom."""
+    a = np.asarray(original.convert("RGB"))
+    b = np.asarray(cropped.convert("RGB"))
+    bottom = a.shape[0] if cut_bottom is None else cut_bottom
+    # the header cut must remove at least one row, and some rows must be left
+    if not 0 < cut_y < bottom <= a.shape[0]:
         return False
-    #True = pixel should be unchanged
-    keep = np.ones(a.shape[:2], dtype=bool)
-    for x0, y0, x1, y1 in boxes:
-        keep[y0:y1, x0:x1] = False
-    return bool((a[keep] == b[keep]).all())
+    kept = a[cut_y:bottom]                    # the rows the crop was supposed to keep
+    return kept.shape == b.shape and bool(np.array_equal(kept, b))
 
-
-def truth_coverage(truth_items, boxes):
-    #synthetic images only: how many of the real fake identifiers sit under a black box?
-    covered = sum(1 for g in truth_items if any(overlap(g["box"], b) / area(g["box"]) >= 0.5 for b in boxes))
-    return covered, len(truth_items)
 
 def readable(word):
-    #count word as readable if OCR is fairly sure of it and it has 2+ letters/digits
+    # count a word as readable if OCR is fairly sure of it and it has 2+ letters/digits
     return word["conf"] >= 0.5 and sum(ch.isalnum() for ch in word["text"]) >= 2
-
-def verify_with_ocr(run_ocr, image_path, boxes):
-    #run ocr on the redacted image. returns (text leftinside boxes, identifying rows left anywhere).
-    words = run_ocr(image_path)
-    inside = [w["text"] for w in words 
-              if readable(w) and area(w["box"]) > 0
-              and any(overlap(w["box"], b) / area(w["box"]) > 0.3 for b in boxes)]
-    still_flagged = [r["text"] for r in merge_rows(words) if looks_identifying(r["text"])]
-    return inside, still_flagged
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--detections", default="results/paddleocr_detections.json")
-    parser.add_argument("--verify-engine", default="paddleocr", choices=list(FACTORIES))
-    args = parser.parse_args()
-
-    detections = json.load(open(args.detections))
-    #where the fake identifiers really are 
-    truth = json.load(open(SAMPLES_DIR / "ground_truth.json"))
-    OUT_DIR.mkdir(exist_ok=True)
-    #engine used for the second look
-    run_ocr = FACTORIES[args.verify_engine]()
-    
-    report = []
-    for item in detections:
-        name = item["image"]
-        original = Image.open(SAMPLES_DIR / name).convert("RGB")
-        redacted, info = redact_image(original, item["regions"])
-        entry = {"image": name, "status": info["status"], "boxes_covered": len(info["boxes"])}
-
-        if redacted is None:
-            entry["error"] = info["error"]
-            report.append(entry)
-            continue
-        
-        #PNG = lossless, no JPEG smudging
-        out_path = OUT_DIR / f"{Path(name).stem}.png"
-        redacted.save(out_path)
-        entry["output"] = str(out_path)
-        entry["identifiers_covered"], entry["identifiers_total"] = truth_coverage(truth[name]["phi"], info["boxes"])
-        entry["same_size"] = redacted.size == original.size
-        entry["outside_unchanged"] = outside_unchanged(original, redacted, info["boxes"])
-        inside, still = verify_with_ocr(run_ocr, out_path, info["boxes"])
-        entry["text_left_in_boxes"] = inside
-        entry["identifying_left_anywhere"] = still 
-        entry["passed"] = (entry["same_size"] and entry["outside_unchanged"] and not inside and not still)
-        if info["status"] == "nothing_detected":
-            entry["flag"] = "no identifying text detected; imagereturn unchanged"
-            #needs human look, never silently "clean"
-            entry["passed"] = False
-        report.append(entry)
-
-    with open(OUT_DIR / "redaction_report.json", "w") as f:
-        json.dump(report, f, indent=2)
-
-    #summary
-    n = len(report)
-    print(f"\nProcessed {n} images (detections: {args.detections}, re-check engine: {args.verify_engine})")
-    print(f"    redacted:           {sum(e['status'] == 'redacted' for e in report)}")
-    print(f"    nothing detected:   {sum(e['status'] == 'nothing_detected' for e in report)}")
-    print(f"    failed:             {sum(e['status'] == 'failed' for e in report)}")
-    print(f"    passed all checks:  {sum(e.get('passed', False) for e in report)}/{n}")
-    cov = sum(e.get("identifiers_covered", 0) for e in report)
-    tot = sum(e.get("identifiers_total", 0) for e in report)
-    print(f" fake identifiers covered: {cov}/{tot}")
-    for e in report:
-        if not e.get("passed", False):
-            print(f"    NOT PASSED: {e['image']} -> {e['status']}"
-                  f"    | text left in boxes: {e.get('text_left_in_boxes')}"
-                  f"    | identifying left: {e.get('identifying_left_anywhere')}")
-            
-
-if __name__ == "__main__":
-    main()
-

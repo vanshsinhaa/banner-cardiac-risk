@@ -1,4 +1,4 @@
-"""Real sanitizer/masking/HTTP mechanics with controlled OCR, not OCR accuracy."""
+"""Real sanitizer/cropping/HTTP mechanics with controlled OCR, not OCR accuracy."""
 
 import base64
 import io
@@ -11,15 +11,24 @@ from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw, PngImagePlugin
 
 from app.deidentify import create_app
-from ocr.redact import redact_image
+from ocr.redact import crop_header
 from tests.metadata_fixtures import MARKER, png_chunks
 
+WIDTH, HEIGHT, GRID_TOP = 480, 400, 120
 
-def page(mode="RGB"):
-    image = Image.new(mode, (240, 140), "white")
+
+def page(grid_top=GRID_TOP, header=True):
+    """A fake page: header text band on top, a light grid below it, and a black 'waveform'."""
+    image = Image.new("RGB", (WIDTH, HEIGHT), "white")
     draw = ImageDraw.Draw(image)
-    draw.text((12, 12), "Patient: Synthetic", fill="black")
-    draw.line([(5, 120), (90, 110), (120, 125), (230, 120)], fill="black", width=2)
+    if header:
+        draw.text((12, 12), "Patient: Synthetic", fill="black")
+    if grid_top < HEIGHT:
+        for x in range(0, WIDTH, 10):                       # vertical grid lines
+            draw.line([(x, grid_top), (x, HEIGHT - 1)], fill=(200, 200, 200))
+        for y in range(grid_top, HEIGHT, 10):               # horizontal grid lines
+            draw.line([(0, y), (WIDTH - 1, y)], fill=(200, 200, 200))
+    draw.line([(5, 280), (150, 250), (250, 290), (470, 270)], fill="black", width=2)
     text = PngImagePlugin.PngInfo()
     text.add_text("PatientName", MARKER)
     output = io.BytesIO()
@@ -48,7 +57,11 @@ def post(client, data=None):
     return client.post("/deidentify", files={"file": ("patient-filename.png", page() if data is None else data, "image/png")})
 
 
-def test_verified_output_is_real_same_size_png_with_clean_metadata():
+def decode(result):
+    return base64.b64decode(result["image"].split(",")[1], validate=True)
+
+
+def test_verified_output_is_a_cropped_png_with_clean_metadata():
     run, calls = engine_sequence([word()], [])
     with TestClient(create_app(lambda: run)) as client:
         assert client.get("/health").status_code == 200
@@ -58,26 +71,46 @@ def test_verified_output_is_real_same_size_png_with_clean_metadata():
     assert response.headers["cache-control"] == "no-store"
     result = response.json()
     assert result["status"] == "redacted" and result["regions_redacted"] == 1
-    data = base64.b64decode(result["image"].split(",")[1], validate=True)
+    data = decode(result)
     assert set(png_chunks(data)) == {b"IHDR", b"IDAT", b"IEND"}
     assert MARKER.encode() not in data
     with Image.open(io.BytesIO(data)) as output:
-        assert output.size == (240, 140) and not output.info
+        assert output.width == WIDTH and not output.info
+        top_cut = HEIGHT - output.height
+        assert GRID_TOP <= top_cut <= GRID_TOP + 10        # the header band was removed
         pixels = np.asarray(output)
-        assert (pixels[4:41, 4:161] == 0).all()
-        assert np.array_equal(pixels[45:], calls[0][45:])
-        assert np.array_equal(pixels, calls[1])
+        assert np.array_equal(pixels, calls[0][top_cut:])   # kept rows are an exact copy of the upload
+        assert np.array_equal(pixels, calls[1])             # the second OCR pass saw exactly this image
+
+
+def test_footer_is_cropped_when_identifying_text_is_found_there():
+    run, calls = engine_sequence([word(), word("SN 1234567", [10, 360, 150, 380])], [])
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client)
+    assert response.status_code == 200 and response.json()["regions_redacted"] == 2
+    with Image.open(io.BytesIO(decode(response.json()))) as output:
+        pixels = np.asarray(output)
+        assert output.height <= HEIGHT - GRID_TOP - (HEIGHT - 360)     # header AND footer removed
+        # the kept rows are one exact slice of the upload, starting at the grid
+        assert any(np.array_equal(pixels, calls[0][top:top + output.height])
+                   for top in range(GRID_TOP, GRID_TOP + 10))
+
+
+def test_cropping_does_not_depend_on_ocr_reading_the_header():
+    # the first OCR pass is only a hint: unreadable header text must not stop the crop
+    run, _ = engine_sequence([word(conf=0.2)], [])
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client)
+    assert response.status_code == 200
+    with Image.open(io.BytesIO(decode(response.json()))) as output:
+        assert output.height < HEIGHT - GRID_TOP + 10
 
 
 @pytest.mark.parametrize("first,second,code", [
-    ([], None, "nothing_detected"),
-    ([word("II")], None, "nothing_detected"),
-    ([word("Jane Testcase")], None, "uncertain_text"),
-    ([word(conf=0.2)], None, "uncertain_text"),
-    ([word()], [word()], "verification_failed"),
-    ([word()], [word("Unknown residual text", [10, 70, 180, 90])], "uncertain_text"),
-    ([word()], RuntimeError(MARKER), "ocr_failed"),
-    (RuntimeError(MARKER), None, "ocr_failed"),
+    ([word()], [word()], "verification_failed"),                                        # identifying text still present
+    ([word()], [word("Unknown residual text", [10, 70, 180, 90])], "uncertain_text"),   # unlisted readable text
+    ([word()], RuntimeError(MARKER), "ocr_failed"),                                      # second pass crashed
+    (RuntimeError(MARKER), None, "ocr_failed"),                                          # first pass crashed
 ])
 def test_uncertain_or_failed_processing_never_returns_an_image(first, second, code):
     run, _ = engine_sequence(first, second)
@@ -88,13 +121,44 @@ def test_uncertain_or_failed_processing_never_returns_an_image(first, second, co
     assert "image" not in response.json() and MARKER not in response.text
 
 
+def test_unsure_word_that_reads_clearly_on_a_closer_look_blocks():
+    unsure = word("Jane Doe", [10, 70, 100, 90], conf=0.3)
+    clear = word("Jane", [0, 0, 40, 10], conf=0.9)               # the enlarged crop reads it clearly
+    run, calls = engine_sequence([word()], [unsure], [clear])
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client)
+    assert response.status_code == 422 and response.json()["code"] == "uncertain_text"
+    assert len(calls) == 3 and "image" not in response.json()
+
+
+def test_waveform_misread_as_unsure_text_is_not_a_block():
+    unsure = word("AAAA", [10, 70, 60, 90], conf=0.47)
+    run, calls = engine_sequence([word()], [unsure], [])          # a closer look finds nothing readable
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client)
+    assert response.status_code == 200 and len(calls) == 3
+
+
+def test_page_without_a_header_is_not_released():
+    run, _ = engine_sequence([])
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client, page(grid_top=0, header=False))
+    assert response.status_code == 422 and response.json()["code"] == "nothing_detected"
+    assert "image" not in response.json()
+
+
+def test_page_without_a_grid_fails_safe():
+    run, _ = engine_sequence([])
+    with TestClient(create_app(lambda: run)) as client:
+        response = post(client, page(grid_top=HEIGHT))
+    assert response.status_code == 422 and response.json()["code"] == "redaction_failed"
+    assert "image" not in response.json()
+
+
 @pytest.mark.parametrize("box", [[40, 30, 10, 10], [1000, 1000, 1100, 1100],
                                  [10, 10, 10, 10], [float("nan"), 1, 20, 20],
                                  [1, 1, float("inf"), 20], [False, 1, 20, 20]])
-def test_bad_boxes_cannot_report_redacted(box):
-    image = Image.new("RGB", (240, 140), "white")
-    output, info = redact_image(image, [{"identifying": True, "box": box}])
-    assert output is None and info["status"] == "failed"
+def test_bad_boxes_cannot_release_an_image(box):
     run, _ = engine_sequence([word(box=box)])
     with TestClient(create_app(lambda: run)) as client:
         response = post(client)
@@ -108,9 +172,9 @@ def test_expected_ecg_text_survives_verification():
         assert post(client).status_code == 200
 
 
-def test_mask_exception_does_not_expose_values():
-    output, info = redact_image(Image.new("RGB", (30, 30)), [{"identifying": True, "box": MARKER}])
-    assert output is None and MARKER not in str(info)
+def test_crop_failure_does_not_expose_values():
+    output, info = crop_header(MARKER)                            # not an image: must fail safe
+    assert output is None and info["status"] == "failed" and MARKER not in str(info)
 
 
 def test_unavailable_engine_is_not_ready_and_has_no_image(caplog):
