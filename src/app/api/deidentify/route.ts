@@ -5,12 +5,16 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_BYTES + 64 * 1024;
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 const png = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
+// Fixed wording for each safe block code the service can return.
+// The service's own text is never relayed to the screen; only these messages are.
+// The wording tells the person how to fix it, since most blocks are bad photos.
 const blockedReasons: Record<string, string> = {
-  nothing_detected: "No printed header was found to remove. Make sure the crop includes the whole page, or adjust the crop.",  uncertain_text: "Some printed text could not be verified safely. Try a clearer image or adjust the crop.",
-  unsupported_pixels: "The privacy service needs an opaque PNG crop.",
-  redaction_failed: "The identifying parts of the image could not be removed safely. Try another crop.",
-  verification_failed: "The cropped image did not pass verification. Nothing was passed on.",  
-  ocr_failed: "The text check could not complete. Retry or check the OCR service.",
+  nothing_detected: "The printed header at the top of the page was not found. Retake the photo with the whole page in view, or drag the corners to include the header.",
+  uncertain_text: "Some printed text was too unclear to check safely. Retake the photo in good light, held steady, with the page flat.",
+  unsupported_pixels: "The privacy service needs an opaque PNG crop. Choose another image.",
+  redaction_failed: "The identifying header could not be removed safely. This usually means the photo is blurry, rotated or too dark. Retake it in good light with the page flat and the whole page in view.",
+  verification_failed: "The cropped image did not pass the final safety check, so nothing was passed on. Retake the photo and try again.",
+  ocr_failed: "The text check could not complete. Wait a moment and try again, or check that the printed-text service is running.",
 };
 
 function fail(status: number, error: string, code?: string) {
