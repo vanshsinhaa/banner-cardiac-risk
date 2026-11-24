@@ -88,3 +88,6 @@ Service text is never relayed to the screen; only that fixed wording is.
   (I, II and III were not read on `clean_1.jpg`).
 - Hosted or deployed setups. All checks ran locally with synthetic sample pages.
 - Real patient images are never committed to the repository.
+- Footer is not cropped yet (pending sponsor confirmation). The final privacy check is
+  strict, so a page whose footer contains unrecognized text blocks; the footer must be
+  cropped out before submitting.
