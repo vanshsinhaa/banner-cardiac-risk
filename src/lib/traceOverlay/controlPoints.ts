@@ -99,3 +99,19 @@ export function applyCorrections(
   const after = toSamples(correctedPoints, autoSamples.length, stride);
   return after.map((value, i) => (value === before[i] ? autoSamples[i] : value));
 }
+
+// Full-resolution runs of non-null samples between `start` and `end` (inclusive), used
+// to draw the trace exactly as stored rather than through the sparse control points.
+export function sampleRuns(samples: readonly (number | null)[], start = 0, end = samples.length - 1): TracePoint[][] {
+  const runs: TracePoint[][] = [];
+  let current: TracePoint[] = [];
+  for (let i = Math.max(0, start); i <= Math.min(end, samples.length - 1); i++) {
+    const mv = samples[i];
+    if (mv === null || !Number.isFinite(mv)) {
+      if (current.length) runs.push(current);
+      current = [];
+    } else current.push({ i, mv });
+  }
+  if (current.length) runs.push(current);
+  return runs;
+}
