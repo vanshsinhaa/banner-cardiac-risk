@@ -12,6 +12,7 @@ import CameraGuide from "./CameraGuide";
 import ReviewFlow from "./review/ReviewFlow";
 import QuadCropper from "./capture/QuadCropper";
 import { warpPreview } from "./capture/warpPreview";
+import AppBar from "./shell/AppBar";
 import styles from "./EkgCaptureScreen.module.css";
 
 interface EkgCaptureScreenProps {
@@ -237,6 +238,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
 
   return (
     <main className={`${styles.screen} ${cropping ? styles.dark : ""}`} aria-busy={stage === "processing" || stage === "deidentifying"}>
+      {!cropping && <AppBar section="Capture" />}
       <input ref={inputRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFileChange} />
       <header className={styles.header}>
         <p className={styles.eyebrow}>EKG CAPTURE</p>
