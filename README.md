@@ -105,7 +105,8 @@ npm run build
 python -m unittest discover -s preprocessing -p 'test_*.py'
 python -m unittest discover -s digitizer-service -p 'test_lead_verification.py'
 python -m unittest discover -s digitizer-service -p 'test_signal_result.py'
-python ocr/test_redact.py
+python -m ocr.test_redact
+python -m ocr.test_policy
 ```
 
 Run the upload API's 140-test suite using its own environment from
