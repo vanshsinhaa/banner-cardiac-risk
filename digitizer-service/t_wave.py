@@ -63,6 +63,12 @@ T_SEARCH_AFTER_QRS_MS = 40
 # fraction of its peak's distance from the baseline.
 T_EDGE_FRACTION = 0.3
 
+# The end of the T wave (for J-point to T end and QT) uses the tangent method: a line
+# along the steepest part of the T wave's falling edge, extended to where it crosses the
+# baseline. The steepest point is looked for from the peak until the T wave has come back
+# within this fraction of its peak's distance from the baseline.
+T_END_SEARCH_FRACTION = 0.1
+
 
 # --- Steps (one per lead) ---------------------------------------------------
 def extract_signal_run(samples: list[float | None]) -> tuple[int, np.ndarray]:
@@ -248,6 +254,39 @@ def find_qrs(median_beat: np.ndarray, r_index: int, sampling_rate: float) -> tup
     return onset, end
 
 
+def find_t_end(median_beat: np.ndarray, peak: int, baseline: float) -> float | None:
+    """Finds the end of the T wave with the tangent method.
+
+    Walks from the peak down the T wave's falling edge, finds its steepest point, and
+    extends the tangent there to where it crosses the baseline. Works the same way for
+    an inverted T wave.
+
+    Returns the end as a (fractional) index into median_beat, or None if the tangent
+    does not cross the baseline inside the beat.
+    """
+    distance = np.abs(median_beat - baseline)
+    stop_at = T_END_SEARCH_FRACTION * distance[peak]
+
+    # The falling edge runs from the peak until the T wave is close to the baseline, or
+    # until it turns away again (the start of the next wave).
+    edge_end = peak
+    while (edge_end < len(median_beat) - 1 and distance[edge_end] > stop_at
+           and distance[edge_end + 1] <= distance[edge_end]):
+        edge_end += 1
+    if edge_end - peak < 2:
+        return None
+
+    slope = np.gradient(median_beat)
+    steepest = peak + int(np.argmax(np.abs(slope[peak : edge_end + 1])))
+    if slope[steepest] == 0:
+        return None
+
+    end = steepest + (baseline - median_beat[steepest]) / slope[steepest]
+    if not peak < end <= len(median_beat) - 1:
+        return None
+    return float(end)
+
+
 def delineate_t_wave(
     median_beat: np.ndarray, r_index: int, sampling_rate: float
 ) -> dict[str, float] | None:
@@ -264,7 +303,8 @@ def delineate_t_wave(
       within T_EDGE_FRACTION of the peak's distance from the baseline.
 
     Returns {"qrs_onset", "qrs_end", "onset", "peak", "offset"} as indices into
-    median_beat plus "baseline" (the baseline level in mV), or None if there is no turning point after the QRS (the T wave runs
+    median_beat, "end" (the tangent-method end of the T wave, a fractional index or
+    None, see find_t_end) and "baseline" (the baseline level in mV), or None if there is no turning point after the QRS (the T wave runs
     past the end of the beat window, or the trace is flat).
     """
     def samples(ms: float) -> int:
@@ -298,7 +338,7 @@ def delineate_t_wave(
 
     return {
         "qrs_onset": qrs_onset, "qrs_end": qrs_end, "onset": onset, "peak": peak, "offset": offset,
-        "baseline": float(baseline),
+        "end": find_t_end(median_beat, peak, baseline), "baseline": float(baseline),
     }
 
 
@@ -347,6 +387,8 @@ def analyze_lead(
         "t_onset_ms": ms_from_r(t_wave["onset"]),
         "t_peak_ms": ms_from_r(t_wave["peak"]),
         "t_offset_ms": ms_from_r(t_wave["offset"]),
+        # Tangent-method end of the T wave, used for J-point to T end and QT.
+        "t_end_ms": None if t_wave["end"] is None else ms_from_r(t_wave["end"]),
         "t_peak_mv": float(median_beat[t_wave["peak"]]),
         "baseline_mv": t_wave["baseline"],
         "beats_used": beats_used,
@@ -395,8 +437,8 @@ def save_t_wave_plot(t_waves: dict[str, dict[str, Any]], sampling_rate: float, p
     """Draws each lead's median beat with its T wave marked and saves it as a PNG.
 
     The leads are laid out like a 3x4 printout. The QRS is shaded grey, the T wave
-    (onset to offset) red, its peak is marked with a dot, and leads where no T wave was
-    found are labelled no_twave.
+    (onset to offset) red, its peak is marked with a dot, its tangent-method end with a
+    dashed line, and leads where no T wave was found are labelled no_twave.
     Not thread-safe (uses pyplot): callers running in several threads must hold a lock.
     """
     fig, axes = plt.subplots(3, 4, figsize=(16, 9), sharex=True)
@@ -417,6 +459,8 @@ def save_t_wave_plot(t_waves: dict[str, dict[str, Any]], sampling_rate: float, p
         ax.axvspan(result["qrs_onset_ms"], result["qrs_end_ms"], color="#888888", alpha=0.15)
         ax.axvspan(result["t_onset_ms"], result["t_offset_ms"], color="#e07a5f", alpha=0.2)
         ax.plot(result["t_peak_ms"], result["t_peak_mv"], "o", color="#c0392b", markersize=5)
+        if result.get("t_end_ms") is not None:
+            ax.axvline(result["t_end_ms"], color="#c0392b", linewidth=1, linestyle="--")  # T end
         beats = result["beats_used"]
         ax.set_title(f"{beats} beat{'s' if beats != 1 else ''}", loc="right", fontsize=9, color="#666666")
 
@@ -424,7 +468,8 @@ def save_t_wave_plot(t_waves: dict[str, dict[str, Any]], sampling_rate: float, p
         ax.set_xlabel("ms from R peak")
     for ax in axes[:, 0]:
         ax.set_ylabel("mV")
-    fig.suptitle("Median beat per lead: QRS shaded grey, T wave red (onset to offset), peak marked")
+    fig.suptitle("Median beat per lead: QRS shaded grey, T wave red (onset to offset), "
+                 "peak marked, dashed line = T end (tangent)")
     fig.tight_layout()
     fig.savefig(path, dpi=100)
     plt.close(fig)
