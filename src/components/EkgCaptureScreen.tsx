@@ -241,7 +241,6 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
       {!cropping && <AppBar section="Capture" />}
       <input ref={inputRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFileChange} />
       <header className={styles.header}>
-        <p className={styles.eyebrow}>EKG CAPTURE</p>
         <h1 ref={titleRef} tabIndex={-1}>{cropping ? "Adjust page corners" : stage === "result" ? "Review your capture" : stage === "deidentifying" ? "Removing identifying information" : stage === "blocked" ? "Image not sent on" : "Capture a clear EKG"}</h1>
         <p className={styles.subtitle}>{cropping ? "Drag corners to the paper edges. Keep every waveform and lead label inside." : stage === "result" ? "Review the image and scan checks before continuing." : "Choose an image or photograph the full printout. You can adjust the page boundary next."}</p>
       </header>

@@ -136,7 +136,7 @@ export default function CameraGuide({onPhoto, onCancel}: CameraGuideProps) {
 }
 
 const styles: Record<string, CSSProperties> = {
-    videoWrap: { position: "relative", borderRadius: 8, overflow: "hidden", background: "#000"},
+    videoWrap: { position: "relative", borderRadius: 8, overflow: "hidden", background: "var(--crop-video)"},
     video: {display: "block", width: "100%", height: "auto"},
     //dashed box; box-shadow dims everything outside it
     frameBox: {
@@ -145,9 +145,9 @@ const styles: Record<string, CSSProperties> = {
         right: "6%",
         top: "18%",
         bottom: "18%",
-        border: "2px dashed #fff",
+        border: "2px dashed var(--crop-contrast)",
         borderRadius: 4,
-        boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
+        boxShadow: "0 0 0 9999px var(--crop-dim)",
         pointerEvents: "none",
     },
     frameLabel: {
@@ -156,17 +156,20 @@ const styles: Record<string, CSSProperties> = {
         right: 0,
         top: 8,
         textAlign: "center",
-        color: "#fff",
+        color: "var(--crop-contrast)",
         fontSize: 13,
-        textShadow: "0 1px 3px rgba(0,0,0,0.8)",
+        textShadow: "0 1px 3px var(--crop-shadow)",
     },
-    tips: {margin: "16px 0 0", paddingLeft: 20, fontSize: 14, color: "#16202a", lineHeight: 1.5},
+    tips: {margin: "16px 0 0", paddingLeft: 20, fontSize: 14, color: "var(--ui-text)", lineHeight: 1.5},
     row: {display: "flex", gap: 10, marginTop: 16},
     btnPrimary: {
-        background: "#2f6f5e",
-        color: "#fff",
+        background: "var(--ui-primary)",
+        color: "var(--ui-primary-text)",
         border: "none",
-        borderRadius: 8,
+        borderRadius: "var(--radius-md)",
+        minHeight: 48,
+        fontWeight: 600,
+        whiteSpace: "nowrap",
         padding: "12px 18px",
         flex: 1,
         cursor: "pointer",
@@ -174,13 +177,16 @@ const styles: Record<string, CSSProperties> = {
     },
     btnSecondary: {
         background: "transparent",
-        border: "1px solid #dde1e4",
-        color: "#16202a",
-        borderRadius: 8,
+        border: "1px solid var(--ui-border-strong)",
+        color: "var(--ui-text)",
+        borderRadius: "var(--radius-md)",
+        minHeight: 48,
+        fontWeight: 600,
+        whiteSpace: "nowrap",
         padding: "12px 18px",
         flex: 1,
         cursor: "pointer",
         font: "inherit",
     },
-    error: { color: "#b3261e", fontSize: 14, margin: "0 0 12px" },
+    error: { color: "var(--ui-danger)", fontSize: 14, margin: "0 0 12px" },
 };
