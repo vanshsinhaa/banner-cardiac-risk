@@ -83,4 +83,25 @@ describe("trace review reducer", () => {
     assert.equal(reviewReducer(initial, { type: "delete", lead: "V9", index: 0, at }), initial);
     assert.equal(reviewReducer(initial, { type: "reset", lead: "I", at }), initial);
   });
+
+  it("undoes and redoes edits, logging both", () => {
+    let state = reviewReducer(start(), { type: "move", lead: "I", index: 1, to: { i: 10, mv: 2 }, at });
+    state = reviewReducer(state, { type: "delete", lead: "II", index: 0, at });
+    state = reviewReducer(state, { type: "undo", at });
+    assert.equal(state.corrected.II, state.auto.II);
+    assert.equal(state.corrected.I[1].mv, 2);
+    state = reviewReducer(state, { type: "undo", at });
+    assert.equal(state.corrected.I, state.auto.I);
+    state = reviewReducer(state, { type: "redo", at });
+    assert.equal(state.corrected.I[1].mv, 2);
+    assert.deepEqual(state.edits.map((e) => [e.kind, e.lead]), [["move", "I"], ["delete", "II"], ["undo", "II"], ["undo", "I"], ["redo", "I"]]);
+    assert.equal(reviewReducer({ ...state, future: [] }, { type: "redo", at }).edits.length, state.edits.length);
+  });
+
+  it("clears redo after a new edit", () => {
+    let state = reviewReducer(start(), { type: "move", lead: "I", index: 1, to: { i: 10, mv: 2 }, at });
+    state = reviewReducer(state, { type: "undo", at });
+    state = reviewReducer(state, { type: "add", lead: "I", point: { i: 5, mv: 1 }, at });
+    assert.equal(state.future.length, 0);
+  });
 });
