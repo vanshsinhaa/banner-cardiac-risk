@@ -42,9 +42,35 @@ Visual choices:
 - The card is neutral (white or dark surface). Only the band chip, a 4px leading
   edge and the dots take the band color, following MDCalc's "more white" redesign.
 - The spacing scale is 4/8/12/16/24/32/48px.
-- The tokens are in `src/app/globals.css`, extending the capture screen palette.
+- The tokens are in `src/app/globals.css` and are shared by the capture screen,
+  the review flow and the score card (see "Visual system" below).
 - Every text/background pair, light and dark, was checked at ≥ 4.5:1 contrast
   (WCAG AA).
+
+## Visual system (2026-11-24 restyle)
+
+Feedback: the app looked generic ("vibecoded") and the capture and review screens
+did not look like one product. Changes:
+
+- **Type.** Inter for UI text and IBM Plex Mono for measurements, ids, times and
+  step counters, loaded with `next/font` in `src/app/layout.tsx`. Before this the
+  pages fell back to Arial because `--font-geist-sans` was never defined.
+- **Palette ("clinical slate").** Cool grey neutrals, one signal-blue accent
+  (`#0a5bd3` light, `#4d8dff` dark), green only for "checked", amber only for the
+  research notice, and band colours only on the score. This follows the calm,
+  single-accent look of clinical review tools (Philips IntelliSpace ECG, GE MUSE)
+  and modern clinical apps (Abridge, Eko). These are reference points for the
+  general style; no layouts or assets were copied.
+- **App bar.** `src/components/shell/AppBar.tsx` is a dark navy product bar
+  (mark, product name, section, status chips, exit action) used on both the
+  capture and review screens.
+- **Surfaces.** 12px card radius, 8px controls, hairline borders and light shadows.
+  The editor card has a header, an instruction strip, the canvas, a legend and a
+  footer toolbar.
+- **Trace colour.** The editable trace is now blue, which stands out from the red
+  grid of printed EKG paper better than orange did.
+- **Lead picker.** Four columns that match the printed 3×4 page
+  (I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6).
 
 ## Data contract (`src/lib/riskScore/contract.ts`)
 
@@ -70,7 +96,7 @@ categories as placeholders until the model has calibrated bands.
   exact hit is needed. Hover enlarges the point and adds a halo, and the cursor
   changes to grab, grabbing or add.
 - **Adding points.** Click within 16px of the line.
-- **Line accuracy.** The orange line is drawn from the full-resolution samples,
+- **Line accuracy.** The blue line is drawn from the full-resolution samples,
   so it sits on the printed waveform. The dashed line is the original detection.
 - **Instructions.** A strip above the canvas says what to do in the current state.
 - **Toolbar.** Undo, Redo (Ctrl+Z / Ctrl+Shift+Z, also logged), Delete point and
