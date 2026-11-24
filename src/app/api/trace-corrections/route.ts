@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     autoDetected: correction.auto,
     corrected: correction.corrected,
     editedLeads: correction.editedLeads,
+    confirmedLeads: correction.confirmedLeads ?? [],
     edits: correction.edits,
     alignment: correction.alignment ?? null,
   };

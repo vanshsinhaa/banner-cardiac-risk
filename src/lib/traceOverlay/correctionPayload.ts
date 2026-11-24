@@ -5,7 +5,7 @@ import { EDIT_KINDS } from "./traceEdits.ts";
 // equal-length sample arrays and well-formed edit log entries.
 const MAX_SAMPLES = 20_000;
 const MAX_EDITS = 10_000;
-const ALLOWED_KEYS = ["captureId", "samplingRateHz", "sampleCount", "auto", "corrected", "editedLeads", "edits", "alignment"];
+const ALLOWED_KEYS = ["captureId", "samplingRateHz", "sampleCount", "auto", "corrected", "editedLeads", "confirmedLeads", "edits", "alignment"];
 const EDIT_KEYS = ["seq", "at", "lead", "kind", "index", "before", "after"];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -38,6 +38,7 @@ export function validateCorrection(body: unknown): string | null {
   if (!isTrace(body.auto, count as number)) return "auto must map lead names to sample arrays.";
   if (!isTrace(body.corrected, count as number)) return "corrected must map lead names to sample arrays.";
   if (!Array.isArray(body.editedLeads) || !body.editedLeads.every(isLead)) return "editedLeads must list lead names.";
+  if (body.confirmedLeads !== undefined && (!Array.isArray(body.confirmedLeads) || !body.confirmedLeads.every(isLead))) return "confirmedLeads must list lead names.";
   if (!Array.isArray(body.edits) || body.edits.length > MAX_EDITS || !body.edits.every(isEdit)) return "edits must be a list of trace edits.";
   if (body.alignment !== undefined && !isObject(body.alignment)) return "alignment must be an object.";
   return null;

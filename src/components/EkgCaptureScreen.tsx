@@ -9,7 +9,7 @@ import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, 
 import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
 import CameraGuide from "./CameraGuide";
-import TraceOverlayEditor from "./trace/TraceOverlayEditor";
+import ReviewFlow from "./review/ReviewFlow";
 import QuadCropper from "./capture/QuadCropper";
 import { warpPreview } from "./capture/warpPreview";
 import styles from "./EkgCaptureScreen.module.css";
@@ -230,6 +230,11 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     assessment?.reasons.includes("insufficient_contrast") ? "The ECG has too little contrast for the readability check. Try the original file or a better-lit photo." :
     "Some lead labels could not be read. Check the crop includes the full ECG.";
 
+  // The review flow takes over the whole screen; it has its own header and actions.
+  if (stage === "result" && resultSrc && reviewingTrace && digitization) {
+    return <ReviewFlow imageSrc={resultSrc} digitization={digitization} onExit={() => setReviewingTrace(false)} exitLabel="Back to capture" />;
+  }
+
   return (
     <main className={`${styles.screen} ${cropping ? styles.dark : ""}`} aria-busy={stage === "processing" || stage === "deidentifying"}>
       <input ref={inputRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFileChange} />
@@ -263,9 +268,6 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
         disabled={stage === "processing"} onLoad={handleImageLoad} onChange={setCorners}
         onError={() => { reset(); setError("This photo could not be displayed. Try a JPEG or PNG."); }} />}
 
-      {stage === "result" && resultSrc && reviewingTrace && digitization &&
-        <TraceOverlayEditor imageSrc={resultSrc} digitization={digitization} onClose={() => setReviewingTrace(false)} />}
-
       {stage === "result" && resultSrc && !reviewingTrace && <section className={styles.resultContent}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={resultSrc} alt="De-identified EKG capture" className={styles.resultImage} />
@@ -280,7 +282,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
           {analysisError && <p role="alert">Readability check could not finish: {analysisError}</p>}
           {digitizerError && <p role="alert">Waveform extraction could not finish: {digitizerError}</p>}
           {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz. {digitization.requiresReview !== false ? "Lead assignments need review." : "Printed labels agree with the extracted lead assignments."}</p>}
-          {digitization && !scanning && <button className={styles.primary} onClick={() => setReviewingTrace(true)}>Review detected trace</button>}
+          {digitization && !scanning && <button className={styles.primary} onClick={() => setReviewingTrace(true)}>Review trace and see risk score</button>}
           {assessment && <details><summary>Lighting-corrected preview</summary>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={assessment.processed_image} alt="Lighting-corrected de-identified EKG" className={styles.resultImage} />
