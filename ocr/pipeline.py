@@ -1,7 +1,7 @@
 """In-memory service pipeline; no saved detections, patient artifacts or ground truth.
 
-De-identification crops the identifying header (and footer, when identifying text is found
-there) off the image, then checks the result with a second OCR pass. The policy blocks text
+De-identification crops the identifying header off the image (the footer is not cropped yet,
+pending sponsor confirmation), then checks the result with a second OCR pass. The policy blocks text
 that looks identifying and any readable-looking text outside a small ECG allowlist. It is not
 a general PHI classifier.
 """
@@ -175,7 +175,10 @@ def deidentify_image(image: Image.Image, run_ocr: Ocr) -> RedactedImage:
 
     # Second pass: nothing identifying may remain in what we release
     check = candidate.crop((0, 0, candidate.width, max(1, int(candidate.height * RESIDUAL_CHECK_FRACTION))))
-    if any(r["identifying"] for r in identifying_rows(read_words(run_ocr, check, strict=False), strict=False)):
+    # Strict on purpose: this is the final check on exactly what we release, so unknown
+    # readable text (including in the footer, which is not cropped yet) blocks the release
+    # instead of passing through unchecked. Both functions default to strict=True.
+    if any(r["identifying"] for r in identifying_rows(read_words(run_ocr, check, strict=True), strict=True)):
         raise PrivacyError("verification_failed")
 
     return RedactedImage(candidate, 1, info["cut_y"], 0)

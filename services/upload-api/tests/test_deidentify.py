@@ -83,18 +83,19 @@ def test_verified_output_is_a_cropped_png_with_clean_metadata():
         assert np.array_equal(pixels, calls[1])             # the second OCR pass saw exactly this image
 
 
-def test_footer_is_cropped_when_identifying_text_is_found_there():
-    run, calls = engine_sequence([word(), word("SN 1234567", [10, 360, 150, 380])], [])
+def test_identifying_text_left_in_the_footer_blocks_while_footer_cropping_is_off():
+    # Footer cropping is switched off until the sponsor confirms it, so only the header
+    # is cut. Identifying text that stays below the cut must therefore BLOCK the release
+    # (the second OCR pass sees it in the cropped image), never slip through.
+    # The box is in the cropped image's coordinates: the page is 400 rows tall and about
+    # 120 rows are cut off the top, so y=240..265 is inside the footer area that remains.
+    footer = word("Patient: Synthetic", [10, 240, 155, 265])
+    run, _ = engine_sequence([word()], [footer])    # 1st pass finds the header; 2nd pass sees the footer
     with TestClient(create_app(lambda: run)) as client:
         response = post(client)
-    assert response.status_code == 200 and response.json()["regions_redacted"] == 2
-    with Image.open(io.BytesIO(decode(response.json()))) as output:
-        pixels = np.asarray(output)
-        assert output.height <= HEIGHT - GRID_TOP - (HEIGHT - 360)     # header AND footer removed
-        # the kept rows are one exact slice of the upload, starting at the grid
-        assert any(np.array_equal(pixels, calls[0][top:top + output.height])
-                   for top in range(GRID_TOP, GRID_TOP + 10))
-
+    assert response.status_code == 422 and response.json()["code"] == "verification_failed"
+    assert "image" not in response.json()
+    
 
 def test_cropping_does_not_depend_on_ocr_reading_the_header():
     # the first OCR pass is only a hint: unreadable header text must not stop the crop
