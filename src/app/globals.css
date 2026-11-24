@@ -1,13 +1,106 @@
+/* Design tokens. "Clinical slate": cool neutral greys, one signal-blue accent, a
+   dark navy app bar, and colour reserved for meaning (trace, checked, risk band).
+   Modelled on clinical review tools such as Philips IntelliSpace ECG and GE MUSE
+   (dense, calm, blue accent) and modern clinical apps such as Abridge and Eko
+   (Inter, generous whitespace, few borders). Every text/background pair is at
+   least 4.5:1 in both themes; risk bands also carry a text label and an icon. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-numeric: var(--font-mono), ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --ui-bg: #f3f5f8;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #f8f9fb;
+  --ui-text: #0e1726;
+  --ui-muted: #586375;
+  --ui-subtle: #8a94a6;
+  --ui-border: #e3e7ee;
+  --ui-border-strong: #cdd4de;
+  --ui-primary: #0a5bd3;
+  --ui-primary-hover: #084cb2;
+  --ui-primary-text: #ffffff;
+  --ui-primary-soft: #eaf2fe;
+  --ui-focus: #2f7cf6;
+  --ui-success: #0f7b55;
+  --ui-success-soft: #e5f5ee;
+  --ui-trace: #0a5bd3;
+  --ui-trace-auto: #7b8699;
+  --ui-notice-bg: #fff8eb;
+  --ui-notice-border: #f1d9a6;
+  --ui-notice-text: #6b4500;
+
+  --ui-shell: #0b1220;
+  --ui-shell-border: #1b2536;
+  --ui-shell-text: #e8edf5;
+  --ui-shell-muted: #9ba7ba;
+
+  --band-low-bg: #e5f5ee;
+  --band-low-text: #0b5d3a;
+  --band-borderline-bg: #fff4d6;
+  --band-borderline-text: #6b4a00;
+  --band-intermediate-bg: #ffead6;
+  --band-intermediate-text: #7a3300;
+  --band-high-bg: #fde4e2;
+  --band-high-text: #8a1212;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-card: 0 1px 2px #0e17260a, 0 1px 3px #0e17260d;
+  --shadow-pop: 0 4px 12px #0e172614, 0 1px 3px #0e17260f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --ui-bg: #0a0e14;
+    --ui-surface: #10151d;
+    --ui-surface-2: #151b25;
+    --ui-text: #e6ebf2;
+    --ui-muted: #9aa5b5;
+    --ui-subtle: #6b7686;
+    --ui-border: #1f2733;
+    --ui-border-strong: #2d3746;
+    --ui-primary: #4d8dff;
+    --ui-primary-hover: #6aa0ff;
+    --ui-primary-text: #04101f;
+    --ui-primary-soft: #13233d;
+    --ui-focus: #6aa0ff;
+    --ui-success: #3fcf8e;
+    --ui-success-soft: #0f2a1f;
+    --ui-trace-auto: #7b8699;
+    --ui-notice-bg: #241c0c;
+    --ui-notice-border: #574416;
+    --ui-notice-text: #f6d58e;
+
+    --ui-shell: #06090e;
+    --ui-shell-border: #19202b;
+
+    --band-low-bg: #0f2a1f;
+    --band-low-text: #8fe3b9;
+    --band-borderline-bg: #2e2408;
+    --band-borderline-text: #ffe099;
+    --band-intermediate-bg: #331a05;
+    --band-intermediate-text: #ffc999;
+    --band-high-bg: #3a1010;
+    --band-high-text: #ffb4ae;
+    --shadow-card: 0 1px 2px #0008;
+    --shadow-pop: 0 8px 24px #0009;
   }
+
+  html { color-scheme: dark; }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html {
@@ -24,17 +117,12 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ui-text);
+  background: var(--ui-bg);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
 }
 
 a {
@@ -42,77 +130,4 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
-
-/* Shared review/score design tokens. Palette follows the capture screen (green
-   primary #2f6f5e on a warm off-white); spacing is an 8px scale with 4px steps.
-   Risk bands carry a text label and icon, so colour is never the only signal. */
-:root {
-  --ui-bg: #f5f7f4;
-  --ui-surface: #ffffff;
-  --ui-text: #172e26;
-  --ui-muted: #576960;
-  --ui-border: #d7e1dc;
-  --ui-primary: #2f6f5e;
-  --ui-primary-text: #ffffff;
-  --ui-primary-soft: #e8efe9;
-  --ui-focus: #75b69f;
-  --ui-trace: #c2410c;
-  --ui-trace-auto: #6b7f77;
-  --ui-notice-bg: #fff8e6;
-  --ui-notice-border: #e9cf8a;
-  --ui-notice-text: #5c4300;
-
-  --band-low-bg: #e6f4ea;
-  --band-low-text: #0b5d2a;
-  --band-borderline-bg: #fff4d6;
-  --band-borderline-text: #6b4a00;
-  --band-intermediate-bg: #ffe5cc;
-  --band-intermediate-text: #7a3300;
-  --band-high-bg: #fde3e1;
-  --band-high-text: #8a1212;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-card: 0 1px 2px #172e260f, 0 8px 24px #172e2614;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ui-bg: #141c19;
-    --ui-surface: #1b2521;
-    --ui-text: #f5f8f6;
-    --ui-muted: #b7c7c1;
-    --ui-border: #45564f;
-    --ui-primary: #4f9c84;
-    --ui-primary-text: #0d1513;
-    --ui-primary-soft: #22332c;
-    --ui-trace: #fb923c;
-    --ui-trace-auto: #93a69e;
-    --ui-notice-bg: #3a2f12;
-    --ui-notice-border: #7a6224;
-    --ui-notice-text: #ffe8a3;
-
-    --band-low-bg: #0f3d22;
-    --band-low-text: #a8e6be;
-    --band-borderline-bg: #4a3500;
-    --band-borderline-text: #ffe099;
-    --band-intermediate-bg: #5a2a00;
-    --band-intermediate-text: #ffc999;
-    --band-high-bg: #5c1414;
-    --band-high-text: #ffb4ae;
-    --shadow-card: 0 1px 2px #0006, 0 8px 24px #0005;
-  }
-}
+::selection { background: var(--ui-primary-soft); }
