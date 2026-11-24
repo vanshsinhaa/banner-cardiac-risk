@@ -38,6 +38,34 @@ For setup on another computer, use [the device handoff](DEVICE-HANDOFF.md).
 
 ## Work log — newest first
 
+### 2026-11-23 — Trace overlay and correction for review (#75)
+
+**Scope:** Sprint 5 task #75. Draw the auto-detected trace over the EKG image
+for each lead, let the reviewer drag/add/delete points, save the corrected
+trace apart from the auto-detected trace, and log each edit. Built on a fresh
+branch, `vansh/task-75-trace-overlay`, from `origin/main`. Did not merge the open
+branches (`rob-ecg-digitizer`, `faith/deid-crop`, `faith/audit-events`).
+
+**Result:** Added the layout geometry, control points, an edit-log reducer, the
+`TraceOverlayEditor` component, `POST /api/trace-corrections` (strict
+validation, JSON under gitignored `.data/`), a **Review detected trace** button
+on the capture result screen, and a `/trace-review` demo on the synthetic page.
+Design and limits are in [trace-review.md](../docs/trace-review.md).
+
+**Validation:** 83 frontend/API tests (19 new), TypeScript, lint and the
+production build passed. In Chrome on the demo page, dragging the V2 spike,
+adding a point and deleting a point each produced an edit log entry. The saved
+record held separate `autoDetected` and `corrected` arrays. Only V2 changed
+(59 samples), and every other lead matched the digitizer output exactly.
+
+**Limits:** Overlay placement is approximated from the printed layout because
+the digitizer returns no pixel coordinates; reviewers align it with sliders.
+Storage is plaintext until #50, and the edit log is not yet in the #61 audit
+stream. No real-capture run was made in this session (digitizer service not
+started). Also noted: `rob-ecg-digitizer` enables debug trace plots by default
+(`ECG_SAVE_TRACE_PLOTS`), which should be off for real scans. No Taiga status
+change, merge or deploy was performed.
+
 ### 2026-11-03 - Document and publish the development baseline
 
 **Scope:** Explicit user authorization to merge into main, with known limits
