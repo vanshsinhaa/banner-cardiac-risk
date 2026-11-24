@@ -52,9 +52,9 @@ Visual choices:
 Feedback: the app looked generic ("vibecoded") and the capture and review screens
 did not look like one product. Changes:
 
-- **Type.** Inter for UI text and IBM Plex Mono for measurements, ids, times and
-  step counters, loaded with `next/font` in `src/app/layout.tsx`. Before this the
-  pages fell back to Arial because `--font-geist-sans` was never defined.
+- **Type.** IBM Plex Sans for UI text and IBM Plex Mono for measurements, ids and
+  times, loaded with `next/font` in `src/app/layout.tsx`. Before this the pages
+  fell back to Arial because `--font-geist-sans` was never defined.
 - **Palette ("clinical slate").** Cool grey neutrals, one signal-blue accent
   (`#0a5bd3` light, `#4d8dff` dark), green only for "checked", amber only for the
   research notice, and band colours only on the score. This follows the calm,
@@ -71,6 +71,27 @@ did not look like one product. Changes:
   grid of printed EKG paper better than orange did.
 - **Lead picker.** Four columns that match the printed 3×4 page
   (I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6).
+
+### Design-system rules (Hallmark anti-slop checklist)
+
+Chosen with the team: modern-minimal genre, clinical-blue palette, IBM Plex
+Sans + Mono, all screens in scope with the score card layout kept.
+
+- **Locked tokens.** Every colour and `font-family` goes through a named token
+  in `globals.css`, including the always-dark camera/crop set (`--crop-*`) and the
+  white EKG paper (`--ui-canvas`). Components contain no raw hex or `rgb()`.
+- **At most one eyebrow per page.** The review page keeps only "Lead 1 of 12";
+  the score page keeps only the label above the percentage. The "Step n of 3"
+  label, the capture eyebrow and the uppercase panel titles were removed.
+- **Mobile floor.** Checked at 320, 375, 414 and 768px on the capture screen and
+  on all three review steps: no horizontal scroll, and no button or link text
+  wrapped onto a second line. The lead tiles have two rows (name and status) by
+  design. `html` and `body` use `overflow-x: clip`; headings wrap with
+  `overflow-wrap: anywhere`. Below 400px the stepper shows only the current
+  step's label (the others stay readable to screen readers), and app-bar chips
+  hide below 480px.
+- **Stamp.** Each stylesheet starts with the Hallmark comment recording genre,
+  theme, the self-critique scores and the slop-test result.
 
 ## Data contract (`src/lib/riskScore/contract.ts`)
 
