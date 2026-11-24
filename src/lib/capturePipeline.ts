@@ -6,7 +6,7 @@ const PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
 
 export interface DeidentifiedCapture {
   status: "redacted";
-  image: string;
+  image: string; 
   regions_redacted: number;
   mock: boolean;
 }
@@ -31,11 +31,29 @@ export function pngBlob(image: string): Blob {
   return new Blob([bytes], { type: "image/png" });
 }
 
+// error that also carries the HTTP status and the safe block code. audit log reads only these two
+export class ServiceError extends Error {
+  status: number;
+  code: string | undefined;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ServiceError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function responseJson(response: Response): Promise<Record<string, unknown>> {
   const value: unknown = await response.json();
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("The service returned an invalid response.");
   const data = value as Record<string, unknown>;
-  if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "The image service could not complete the request.");
+  if (!response.ok) {
+    throw new ServiceError(
+      typeof data.error === "string" ? data.error : "The image service could not complete the request.",
+      response.status,
+      typeof data.code === "string" ? data.code : undefined,
+    );
+  }
   return data;
 }
 

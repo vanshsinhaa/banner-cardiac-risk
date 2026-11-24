@@ -6,11 +6,10 @@ const MAX_REQUEST_BYTES = MAX_BYTES + 64 * 1024;
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 const png = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
 const blockedReasons: Record<string, string> = {
-  nothing_detected: "Identifying text was not confirmed. Try a clearer image or adjust the crop.",
-  uncertain_text: "Some printed text could not be verified safely. Try a clearer image or adjust the crop.",
+  nothing_detected: "No printed header was found to remove. Make sure the crop includes the whole page, or adjust the crop.",  uncertain_text: "Some printed text could not be verified safely. Try a clearer image or adjust the crop.",
   unsupported_pixels: "The privacy service needs an opaque PNG crop.",
-  redaction_failed: "Identifying text could not be covered safely. Try another crop.",
-  verification_failed: "The redacted image did not pass verification. Nothing was passed on.",
+  redaction_failed: "The identifying parts of the image could not be removed safely. Try another crop.",
+  verification_failed: "The cropped image did not pass verification. Nothing was passed on.",  
   ocr_failed: "The text check could not complete. Retry or check the OCR service.",
 };
 

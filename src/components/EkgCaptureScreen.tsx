@@ -6,6 +6,7 @@ import { checkResolution, type ResolutionResult } from "@/lib/checkResolution";
 import { insetCorners, isWithinPhoto, orderCorners, type CaptureDetails, type Corners, type PhotoSize } from "@/lib/cropCorners";
 import { outputSize } from "@/lib/perspective";
 import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, pngBlob, type Assessment, type DeidentifiedCapture } from "@/lib/capturePipeline";
+import { logAuditEvent, newCaptureId, reasonFromError, type AuditEventType, type AuditOutcome, type AuditReason } from "@/lib/auditLog";
 import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
 import CameraGuide from "./CameraGuide";
@@ -27,6 +28,14 @@ function errorMessage(error: unknown) {
 
 export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptureScreenProps) {
   const [stage, setStage] = useState<Stage>("idle");
+  // 61 audit trail: one random id per confirmed crop. It is never derived from image or  file name
+  const captureId = useRef<string>(newCaptureId());
+  // True when the audit log can't be reached, so the person is told
+  const [auditFailed, setAuditFailed] = useState(false);
+  // Logs one event. It never throws and never blocks the capture.
+  function audit(type: AuditEventType, outcome: AuditOutcome, reason?: AuditReason) {
+    void logAuditEvent(captureId.current, type, outcome, reason).then(ok => setAuditFailed(!ok));
+  }
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [resultSrc, setResultSrc] = useState<string | null>(null);
@@ -132,12 +141,16 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
   async function sendForDeidentification(pending: { blob: Blob; details: CaptureDetails }, controller: AbortController) {
     setError(null);
     setStage("deidentifying");
+    audit("deid_requested", "success");
     let confirmed: DeidentifiedCapture;
     try {
       confirmed = await deidentifyCapture(pending.blob, controller.signal);
       controller.signal.throwIfAborted();
     } catch (error) {
-      if (!controller.signal.aborted && processing.current === controller) {
+      if (controller.signal.aborted) {
+        audit("deid_blocked", "blocked", "cancelled");   // the person cancelled
+      } else if (processing.current === controller) {
+        audit("deid_blocked", "blocked", reasonFromError(error));   // a safe category only, never the message
         setError(errorMessage(error));
         setStage("blocked");
         processing.current = null;
@@ -155,6 +168,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     processing.current = null;
     // A mock is a preview only: never call downstream consumers with it.
     if (!confirmed.mock) {
+      audit("deid_succeeded", "success");
       void scan(confirmed);
       onCapture?.(confirmed.image, pending.details);
     }
@@ -187,6 +201,8 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
       controller.signal.throwIfAborted();
       const pending = { blob: pngBlob(dataUrl), details };
       pendingCrop.current = pending;
+      captureId.current = newCaptureId();   // a new capture starts when a crop is confirmed
+      audit("crop_confirmed", "success");
       await sendForDeidentification(pending, controller);
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -313,11 +329,12 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
             </>}
             {stage === "result" && <>
               <button className={styles.secondary} onClick={replacePhoto}>{replacementLabel}</button>
-              {!capture?.mock && <a className={styles.primary} href={resultSrc ?? undefined} download={`ekg-capture-${count}.png`}>Save image</a>}
+              {!capture?.mock && <a className={styles.primary} href={resultSrc ?? undefined} download={`ekg-capture-${count}.png`} onClick={() => audit("image_save_requested", "success")}>Save image</a>}             
             </>}
           </div>
           {stage === "blocked" && <button className={styles.textAction} onClick={adjustCrop}>Adjust crop</button>}
           {cropping && stage !== "processing" && <button className={styles.textAction} onClick={reset}>Cancel</button>}
+          {auditFailed && <p role="alert" className={styles.count}>The audit log could not be reached. Your capture can continue, and the event will be retried.</p>}
           <p className={styles.count}>{count} {count === 1 ? "image" : "images"} captured this session</p>
         </div>
       </footer>

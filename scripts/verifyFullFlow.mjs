@@ -52,7 +52,7 @@ try {
     assert.equal(reply.status(), 200, `${endpoints[index]} failed: ${value.error || value.code}`);
     if (index === 0) {
       assert.equal(value.status, "redacted");
-      assert.ok(value.regions_redacted >= 4 && !value.mock);
+      assert.ok(value.regions_redacted >= 1 && !value.mock);
       confirmedDigest = createHash("sha256").update(Buffer.from(value.image.split(",", 2)[1], "base64")).digest("hex");
       summaries.push({ endpoint: endpoints[index], status: value.status, regions: value.regions_redacted });
     } else if (index === 1) {

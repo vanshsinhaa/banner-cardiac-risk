@@ -35,7 +35,7 @@ try {
   assert.equal(response.status(), 200);
   const data = await response.json();
   assert.equal(data.status, "redacted");
-  assert.ok(!data.mock && data.regions_redacted >= 4);
+  assert.ok(!data.mock && data.regions_redacted >= 1);
   await page.getByRole("link", { name: "Save image", exact: true }).waitFor();
   await page.getByText("Identifying information removed.", { exact: true }).waitFor();
   const downloadEvent = page.waitForEvent("download");

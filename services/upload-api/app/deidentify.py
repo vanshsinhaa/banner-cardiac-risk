@@ -20,12 +20,12 @@ from ocr.runtime import load_paddle
 
 HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
 MESSAGES = {
-    "nothing_detected": "Identifying text was not confirmed. Try a clearer image.",
+    "nothing_detected": "No printed header was found to remove. Make sure the crop includes the whole page.",
     "uncertain_text": "Some printed text could not be verified safely. Try a clearer crop.",
     "unsupported_pixels": "Send an opaque RGB PNG crop.",
     "ocr_failed": "The text check could not complete. Retry or check the OCR service.",
-    "redaction_failed": "Identifying text could not be covered safely.",
-    "verification_failed": "The redacted image did not pass verification.",
+    "redaction_failed": "The identifying parts of the image could not be removed safely.",
+    "verification_failed": "The cropped image did not pass verification.",
 }
 logger = logging.getLogger("deidentify_api")
 
@@ -51,10 +51,15 @@ def process_upload(data: bytes, run_ocr) -> dict:
     with Image.open(io.BytesIO(clean.data)) as image:
         result = deidentify_image(image, run_ocr)
     with result.image, _Output() as output:
+        # size of the cropped image, noted before the image is closed
+        expected_size = result.image.size
         result.image.save(output, format="PNG")
         # Reuse #48 on the final encoded artifact, not only the incoming upload.
         final = sanitize_image(output.getvalue())
-    if final.width != clean.width or final.height != clean.height or len(final.data) > MAX_UPLOAD_BYTES:
+    # The crop may only remove rows: same width, no taller than the upload, and the
+    # re-encoded PNG must still match the cropped size exactly.
+    if (expected_size[0] != clean.width or expected_size[1] > clean.height
+            or (final.width, final.height) != expected_size or len(final.data) > MAX_UPLOAD_BYTES):
         raise PrivacyError("verification_failed")
     return {"status": "redacted", "image": "data:image/png;base64," + base64.b64encode(final.data).decode("ascii"),
             "regions_redacted": result.regions_redacted}
