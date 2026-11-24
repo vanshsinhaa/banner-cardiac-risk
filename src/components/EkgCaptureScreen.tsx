@@ -9,6 +9,7 @@ import { analyzeCapture, deidentifyCapture, digitizeCapture, MAX_CAPTURE_BYTES, 
 import { combinedLeadLabels } from "@/lib/combined-lead-labels";
 import type { EcgDigitizationResult } from "@/lib/ecg-digitizer/types";
 import CameraGuide from "./CameraGuide";
+import TraceOverlayEditor from "./trace/TraceOverlayEditor";
 import QuadCropper from "./capture/QuadCropper";
 import { warpPreview } from "./capture/warpPreview";
 import styles from "./EkgCaptureScreen.module.css";
@@ -43,6 +44,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [digitizerError, setDigitizerError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [reviewingTrace, setReviewingTrace] = useState(false);
   const pendingCrop = useRef<{ blob: Blob; details: CaptureDetails } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -86,6 +88,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     setResultSrc(null);
     setAssessment(null);
     setDigitization(null);
+    setReviewingTrace(false);
     setAnalysisError(null);
     setDigitizerError(null);
     setScanning(false);
@@ -117,6 +120,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     setScanning(true);
     setAssessment(null);
     setDigitization(null);
+    setReviewingTrace(false);
     setAnalysisError(null);
     setDigitizerError(null);
     await Promise.allSettled([
@@ -216,6 +220,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
     setDigitization(null);
     setAnalysisError(null);
     setDigitizerError(null);
+    setReviewingTrace(false);
   }
 
   const labels = combinedLeadLabels(assessment?.detected_leads, digitization);
@@ -258,7 +263,10 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
         disabled={stage === "processing"} onLoad={handleImageLoad} onChange={setCorners}
         onError={() => { reset(); setError("This photo could not be displayed. Try a JPEG or PNG."); }} />}
 
-      {stage === "result" && resultSrc && <section className={styles.resultContent}>
+      {stage === "result" && resultSrc && reviewingTrace && digitization &&
+        <TraceOverlayEditor imageSrc={resultSrc} digitization={digitization} onClose={() => setReviewingTrace(false)} />}
+
+      {stage === "result" && resultSrc && !reviewingTrace && <section className={styles.resultContent}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={resultSrc} alt="De-identified EKG capture" className={styles.resultImage} />
         {capture?.mock && <p role="alert" className={styles.warning}>TEST MODE: this preview was not de-identified. Saving, analysis, and digitization are disabled.</p>}
@@ -272,6 +280,7 @@ export default function EkgCaptureScreen({ initialCorners, onCapture }: EkgCaptu
           {analysisError && <p role="alert">Readability check could not finish: {analysisError}</p>}
           {digitizerError && <p role="alert">Waveform extraction could not finish: {digitizerError}</p>}
           {digitization && <p>{Object.keys(digitization.leads).length} {Object.keys(digitization.leads).length === 1 ? "waveform" : "waveforms"} extracted at {digitization.samplingRateHz} Hz. {digitization.requiresReview !== false ? "Lead assignments need review." : "Printed labels agree with the extracted lead assignments."}</p>}
+          {digitization && !scanning && <button className={styles.primary} onClick={() => setReviewingTrace(true)}>Review detected trace</button>}
           {assessment && <details><summary>Lighting-corrected preview</summary>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={assessment.processed_image} alt="Lighting-corrected de-identified EKG" className={styles.resultImage} />
